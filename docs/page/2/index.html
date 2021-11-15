@@ -119,7 +119,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-count">77</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -361,104 +361,14 @@
     <div class="post-body" itemprop="articleBody">
           <h2 id="已知"><a href="#已知" class="headerlink" title="已知"></a>已知</h2><p>不得不说，我(们)对跨域可能有些误解。确切地讲，是对跨域的使用有些误解。</p>
 <p>我的跨域知识从哪里来？从这里——<a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS">跨源资源共享（CORS） - HTTP | MDN</a></p>
-<p>能总结出几点</p>
-<ul>
-<li>跨域是一种允许服务端对来自浏览器的访问进行控制的机制</li>
-<li>它涉及到一系列专用的请求头<ul>
-<li>浏览器端<ul>
-<li>Origin：声明源站</li>
-<li>Access-Control-Request-Method：声明自己将要使用什么方法</li>
-<li>Access-Control-Request-Headers：声明自己将要携带哪些自定义头部</li>
-</ul>
-</li>
-<li>服务端<ul>
-<li>Access-Control-Allow-Origin：声明本站允许的源站</li>
-<li>Access-Control-Allow-Methods：声明本站允许的方法</li>
-<li>Access-Control-Allow-Headers：声明本真允许的自定义头部</li>
-<li>Access-Control-Max-Age：声明一个预检请求的有效期，有效期内同一个请求无须再次预检</li>
-</ul>
-</li>
-</ul>
-</li>
-<li>请求被划分为简单请求和复杂请求<ul>
-<li>复杂请求在请求实际发出之前，会发出OPTIONS预检请求进行跨域询问</li>
-<li>简单请求不需要预检</li>
-</ul>
-</li>
-</ul>
-<p>在实际使用中，我们为了方便，尝尝会将服务端的所有响应配置为“*”，即允许所有源站、方法、自定义首部的请求进行访问。</p>
-<p>然而，这招在需要传输Cookie的请求中，行不通，浏览器会报如下错误。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xxx from origin <span class="string">&#x27;xxxx&#x27;</span> has been blocked by CORS policy: The value of the <span class="string">&#x27;Access-Control-Allow-Origin&#x27;</span> header <span class="keyword">in</span> the response must not be the wildcard <span class="string">&#x27;*&#x27;</span> when the request<span class="string">&#x27;s credentials mode is &#x27;</span>include<span class="string">&#x27;. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute.</span></span><br></pre></td></tr></table></figure>
-
-<h2 id="盲区"><a href="#盲区" class="headerlink" title="盲区"></a>盲区</h2><p>出现这个问题，是因为漏掉了关键的一点：附带身份凭证的请求。其明确规定一点</p>
-<ul>
-<li><p>对于附带身份凭证的请求，服务器不得设置 Access-Control-Allow-Origin 的值为“*”</p>
-<p>  相应的，它必须是确切地和请求中的Origin进行匹配，即，如果请求的Origin是<a target="_blank" rel="noopener" href="http://xyc.com,则响应的access-control-allow-origin也必须为http//xyc.com">http://xyc.com，则响应的Access-Control-Allow-Origin也必须为http://xyc.com</a></p>
-</li>
-</ul>
-<p>这一点可以验证，并且牵出一个新的响应请求头</p>
-<ul>
-<li>Access-Control-Allow-Credentials: 是否允许跨域携带凭证。为true时，代表允许，相应地Access-Control-Allow-Origin 就一定不会为“*”</li>
-</ul>
-<p>出现上面的错误只有一种情况，即响应只有Access-Control-Allow-Origin: *，而没有Access-Control-Allow-Credentials，或者其值为false。</p>
-<p>解决办法，加上Access-Control-Allow-Credentials: true，并修改Access-Control-Allow-Origin。</p>
-<h2 id="Spring对跨域的支持"><a href="#Spring对跨域的支持" class="headerlink" title="Spring对跨域的支持"></a>Spring对跨域的支持</h2><p>所有Spring Web模块，都支持直接配置跨域。下面是正确且唯一正确的配置</p>
-<p>web服务的代码中配置</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">corsFilter</span><span class="params">()</span></span>: CorsFilter &#123;</span><br><span class="line">    <span class="keyword">val</span> config = CorsConfiguration()</span><br><span class="line">    <span class="comment">// 预检请求有效期</span></span><br><span class="line">    config.maxAge = <span class="number">3600</span></span><br><span class="line">    <span class="comment">// 允许跨域发送身份凭证</span></span><br><span class="line">    config.allowCredentials = <span class="literal">true</span></span><br><span class="line">    <span class="comment">// 允许跨域的源为所有，注意与origin:*进行区分</span></span><br><span class="line">    config.addAllowedOriginPattern(<span class="string">&quot;*&quot;</span>)</span><br><span class="line">    <span class="comment">// 允许所有请求头</span></span><br><span class="line">    config.addAllowedHeader(<span class="string">&quot;*&quot;</span>)</span><br><span class="line">    <span class="comment">// 允许所有请求方法</span></span><br><span class="line">    config.addAllowedMethod(<span class="string">&quot;*&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> source = UrlBasedCorsConfigurationSource().apply &#123;</span><br><span class="line">        <span class="comment">// 上述配置针对所有请求路径生效</span></span><br><span class="line">        registerCorsConfiguration(<span class="string">&quot;/**&quot;</span>, config)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> CorsFilter(source)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>Spring Gateway中配置文件的配置</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /**表示配置针对所有路径</span></span><br><span class="line"><span class="comment"># 允许</span></span><br><span class="line"><span class="string">spring.cloud.gateway.globalcors.cors-configurations.[/**].allowed-headers=*</span></span><br><span class="line"><span class="string">spring.cloud.gateway.globalcors.cors-configurations.[/**].allowed-methods=*</span></span><br><span class="line"><span class="string">spring.cloud.gateway.globalcors.cors-configurations.[/**].allowed-origin-patterns=*</span></span><br><span class="line"><span class="string">spring.cloud.gateway.globalcors.cors-configurations.[/**].allow-credentials=true</span></span><br></pre></td></tr></table></figure>
-
-<p>这里尤其注意区分</p>
-<p><code>addAllowedOriginPattern(&quot;*&quot;)</code>和<code>addOrigins(&quot;*&quot;)</code>的区别</p>
-<ul>
-<li><p>前者的*表示通配符，用来匹配请求的Origin，如果匹配成功，响应的Access-Control-Allow-Origin就直接被设置为请求的Origin</p>
-</li>
-<li><p>后者表示直接将所有的Access-Control-Allow-Origin值都设置为”*“。这个在和allowCredentials=true一起使用的情况下要注意</p>
-</li>
-<li><p>如果两个都设置，将会是<code>addOrigins(&quot;*&quot;)</code>生效。这一点可以去翻源码</p>
-<p>  位置：org.springframework.web.cors.CorsConfiguration#checkOrigin</p>
-</li>
-</ul>
-<h2 id="请求头冲突的问题"><a href="#请求头冲突的问题" class="headerlink" title="请求头冲突的问题"></a>请求头冲突的问题</h2><p>如果使用Spring Gateway作为网关，后面再挂着Spring Web作为服务，并且它们都正确配置了跨域。那么正常情况下，响应的请求头就会出现两份完全一样的跨域头部，像下面这样</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">vary:</span> <span class="string">Origin</span></span><br><span class="line"><span class="attr">access-control-allow-credentials:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">access-control-allow-origin:</span> <span class="string">xxxx</span></span><br><span class="line"><span class="attr">vary:</span> <span class="string">Origin</span></span><br><span class="line"><span class="attr">access-control-allow-credentials:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">access-control-allow-origin:</span> <span class="string">xxxx</span></span><br></pre></td></tr></table></figure>
-
-<p>这似乎不违反HTTP关于请求头重复的规定，但在跨域的机制中，却是不可接收的，可能出现这种错误</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Access to XMLHttpRequest at <span class="string">&#x27;xxxxx&#x27;</span> from origin <span class="string">&#x27;http://localhost:3200&#x27;</span> has been blocked by CORS policy: </span><br><span class="line">The <span class="string">&#x27;Access-Control-Allow-Origin&#x27;</span> header contains multiple values <span class="string">&#x27;*, http://localhost:3200&#x27;</span>, but only one is allowed.</span><br></pre></td></tr></table></figure>
-
-<p>解决办法就是在网关对重复的头部进行处理，我们可以用过滤器：DedupeResponseHeader</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">spring.cloud.gateway.default-filters[0]=DedupeResponseHeader=Vary</span> <span class="string">Access-Control-Allow-Origin</span> <span class="string">Access-Control-Allow-Credentials</span></span><br></pre></td></tr></table></figure>
-
-<p>它默认保留重复头中的第一个，具体参见<a href="%5Bhttps://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#the-deduperesponseheader-gatewayfilter-factory%5D(https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#the-deduperesponseheader-gatewayfilter-factory)">手册</a></p>
-<h2 id="Vary怎么说"><a href="#Vary怎么说" class="headerlink" title="Vary怎么说"></a>Vary怎么说</h2><p>我们总是能看到响应中有Vary头部，它有什么用？服务端是如何生成的？</p>
-<p>根据<a href="%5Bhttps://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Vary%5D(https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Vary)">标准</a>，它是被服务器用来声明一个请求的响应的变化依据，浏览器可用它来控制缓存。比如对<code>Vary: Origin</code>，它表示，对同一个请求，服务器针对不同的源站有不同的响应。</p>
-<p>服务端是如何生成的呢？确切地讲，不同场景下有不同的生成方式，比如Spring Web中如果开启了跨域，默认会在响应上添加Vary请求头，写死的，其值包含</p>
-<ul>
-<li>Origin</li>
-<li>Access-Control-Request-Method</li>
-<li>Access-Control-Request-Headers</li>
-</ul>
-<p>源码参见：org.springframework.web.cors.reactive.DefaultCorsProcessor#VARY_HEADERS</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> List&lt;String&gt; VARY_HEADERS = Arrays.asList(</span><br><span class="line">			HttpHeaders.ORIGIN, HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS);</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">process</span><span class="params">(<span class="meta">@Nullable</span> CorsConfiguration config, ServerWebExchange exchange)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	ServerHttpRequest request = exchange.getRequest();</span><br><span class="line">	ServerHttpResponse response = exchange.getResponse();</span><br><span class="line">	HttpHeaders responseHeaders = response.getHeaders();</span><br><span class="line"></span><br><span class="line">	List&lt;String&gt; varyHeaders = responseHeaders.get(HttpHeaders.VARY);</span><br><span class="line">        <span class="comment">// 如果当前响应没有包含Vary，则加上</span></span><br><span class="line">	<span class="keyword">if</span> (varyHeaders == <span class="keyword">null</span>) &#123;</span><br><span class="line">		responseHeaders.addAll(HttpHeaders.VARY, VARY_HEADERS);</span><br><span class="line">	&#125;</span><br><span class="line">	... ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<h2 id="Spring-Cloud同时使用DedupeResponseHeader和WebSocket"><a href="#Spring-Cloud同时使用DedupeResponseHeader和WebSocket" class="headerlink" title="Spring Cloud同时使用DedupeResponseHeader和WebSocket"></a>Spring Cloud同时使用DedupeResponseHeader和WebSocket</h2><p>Spring Cloud中同时使用DedupeResponseHeader和WebSocket会报错。如下，这是握手成功后抛出的异常。</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">java.lang.UnsupportedOperationException</span><br><span class="line">	at org.springframework.http.ReadOnlyHttpHeaders.set(ReadOnlyHttpHeaders.java:106)</span><br></pre></td></tr></table></figure>
-
-<p><strong>原因</strong></p>
-<p>Spring Cloud对WebSocket有特殊处理，位于过滤器WebsocketRoutingFilter中，与这部分相关的逻辑位于：org.springframework.web.reactive.socket.server.upgrade.ReactorNettyRequestUpgradeStrategy#upgrade</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> Mono&lt;<span class="built_in">Void</span>&gt; upgrade(ServerWebExchange exchange, WebSocketHandler handler,</span><br><span class="line">		<span class="meta">@Nullable</span> String subProtocol, Supplier&lt;HandshakeInfo&gt; handshakeInfoFactory) &#123;</span><br><span class="line"></span><br><span class="line">	ServerHttpResponse response = exchange.getResponse();</span><br><span class="line">	HttpServerResponse reactorResponse = ServerHttpResponseDecorator.getNativeResponse(response);</span><br><span class="line">	HandshakeInfo handshakeInfo = handshakeInfoFactory.<span class="keyword">get</span>();</span><br><span class="line">	NettyDataBufferFactory bufferFactory = (NettyDataBufferFactory) response.bufferFactory();</span><br><span class="line">	URI uri = exchange.getRequest().getURI();</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Trigger WebFlux preCommit actions and upgrade</span></span><br><span class="line">	<span class="keyword">return</span> response.setComplete()</span><br><span class="line">			.then(Mono.defer(() -&gt; &#123;</span><br><span class="line">				WebsocketServerSpec spec = buildSpec(subProtocol);</span><br><span class="line">				<span class="keyword">return</span> reactorResponse.sendWebsocket((<span class="keyword">in</span>, <span class="keyword">out</span>) -&gt; &#123;</span><br><span class="line">					ReactorNettyWebSocketSession session =</span><br><span class="line">							new ReactorNettyWebSocketSession(</span><br><span class="line">									<span class="keyword">in</span>, <span class="keyword">out</span>, handshakeInfo, bufferFactory, spec.maxFramePayloadLength());</span><br><span class="line">					<span class="keyword">return</span> handler.handle(session).checkpoint(uri + <span class="string">&quot; [ReactorNettyRequestUpgradeStrategy]&quot;</span>);</span><br><span class="line">				&#125;, spec);</span><br><span class="line">			&#125;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>其中的关键点是，response.setComplete()，这里已经将response设置为完成状态，后续过滤器就无法再操作其内容，而我们设置的DedupeResponseHeader过滤器就在它的后面，因此报错。</p>
-<p><strong>解决</strong></p>
-<p>这里，要明白两个点</p>
-<ul>
-<li>WebSocket握手成功后的响应头，不会存在重复的情况，这一点由WebSocket相关的Filter自己去保证</li>
-<li>DedupeResponseHeader，不会去判断response是否已经完成</li>
-</ul>
-<p>为此，可以自定义DedupeResponseHeader，加上对response的完成状态进行判断的逻辑。如下，整个逻辑完全照抄DedupeResponseHeaderGatewayFilterFactory，连Config和Strategy都沿用，这样能够使得对它的使用上完全和DedupeResponseHeader一致。</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CustomDedupeResponseHeaderGatewayFilterFactory</span> : <span class="type">AbstractGatewayFilterFactory</span>&lt;<span class="type">Config</span>&gt;</span>(Config::<span class="keyword">class</span>.java) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span> &#123;</span><br><span class="line">        log.info(<span class="string">&quot;Loaded GatewayFilterFactory [CustomDedupeResponseHeader]&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">shortcutFieldOrder</span><span class="params">()</span></span>: List&lt;String&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> listOf(NAME_KEY, <span class="string">&quot;strategy&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">apply</span><span class="params">(config: <span class="type">Config</span>)</span></span> = GatewayFilter &#123; exchange, chain -&gt;</span><br><span class="line">        chain.filter(exchange).then(Mono.fromRunnable &#123;</span><br><span class="line">            <span class="keyword">if</span> (!exchange.response.isCommitted) &#123;</span><br><span class="line">                dedupe(exchange.response.headers, config)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">dedupe</span><span class="params">(headers: <span class="type">HttpHeaders</span>?, config: <span class="type">Config</span>)</span></span> &#123;</span><br><span class="line">        <span class="keyword">val</span> names = config.name</span><br><span class="line">        <span class="keyword">val</span> strategy = config.strategy</span><br><span class="line">        <span class="keyword">if</span> (headers == <span class="literal">null</span> || names == <span class="literal">null</span> || strategy == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (name <span class="keyword">in</span> names.split(<span class="string">&quot; &quot;</span>.toRegex()).toTypedArray()) &#123;</span><br><span class="line">            dedupe(headers, name.trim &#123; it &lt;= <span class="string">&#x27; &#x27;</span> &#125;, strategy)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">dedupe</span><span class="params">(headers: <span class="type">HttpHeaders</span>, name: <span class="type">String</span>, strategy: <span class="type">Strategy</span>)</span></span> &#123;</span><br><span class="line">        <span class="keyword">val</span> values = headers[name]</span><br><span class="line">        <span class="keyword">if</span> (values == <span class="literal">null</span> || values.size &lt;= <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">when</span> (strategy) &#123;</span><br><span class="line">            Strategy.RETAIN_FIRST -&gt; headers[name] = values[<span class="number">0</span>]</span><br><span class="line">            Strategy.RETAIN_LAST -&gt; headers[name] = values[values.size - <span class="number">1</span>]</span><br><span class="line">            Strategy.RETAIN_UNIQUE -&gt; headers[name] = values.stream().distinct().collect(Collectors.toList())</span><br><span class="line">            <span class="keyword">else</span> -&gt; <span class="built_in">Unit</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>配置</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">spring.cloud.gateway.default-filters[<span class="number">0</span>]=CustomDedupeResponseHeader=Vary Access-Control-Allow-Origin Access-Control-Allow-Credentials</span><br></pre></td></tr></table></figure>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E6%88%91%E5%AF%B9%E8%B7%A8%E5%9F%9F%E5%8F%AF%E8%83%BD%E6%9C%89%E4%BA%9B%E8%AF%AF%E8%A7%A3-2021-09-08-22-42-45/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -627,296 +537,14 @@
 <li>WebSocket协议在数据层面还是太底层了，需要STOMP这样的应用层协议供大家使用；而STOMP又涵盖了消息中心的大部分使用场景，因此变得很必要。</li>
 <li>对前端来说，sockjs-client库很多时候是接入WebSocket的较好的方式，于是SockJS协议映入眼帘。</li>
 </ul>
-<p>所以，无论如何，这三个协议本身，我们是必须搞清楚的。</p>
-<h2 id="WebSocket"><a href="#WebSocket" class="headerlink" title="WebSocket"></a>WebSocket</h2><p>十分建议详细阅读一下WebSocket的协议标准——<a target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/pdfrfc/rfc6455.txt.pdf">RFC6455</a></p>
-<p>关于WebSocket需要明白的重点</p>
-<ul>
-<li>由HTTP升级而来</li>
-<li>与HTTP共用端口，即80和443(HTTPS)</li>
-<li>升级后CS之间通信与HTTP无任何关系，而是采用类似TCP的二进制帧进行的</li>
-</ul>
-<h3 id="WebSocket的设计哲学"><a href="#WebSocket的设计哲学" class="headerlink" title="WebSocket的设计哲学"></a>WebSocket的设计哲学</h3><ul>
-<li>设计足够简单，使得能够被用来支撑其它应用，如STOMP。STOMP之于WebSocket，好比HTTP之于TCP。</li>
-<li>相较于TCP，它仅仅是被赋予了web的一些特性。如：origin安全模型、类似http 的uri地址模型等</li>
-<li>其它。。。就没有其它了</li>
-</ul>
-<h3 id="协议介绍"><a href="#协议介绍" class="headerlink" title="协议介绍"></a>协议介绍</h3><p>一个完整的WebSocket通信流程包括：握手 -&gt; 全双工通信 -&gt; 关闭连接</p>
-<h4 id="握手"><a href="#握手" class="headerlink" title="握手"></a>握手</h4><p>握手是纯HTTP请求，这为WebSocket鉴权带来了方便。我们依旧可以使用之前HTTP体系下的鉴权方式。</p>
-<p>客户端握手请求示例</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET /chat HTTP/1.1</span><br><span class="line">Host: server.example.com</span><br><span class="line">Upgrade: websocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==</span><br><span class="line">Origin: http://example.com</span><br><span class="line">Sec-WebSocket-Protocol: chat, superchat</span><br><span class="line">Sec-WebSocket-Version: 13</span><br></pre></td></tr></table></figure>
-
-<p>服务端响应示例</p>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 101 Switching Protocols</span><br><span class="line">Upgrade: websocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=</span><br><span class="line">Sec-WebSocket-Protocol: chat</span><br></pre></td></tr></table></figure>
-
-<p>对比较陌生的请求头予以说明</p>
-<table>
-<thead>
-<tr>
-<th>请求头</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>Upgrade: websocket</td>
-<td>表明协议升级的目标协议。<br />如果有注意到，从HTTP1.1升级到HTTP2.0，也是采用一样的方式</td>
-</tr>
-<tr>
-<td>Connection: Upgrade</td>
-<td>表明本次请求是协议升级</td>
-</tr>
-<tr>
-<td>Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==</td>
-<td>客户端生成的随机数的BASE64编码结果</td>
-</tr>
-<tr>
-<td>Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=</td>
-<td>服务端根据客户端给的随机数通过固定的算法计算出的结果；<br />客户端收到后会以相同的算法计算结果并对比，以证明这是一个合法的响应</td>
-</tr>
-<tr>
-<td>Sec-WebSocket-Protocol: chat, superchat</td>
-<td>子协议选择，客户端列出可选子协议，服务端选择支持的子协议<br />由于WebSocket过于底层，因此支持子协议以适应不同应用场景</td>
-</tr>
-<tr>
-<td>Sec-WebSocket-Version: 13</td>
-<td>WebSocket版本</td>
-</tr>
-<tr>
-<td>HTTP/1.1 101 Switching Protocols</td>
-<td>101表示升级成功，即握手成功</td>
-</tr>
-</tbody></table>
-<h4 id="协议帧"><a href="#协议帧" class="headerlink" title="协议帧"></a>协议帧</h4><p>握手成功之后就是正常的通信。WebSocket通信时以帧为单位进行数据的收发，一条完整的信息可能被分为多个帧进行传输，到远端后再被拼接在一次。</p>
-<p>协议帧结构如下，是不是很熟悉，有点TCP协议帧的味道。这也是说它很底层的原因。各bit的详细含义，参见RFC</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210902223211949.png" alt="image-20210902223211949"></p>
-<h4 id="协议帧类型"><a href="#协议帧类型" class="headerlink" title="协议帧类型"></a>协议帧类型</h4><p>WebSocket协议帧有两种类型：数据帧和控制帧。数据帧顾名思义，用于传输数据；我们这里重点关注数据帧</p>
-<ul>
-<li>Close：用于关闭连接</li>
-<li>Ping：心跳发起</li>
-<li>Pong：心跳响应，Ping、Pong总是成对出现</li>
-</ul>
-<p>注意，协议虽然定义了新跳帧，但是否使用，需要使用者决定。</p>
-<h2 id="SockJS"><a href="#SockJS" class="headerlink" title="SockJS"></a>SockJS</h2><p>同样，十分建议阅读一下SockJS的协议标准——<a target="_blank" rel="noopener" href="https://sockjs.github.io/sockjs-protocol/sockjs-protocol-0.3.3.html">它并非ITEF拟定的，而是一个开源项目</a></p>
-<p>我们知道，早在WebSocket出现之前，从服务端向客户端推数据这个需求，就一直存在。其中最常用的尝试就有轮询、长轮询等，后面又有了EventSource之类的机制。而SockJS，就是集合了现今所有这类方式的库（包含websocket）。如今，SockJS已经成为了一个协议标准，主流语言都有了支持的库，尤其是web前端。</p>
-<p>简单地说，SocketJS定义了一个服务端必须有哪些HTTP端点，以便使用不同的通信方式。定义了帧结构，用于传输数据</p>
-<h3 id="端点"><a href="#端点" class="headerlink" title="端点"></a>端点</h3><p>这里列出关键的端点，省略了域名和base url</p>
-<ul>
-<li><p>/info：用于查询客户端支持的通信方式，如是否支持WebSocket。可以理解为通信协商</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># 这里展示一个典型地info响应</span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;entropy&quot;</span>:<span class="number">2143307232</span>,</span><br><span class="line">  <span class="attr">&quot;origins&quot;</span>:[</span><br><span class="line">    <span class="string">&quot;*:*&quot;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;cookie_needed&quot;</span>:<span class="literal">true</span>,</span><br><span class="line">  <span class="attr">&quot;websocket&quot;</span>:<span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>/(server_id)/(session_id)/websocket：暴露的websocket端点，用于websocket通信</p>
-</li>
-<li><p>/(server_id)/(session_id)/xhr，/(server_id)/(session_id)/xhr_send：暴露的长连接端点，用于ajax长连接</p>
-</li>
-<li><p>/(server_id)/(session_id)/eventsource：eventsource端点</p>
-</li>
-<li><p>/websocket：这是一个外挂，该端点直接走裸的websocket协议，这为SockJS服务端直接使用WebSocket客户端库提供了条件</p>
-</li>
-</ul>
-<p>SockJS协议通信分为两步：访问/info询问支持的通信方式；访问对应的端点进行通信</p>
-<h3 id="帧结构"><a href="#帧结构" class="headerlink" title="帧结构"></a>帧结构</h3><p>SockJS是一个协议，也有自己的帧定义，但它的帧定义足够简单，就几个字符</p>
-<ul>
-<li>o：通信开启帧</li>
-<li>h：心跳帧，服务端下发</li>
-<li>a：消息数组</li>
-<li>c：通信关闭帧</li>
-</ul>
-<h3 id="SockJS的缺点"><a href="#SockJS的缺点" class="headerlink" title="SockJS的缺点"></a>SockJS的缺点</h3><ul>
-<li>出于安全原因，在协议层面就不支持自定义请求头，我们应该能发现所有sockjs客户端库都无法添加请求头吧。<a target="_blank" rel="noopener" href="https://github.com/sockjs/sockjs-client/issues/196">原因看这</a></li>
-<li>与WebSocket是包含关系，而非兼容关系。如果一个服务端暴露SockJS服务，客户端是没办法直接将这个端点用在WebSocket库的，而是要通过SockJS暴露出的websocket原生端点进行访问（即base url/websocket），不大友好</li>
-</ul>
-<h2 id="STOMP"><a href="#STOMP" class="headerlink" title="STOMP"></a>STOMP</h2><p>再次，十分建议阅读一下STOMP的协议标准——<a target="_blank" rel="noopener" href="https://stomp.github.io/stomp-specification-1.2.html">它也是一个开源项目</a></p>
-<p>STOMP是一个高级的应用协议，用于异步消息传输，支持点对点发送、发布订阅等消息传递方式。它的设计哲学就是足够简单，这也体现在协议长度上，如果看过AMQP、MQTT之类的消息协议，就能体会什么叫简单。</p>
-<h3 id="帧结构-1"><a href="#帧结构-1" class="headerlink" title="帧结构"></a>帧结构</h3><p>这是它的帧结构，就是纯文本帧。包含命令、头部、body三部分。最后以ascii为0的字符结尾。</p>
-<ul>
-<li>命令：表明帧类型</li>
-<li>头部：额外的帧属性，如心跳配置、content-type等</li>
-<li>body：消息体，只有消息帧时才有</li>
-</ul>
-<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">COMMAND</span><br><span class="line">header1:value1</span><br><span class="line">header2:value2</span><br><span class="line"></span><br><span class="line">Body^@</span><br></pre></td></tr></table></figure>
-
-<h3 id="帧类型"><a href="#帧类型" class="headerlink" title="帧类型"></a>帧类型</h3><p>帧类型也足够简单</p>
-<table>
-<thead>
-<tr>
-<th>Side</th>
-<th>命令</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>客户端</td>
-<td>CONNECT</td>
-<td>发起连接</td>
-</tr>
-<tr>
-<td></td>
-<td>DISCONNECT</td>
-<td>断开连接</td>
-</tr>
-<tr>
-<td></td>
-<td>SEND</td>
-<td>发送消息</td>
-</tr>
-<tr>
-<td></td>
-<td>SUBSCRIBE</td>
-<td>订阅</td>
-</tr>
-<tr>
-<td></td>
-<td>UNSUBSCRIBE</td>
-<td>取消订阅</td>
-</tr>
-<tr>
-<td></td>
-<td>ACK/NACK</td>
-<td>响应</td>
-</tr>
-<tr>
-<td></td>
-<td>BEGIN/COMMIT/ABORT</td>
-<td>事务相关</td>
-</tr>
-<tr>
-<td>服务端</td>
-<td>CONNECTED</td>
-<td>连接成功</td>
-</tr>
-<tr>
-<td></td>
-<td>MESSAGE</td>
-<td>发送订阅的消息给客户端</td>
-</tr>
-<tr>
-<td></td>
-<td>RECEIPT</td>
-<td>凭据，如果客户端需要的话</td>
-</tr>
-<tr>
-<td></td>
-<td>ERROR</td>
-<td>错误通报</td>
-</tr>
-</tbody></table>
-<h2 id="所以这三个协议的关系？"><a href="#所以这三个协议的关系？" class="headerlink" title="所以这三个协议的关系？"></a>所以这三个协议的关系？</h2><p>WebSocket、SockJS、STOMP三者，从前往后，层级依次上升，就像洋葱，WebSocket在里面，SockJS其次，STOMP在最外面。如果我们使用建立在SockJS协议上的STOMP服务，而SockJS又选择WebSocket作为底层的通信协议。在通信过程中，STOMP帧会被组装成SockJS的帧；SockJS的帧会被组装成WebSocket的帧；再深一点，WebSocket的帧会被组装成TCP的帧；TCP的帧被组装成IP层的帧，然后传输；到远端后执行相反操作。</p>
-<p>从分类上说，WebSocket和SockJS都只是通用的数据传输协议；而STOMP是一种消息协议，抽象层级更高。</p>
-<h2 id="心跳"><a href="#心跳" class="headerlink" title="心跳"></a>心跳</h2><p>三个协议都定义了心跳，其中</p>
-<ul>
-<li>WebSocket只定义了心跳帧，但发送的时机与策略，由具体实现来定。目前来看，默认情况下WebSocket库是不会自动发送心跳的，需调用者手动发送</li>
-<li>SockJS规定服务端必须发送心跳，默认25秒一次，可配，不需要调用者手动开启</li>
-<li>STOMP也定义了心跳，默认不开启，一般实现库都有提供，只需手动配置开启即可。需要说明的是，开启了STOMP的心跳，会关闭掉SockJS的心跳。</li>
-</ul>
-<h2 id="Spring实现一个消息推送服务"><a href="#Spring实现一个消息推送服务" class="headerlink" title="Spring实现一个消息推送服务"></a>Spring实现一个消息推送服务</h2><p>Spring对WebSocket的支持看<a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/docs/4.3.x/spring-framework-reference/html/websocket.html">这里</a>。</p>
-<p>我们实现一个简单的需求</p>
-<ul>
-<li>暴露STOMP端点</li>
-<li>提供主题，供用户订阅，支持对单个用户广播。即，需要鉴权</li>
-<li>提供一个STOMP地址，用户向该地址发送数据时，从其订阅的主体下发消息</li>
-</ul>
-<h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><p>配置类如下，这不是一个完全可用的类，直接复制很可能无法正常运行。</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 配置类</span></span><br><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@EnableWebSocketMessageBroker</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">WebSocketConfig</span> : <span class="type">WebSocketMessageBrokerConfigurer &#123;</span></span></span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">lateinit</span> <span class="keyword">var</span> objectMapper: ObjectMapper</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">registerStompEndpoints</span><span class="params">(registry: <span class="type">StompEndpointRegistry</span>)</span></span> &#123;</span><br><span class="line">      	<span class="comment">// 暴露STOMP端点</span></span><br><span class="line">        registry.addEndpoint(<span class="string">&quot;/stomp&quot;</span>)</span><br><span class="line">      			<span class="comment">// 添加握手拦截器，用于做权限验证</span></span><br><span class="line">            .addInterceptors(AuthHandshakeInterceptor(objectMapper))</span><br><span class="line">      			<span class="comment">// 握手处理器</span></span><br><span class="line">            .setHandshakeHandler(AuthHandshakeHandler())</span><br><span class="line">            .setAllowedOriginPatterns(<span class="string">&quot;*&quot;</span>)</span><br><span class="line">            .withSockJS()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">configureMessageBroker</span><span class="params">(registry: <span class="type">MessageBrokerRegistry</span>)</span></span> &#123;</span><br><span class="line">        <span class="comment">// 用于发送心跳的调度器，一定要有。其它层级协议的心跳不能替代STOMP层级的心跳</span></span><br><span class="line">        <span class="keyword">val</span> scheduler = TaskSchedulerBuilder().build().apply &#123; initialize() &#125;</span><br><span class="line">        registry.enableSimpleBroker(<span class="string">&quot;/topic&quot;</span>).setTaskScheduler(scheduler)</span><br><span class="line">        registry.setApplicationDestinationPrefixes(<span class="string">&quot;/app&quot;</span>)</span><br><span class="line">        <span class="comment">// 订阅/user/打头的destination时，STOMP可自动将每个用户对应一个主题，实现向指定用户发送消息的能力</span></span><br><span class="line">        registry.setUserDestinationPrefix(<span class="string">&quot;/user/&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">AuthHandshakeInterceptor</span></span>(<span class="keyword">val</span> objectMapper: ObjectMapper) : HandshakeInterceptor &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">beforeHandshake</span><span class="params">(request: <span class="type">ServerHttpRequest</span>, response: <span class="type">ServerHttpResponse</span>, wsHandler: <span class="type">WebSocketHandler</span>, attributes: <span class="type">MutableMap</span>&lt;<span class="type">String</span>, Any&gt;)</span></span>: <span class="built_in">Boolean</span> &#123;</span><br><span class="line">      	<span class="comment">// 从request的header或query中提取用户，具体逻辑自己实现</span></span><br><span class="line">        <span class="keyword">val</span> user = request.parseUser(objectMapper)</span><br><span class="line">        <span class="keyword">if</span> (user == <span class="literal">null</span>) &#123;</span><br><span class="line">          	<span class="comment">// </span></span><br><span class="line">            <span class="keyword">val</span> error = ResErrCode.NEED_AUTHORIZE</span><br><span class="line">            response.setStatusCode(error.httpStatus)</span><br><span class="line">            response.headers.contentType = MediaType.APPLICATION_JSON</span><br><span class="line">            response.body.write(objectMapper.writeValueAsBytes(R.fail(error)))</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">        attributes[<span class="string">&quot;user&quot;</span>] = user</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">afterHandshake</span><span class="params">(request: <span class="type">ServerHttpRequest</span>, response: <span class="type">ServerHttpResponse</span>, wsHandler: <span class="type">WebSocketHandler</span>, exception: <span class="type">Exception</span>?)</span></span> &#123;</span><br><span class="line">			<span class="comment">// 这里啥也没做</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">AuthHandshakeHandler</span> : <span class="type">DefaultHandshakeHandler</span></span>() &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">determineUser</span><span class="params">(request: <span class="type">ServerHttpRequest</span>, wsHandler: <span class="type">WebSocketHandler</span>, attributes: <span class="type">MutableMap</span>&lt;<span class="type">String</span>, Any&gt;)</span></span>: Principal? &#123;</span><br><span class="line">        <span class="keyword">return</span> attributes[<span class="string">&quot;user&quot;</span>] <span class="keyword">as</span> Principal?</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><ul>
-<li><p>暴露接收用户信息的地址。</p>
-<p>这里的关键在于MessageMapping和SendToUser两个注解的使用，它们能够直接在Controller中使用。</p>
-<p>前者将用户发送的消息导入；后者将方法返回的内容发送给对应的用户。</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Controller</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">WebSocketController</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 手动触发拉取通知，随便发个啥，都会触发一次拉取通知</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@MessageMapping(<span class="meta-string">&quot;/triggerPullNotification&quot;</span>)</span></span><br><span class="line">    <span class="meta">@SendToUser(destinations = [<span class="meta-string">&quot;topic/pullNotification&quot;</span>])</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">echo</span><span class="params">(income: <span class="type">String</span>, principal: <span class="type">Principal</span>)</span></span>: Any &#123;</span><br><span class="line">        log.info(<span class="string">&quot;trigger pull notification manually: user &#123;&#125;; message: &#123;&#125;&quot;</span>, principal.name, income)</span><br><span class="line">        <span class="keyword">return</span> STOMP_USER_PULL_NOTIFICATION_PAYLOAD</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>上面的例子，STOMP客户端向/app/triggerPullNotification发送消息时，会进入echo方法，发送的内容被传递到income参数中，发送消息的用户被传递到principal参数中。echo返回的对象会被发送给订阅了/user/topic/pullNotification主题的当前session的用户，即触发这个消息的用户。</p>
-</li>
-<li><p>在其他地方向指定用户发送消息</p>
-<p>这里的关键是注入SimpMessagingTemplate</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExampleService</span></span>(<span class="keyword">val</span> stomp: SimpMessagingTemplate) &#123;</span><br><span class="line">  </span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">test</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">// 这里是你的自由逻辑</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 发送给某个用户</span></span><br><span class="line">    stomp.convertAndSendToUser(<span class="number">12345</span>, <span class="string">&quot;/topic/pullNotification&quot;</span>, <span class="string">&quot;your payload&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
-</ul>
-<h3 id="测试连接"><a href="#测试连接" class="headerlink" title="测试连接"></a>测试连接</h3><p>JS测试脚本</p>
-<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 连接并订阅</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">connect</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> socket = <span class="keyword">new</span> SockJS(<span class="string">&#x27;https://apitest.wemore.com/mylogs/stomp?X-5E-TOKEN=qhMtjBjVozY3zYLrOfMStgvffeFjBofY&#x27;</span>);</span><br><span class="line">    stompClient = Stomp.over(socket);</span><br><span class="line">    stompClient.connect(&#123;</span><br><span class="line">    &#125;, <span class="function"><span class="keyword">function</span> (<span class="params">frame</span>) </span>&#123;</span><br><span class="line">        setConnected(<span class="literal">true</span>);</span><br><span class="line">        stompClient.subscribe(<span class="string">&#x27;/user/topic/pullNotification&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params">data</span>) </span>&#123;</span><br><span class="line">            <span class="comment">// console.log(&#x27;received: &#x27; + data);</span></span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 发送消息给服务端</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">trigger</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    stompClient.send(<span class="string">&quot;/app/triggerPullNotification&quot;</span>, &#123;&#125;, <span class="built_in">JSON</span>.stringify(&#123;<span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;啥呀&#x27;</span>&#125;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>使用Chrome进行测试，在点击连接时，我们能看到先通过info询问，再调用websocket</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174636617.png" alt="image-20210903174636617"></p>
-<p>info的响应</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174721948.png" alt="image-20210903174721948"></p>
-<p>websocket的消息流：可以看到就是SockJS帧套STOMP帧。</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174749633.png" alt="image-20210903174749633"></p>
-<p>其中的[“\n”]和a[“\n”]是STOMP的心跳，我们把视线转移到console看得更为直观，它详细地展示了STOMP的通信过程</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174948448.png" alt="image-20210903174948448"></p>
-<p>此时如果我们再触发一次消息，可以观察到消息的发出和接收</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903175110240.png" alt="image-20210903175110240"></p>
-<h3 id="强调几点"><a href="#强调几点" class="headerlink" title="强调几点"></a>强调几点</h3><ol>
-<li><p><code>HandShakeIntercepter</code>和<code>HandShakeHandler</code>的区别</p>
-<ul>
-<li><p><code>HandShakeIntercepter</code>前者能够拦截握手的请求，并且可操作直接对握手请求进行响应</p>
-</li>
-<li><p><code>HandShakeHandler</code>用于处理握手成功后的细节问题，尤其是允许我们自己设置当前session的用户</p>
-</li>
-<li><p>我们在<code>HandShakeIntercepter</code>进行鉴权；在<code>HandShakeHandler</code>将鉴权得来的用户设置为当前session的用户</p>
-</li>
-</ul>
-</li>
-<li><p>心跳</p>
-<p>STOMP服务端的心跳一定要配：如果客户端直接采用了WebSocket连接，没有心跳配置，连接可能随时会断</p>
-</li>
-<li><p>标记用户</p>
-<p>这是Spring Stomp为我们提供的方便的功能。它使得我们可以方便地只发送消息给订阅某个主题的单个用户。要完成它，必须有这么几步</p>
-<ul>
-<li><p>注入我们的用户逻辑，可以迁入Spring Security，也可以自定义。本文中我们在<code>HandShakeHandler</code>中将自己用户体系中的user传递给了Stomp作为用户标记。记得给user实现Principal接口哦。</p>
-</li>
-<li><p>配置用户地址前缀。并不是每个主题都能支持这样的功能的，我们需要设置一个固定的前缀，那么订阅了这些指定前缀主题的用户，就具有了被标记的能力</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">configureMessageBroker</span><span class="params">(registry: <span class="type">MessageBrokerRegistry</span>)</span></span> &#123;</span><br><span class="line">  			... ...</span><br><span class="line">        <span class="comment">// 订阅/user/打头的destination时，STOMP可自动将每个用户对应一个主题，实现向指定用户发送消息的能力</span></span><br><span class="line">        registry.setUserDestinationPrefix(<span class="string">&quot;/user&quot;</span>)</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
-<li><p>使用规则</p>
-<p>需要对地址<code>/topic/pullNotification</code>赋予用户标记的能力，在配置OK后，使用方法</p>
-<ul>
-<li>客户端订阅地址：<code>/user/topic/pullNotification</code></li>
-<li>服务端向指定用户发送消息时，使用：<code>stomp.convertAndSendToUser(12345, &quot;/topic/pullNotification&quot;, &quot;your payload&quot;)</code></li>
-</ul>
-</li>
-</ul>
-</li>
-</ol>
-<h2 id="用Postman调试STOMP服务"><a href="#用Postman调试STOMP服务" class="headerlink" title="用Postman调试STOMP服务"></a>用Postman调试STOMP服务</h2><p>Postman提供WebSocket调试功能，但却不支持调试STOMP服务，这让人感到可惜。但是，如果我们实在想要直接用Postman访问STOMP服务的话。依在下愚见，唯一的办法就是，硬用。即，手动编辑STOMP帧，然后发送。</p>
-<p>手动编辑有个问题，STOMP帧是以ASCII码表中值为0的字符结尾的，即<code>&#39;\u0000&#39;</code>，无法通过文本表达。于是只能通过二进制发送。</p>
-<p>以上面的服务为例，我们要订阅一个STOMP服务，首先要连接上STOMP端点，然后发送CONNECT帧，然后是SUBSCRIBE帧，帧的二进制编码通过代码生成</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> connectMessage = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        CONNECT</span></span><br><span class="line"><span class="string">        heart-beat:5000,5000</span></span><br><span class="line"><span class="string">        accept-version:1.2</span></span><br><span class="line"><span class="string">        host:127.0.0.1</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span>.trimIndent()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> subscription = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        SUBSCRIBE</span></span><br><span class="line"><span class="string">        id:0</span></span><br><span class="line"><span class="string">        destination:/user/topic/pullNotification</span></span><br><span class="line"><span class="string">        ack:client</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span>.trimIndent()</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> String.<span class="title">generate</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">        <span class="keyword">val</span> builder = StringBuilder()</span><br><span class="line">        builder.append(<span class="keyword">this</span>)</span><br><span class="line">        builder.append(<span class="string">&#x27;\n&#x27;</span>)</span><br><span class="line">        builder.append(<span class="string">&#x27;\n&#x27;</span>)</span><br><span class="line">        builder.append(<span class="string">&#x27;\u0000&#x27;</span>)</span><br><span class="line">        <span class="keyword">return</span> builder.toString().toByteArray().joinToString(separator = <span class="string">&quot;&quot;</span>) &#123; String.format(<span class="string">&quot;%02x&quot;</span>, it) &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    println(connectMessage.generate()) <span class="comment">// 434f4e4e4543540a6163636570742d76657273696f6e3a312e320a686f73743a3132372e302e302e310a0a00</span></span><br><span class="line">    println(subscription.generate()) <span class="comment">// 5355425343524942450a69643a300a64657374696e6174696f6e3a2f757365722f746f7069632f70756c6c4e6f74696669636174696f6e0a61636b3a636c69656e740a0a00</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>上面暴露的是SockJS服务，我们有两种方式连接websocket</p>
-<ul>
-<li>使用SockJS暴露的原生WebSocket端点，即/websocket</li>
-<li>使用SockJS协议内容的WebSocket端点，即/server_id/sessioin_id/websocket</li>
-</ul>
-<p>我们用第一种，然后步骤是</p>
-<ol>
-<li><p>输入ws端点：wss://&lt;我的域名&gt;/stomp/websocket，点击连接</p>
-</li>
-<li><p>以二进制格式发送连接帧，重点是选择二进制哦</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_160e941c-6adc-4459-96bf-bbba2d15e4ad.png" alt="企业微信截图_160e941c-6adc-4459-96bf-bbba2d15e4ad"></p>
-<p>出现如下响应，说明连接成功</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_293f66bf-25ab-49c4-8312-2f8cba9da8e5.png" alt="企业微信截图_293f66bf-25ab-49c4-8312-2f8cba9da8e5"></p>
-</li>
-<li><p>发送订阅帧</p>
-</li>
-<li><p>使用刚才的脚本触发一次echo，你就可以看到我们能够正常收到消息了</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903181047727.png" alt="image-20210903181047727"></p>
-</li>
-</ol>
-<h3 id="有一个问题"><a href="#有一个问题" class="headerlink" title="有一个问题"></a>有一个问题</h3><p>你会发现，通过Postman尽管连上了，但在最后一次通信的60s后，连接自动断开了！！！</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_26269104-19a8-4c63-82dc-af94ce05534e.png" alt="企业微信截图_26269104-19a8-4c63-82dc-af94ce05534e"></p>
-<p>这是因为我们没发心跳呀啊啊啊啊啊啊啊啊啊。由于我将服务部署在nginx后，我们的nginx设置为60s不活动的TCP连接都将被关闭。</p>
-<p>如何解决呢，要解决，只有两个方法</p>
-<ul>
-<li>60s内发心跳续命</li>
-<li>不停进行消息通信</li>
-</ul>
-<p>反正就是不停发就行了。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>要使用WebSocket，那么SockJS和STOMP都是必须了解的，最好的了解方式是去看协议。</p>
-<p>文中的示例代码，不能直接用，只能当做参考。</p>
-<p>Postman调试STOMP？可以用来熟悉协议，但实际用来调试，还是算了吧。</p>
-<p>本文重点：三种协议关键点介绍、Spring的STOMP用户标记功能、通过Postman学习STOMP协议帧。</p>
-<h2 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h2><ol>
-<li><a target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/pdfrfc/rfc6455.txt.pdf">RFC6455</a></li>
-<li><a target="_blank" rel="noopener" href="https://sockjs.github.io/sockjs-protocol/sockjs-protocol-0.3.3.html">SockJS Protocol</a></li>
-<li><a target="_blank" rel="noopener" href="https://stomp.github.io/stomp-specification-1.2.html">STOMP Specification</a></li>
-<li><a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/docs/4.3.x/spring-framework-reference/html/websocket.html">Spring WebSocket</a></li>
-</ol>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/WebSocket%E5%95%8A%E5%96%82-websocket-a-wei/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -994,137 +622,14 @@
 <li>阐述本书的核心思想。很有必要，因为它是理论指导。</li>
 <li>如何将书中方法应用在自己身上？</li>
 </ul>
-<h2 id="这本书讲了啥"><a href="#这本书讲了啥" class="headerlink" title="这本书讲了啥"></a>这本书讲了啥</h2><p>全书分为上下两个部分，结构非常清晰。上部客观阐述大脑的组成，从内部分析我们为何会焦虑，为何会莫名倾向娱乐，并提供了解决这些问题的理论基础；下部从外部世界的客观方法入手，讲述了我们应该如何训练专注力、学习力、情绪力，最后章尤其提供了五种具体的方法供读者参考。</p>
-<h3 id="大脑的三部分"><a href="#大脑的三部分" class="headerlink" title="大脑的三部分"></a>大脑的三部分</h3><p>首先正确认识我们的大脑，从几十万年前至今，我们的大脑总共发展出三个部分</p>
-<ul>
-<li>本能脑：让我们在这个世界存活下来，如呼吸，走路</li>
-<li>情绪脑：让我们活得更好，如恐惧情绪让我们远离危险</li>
-<li>理智脑：让我们学会思考，创建了文明，使人类拥有更高的精神世界，走得更远</li>
-</ul>
-<p>从运算能力和控制人类最终行为能力的强弱，从前到后依次降低。如果不加控制，本能脑和情绪脑占主导地位，就会使我们总是倾向于更加容易的工作、更加简单的事情、娱乐等即时满足的事项。这也能解释为什么我们在闲时不由自主地喜欢刷抖音、刷微博、聊微信，工作时喜欢不规划直接动手。学习和制定计划等，属于理智脑管辖的范围，比较耗能，并非优先选择。</p>
-<p>所以，从客观来说，我们本身就是趋易避难的。理智脑无法占据上风，这是正常的事情，并非我们意志力不足，只是我们没有找到让他们协作的方法。</p>
-<h3 id="痛苦和焦虑"><a href="#痛苦和焦虑" class="headerlink" title="痛苦和焦虑"></a>痛苦和焦虑</h3><p>焦虑，来源于能力和欲望之间的巨大差距。</p>
-<p>如果在平时的工作和学习中不注重调节，任凭自己跟着感觉走，那多半会落入本能脑和情绪脑的控制中，他让我们变得没有规划，娱乐、娱乐、再娱乐。因此，必须加以控制和引导，使得三者能够通力合作。增长能力，使其距离欲望更近一点，焦虑就少一点。</p>
-<h3 id="科学方法"><a href="#科学方法" class="headerlink" title="科学方法"></a>科学方法</h3><ul>
-<li><p>耐心：无论工作或学习，耐心必不可少，但是情绪脑让我们变得没有耐心——做这事干啥，还不如去刷会儿抖音，外界的诱惑是耐心的最大敌人。</p>
-<p>  解决办法是延迟满足，不是不玩，而是等一会儿再玩。而且长时间娱乐的焦虑感和完成任务后短时间娱乐的愉悦感，高下立判。</p>
-<p>  更加终极的办法是，以任务完成的满足感，替代娱乐带来的爽感。情绪脑不就要个开心的感觉么，前者完全可以替代呀。当然这因人而异。</p>
-<p>  此外，要明白复利曲线，复利是保持耐心的回报。</p>
-<p>  <img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image_1630419070936.png" alt="image.png"></p>
-</li>
-<li><p>注意力：工作效率取决于注意力，注意力也是可以锻炼的。</p>
-<p>  一个切实有效的物理方法——冥想。</p>
-<p>  注意力会随着时间的持续客观地下降，因此劳逸结合有助于保持注意力——番茄工作法。</p>
-</li>
-<li><p>消除模糊：当我们突然闲下来时，会发现有很多事情可以做，并且权重好像都差不多，就会陷入做这个也不是，做那个也不好的纠结，最终会被情绪脑拉入娱乐，一刷微博就是好久，自己不受控，最终还会产生焦虑。</p>
-<p>  解决办法是消除模糊，列个计划，让我们在某个时间需要做的事情只有一件，没得选，让自己很快进入执行状态，不给情绪脑有机可乘。</p>
-</li>
-<li><p>利用”感觉“：当然这是更加高级的方法，我们真正的喜恶，其实是由情绪脑决定的，比如我们喜欢什么样的人，喜欢从事什么样的工作，想要成为一个什么样的人，这些方面是不能让理智脑决的定，如果那样，得到的答案多半不会长久，因为情绪脑不答应——你不是真正的喜欢。</p>
-<p>  由此，可以让情绪脑决定自己的人生大事，再通过理智脑去有条有理地达成。</p>
-<p>  此外，还可以利用感觉去寻找对自己有触动的点，然后通过理智脑详细学习。能够触动你的点，对你来说多半是处于拉伸区的，且是能够掌握的。这也是很多学习高手的方法。</p>
-</li>
-<li><p>反思：知识必须形成闭环，所有事情都一样。做，接受反馈，修正。如此循环，就能够达成理想中的自己。</p>
-<p>  反思，是一种非常好的自我反馈的手段，定期总结，予以修正。</p>
-<p>  不过，反思时我们需要从多个角度思考，然后给与现在的自己多个角度的反馈。</p>
-<p>  <img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image_1630419091857.png" alt="image.png"></p>
-</li>
-<li><p>在拉伸区活动：可以将事情难易程度分为三部分：容易区、拉伸区、困难区</p>
-<p>  在容易区反复拉扯不会有什么进步，在困难区执行也不会有什么进步，还会造成挫败感。最理想的是在拉伸区活动，这是效率最高的方法。</p>
-<p>  <img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image_1630419116097.png" alt="image.png"></p>
-</li>
-<li><p>高效学习：尊重学习效率曲线。学习并不是一直坐在那里用功努力，因为随着时间增长，你的深度学习能力是在下降的，都后面越来越低，累积下来的学习效果，很可能不如番茄工作法产生学习效果</p>
-<p>  <img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image_1630419149770.png" alt="image.png"></p>
-</li>
-<li><p>深度学习：要了解学习金字塔，知道自己的学习处在哪一个程度，并且要向深度学习发展，这样才有意义。我们的目标至少是——实践。最好是——教授给他人。</p>
-<p>  <img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image_1630419164909.png" alt="image.png"></p>
-</li>
-</ul>
-<h2 id="应用于自己"><a href="#应用于自己" class="headerlink" title="应用于自己"></a>应用于自己</h2><p>那我要怎么应用在我的生活和工作中呢。下面分具体情况，反思之前做的不好的地方，以及今后如何改正。</p>
-<h3 id="作息习惯"><a href="#作息习惯" class="headerlink" title="作息习惯"></a>作息习惯</h3><p>打开手机睡眠检测，看看睡眠时间，严重不稳定。</p>
-<p>存在的问题</p>
-<ul>
-<li>入睡时间不稳定，早也不过12点，晚却超过1:30</li>
-<li>入睡时间过晚</li>
-<li>早上虽然8点就醒了，但会被手机耽误将近一个小时，直到9点才起床洗漱</li>
-<li>直接导致次日精神状态和身体状态都不好</li>
-</ul>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image_1630419189091.png" alt="image.png"></p>
-<p>分析原因</p>
-<ul>
-<li>睡前总是打开B站，然后。。。就到一点多了</li>
-<li>起床第一件事就是拿手机，东刷刷，西刷刷。。。就到九点多了</li>
-</ul>
-<p>如何解决</p>
-<ul>
-<li>睡前不要打开B站；起床后不要拿手机，而是先想今天要做什么</li>
-</ul>
-<h3 id="工作"><a href="#工作" class="headerlink" title="工作"></a>工作</h3><p>自认为当前的工作习惯还算OK，有计划，有执行记录等，但工作状态容易失控。</p>
-<ul>
-<li>在一项工作上花费过久的时间，对其它任务形成挤压，连锁效应导致工作效率降低</li>
-<li>容易死磕，只看到问题，看不清解决方案时不是去寻找解决方案，而是凭脑子硬想</li>
-</ul>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image_1630419210026.png" alt="image.png"></p>
-<p>分析原因：不够冷静和理性。</p>
-<ul>
-<li>没有站在全局看待工作，当一项任务需要花费比预期多得多的时间去完成时，要么是准备不足，要么是能力不足。此时应该将注意力转移到”完成“上，先完成任务，保证整体进度。事后再提升自己。</li>
-<li>没有正视自己的能力，当看不清解决方案时，不应该闭门造车，而是多看看别人怎么做的，去查资料，去讨论。</li>
-</ul>
-<p>解决方案</p>
-<ul>
-<li>陷入这类状态时，强制自己休息10分钟</li>
-<li>把这篇文章拿出来看</li>
-</ul>
-<h3 id="看书"><a href="#看书" class="headerlink" title="看书"></a>看书</h3><p>现在的问题</p>
-<ul>
-<li>啥都想要，想要得到书中的每个知识点，最后却啥都没记住</li>
-<li>深度不够，仅仅停留在学习金字塔的被动学习——演示阶段（做笔记，写总结）</li>
-</ul>
-<p>解决方案</p>
-<ul>
-<li>放弃通篇做笔记，阅读一遍之后，再浏览一遍，抓取有感触的地方，以此扩展开来写一篇文章</li>
-</ul>
-<h3 id="学习一门技术"><a href="#学习一门技术" class="headerlink" title="学习一门技术"></a>学习一门技术</h3><p>学习技术的方法上自认为没有大问题，现在最大的问题是</p>
-<ul>
-<li>无法持续学习，一项技术从开始看，并不能善终，总是学到一半就转移到其它技术了</li>
-</ul>
-<p>原因</p>
-<ul>
-<li>焦虑和贪婪在作怪，想学习的技术太多，轻重主次分的不是特别清楚</li>
-<li>不舍得花时间，确切地说，是不舍得花大量整块的时间。导致进展缓慢且没有什么成效</li>
-</ul>
-<p>解决方案</p>
-<ul>
-<li>列清单分析优先级，以及需要达到的程度。要使得当前需要学习的内容<strong>只有一项</strong>！！！</li>
-<li>要有明确的输出要求，如写出一个项目；输出有深度的文章等</li>
-<li>投入时间，关键是<strong>保持耐心！！！</strong></li>
-</ul>
-<h3 id="碎片时间"><a href="#碎片时间" class="headerlink" title="碎片时间"></a>碎片时间</h3><p>当前的问题：不知道该干啥，于是就刷刷新闻，刷刷技术博客，但这么短时间根本刷不出什么。</p>
-<p>可以解决：我用flomo记录了挺多闪过脑海的想要了解的东西，可以看那些。</p>
-<h3 id="娱乐的处理"><a href="#娱乐的处理" class="headerlink" title="娱乐的处理"></a>娱乐的处理</h3><p>我肯定无法做到以学习的乐趣取代娱乐的。但我能做到</p>
-<ul>
-<li>改变娱乐项目，从B站、Youtube改为看动漫番</li>
-<li>改变娱乐时间段，从没有限制改为每天晚上10点后，11:30前</li>
-<li>改变娱乐时长，工作日每天最多一小时；周末每天最多三小时</li>
-</ul>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>《认知觉醒》给我带来的感触更多是精神上的，将其中的方法应用上后，我将来的生活节奏也不会发生非常大的变化，可以预期是不会发生三分钟热度这种事。那么，现在来畅想一下我一天的生活吧。</p>
-<ul>
-<li>早上8点，闹钟响了，我抬起手腕，关闭闹钟。双眼微闭，感受清晨刚醒时浑身放松的感觉。约么十多分钟，起床洗漱</li>
-<li>9点，洗漱完毕，准备出门，打开博客，戴上耳机，听取被人的观点</li>
-<li>10点，到公司，洗一洗茶杯，吃个早餐，整理一下工位</li>
-<li>10:10，花二十分钟整理一下今天要做的事情</li>
-<li>10:30，开始工作</li>
-<li>中午：照常吃饭，和同事聊聊天。</li>
-<li>1:30：给自己10分钟时间安安静静地啥也不做，重新想想今天该做啥。此外，午休必不可少。</li>
-<li>2:10：午休完成，继续开始工作</li>
-<li>4:00：陷入一个技术问题，脑子反应不过来。去厕所洗个脸，在零食区坐上10分钟，啥也不要想</li>
-<li>4:20：想起了工作要以进度有限，应该上自己认知范围内的最好方案，这样才能节省出时间赶进度和学习，才能在以后提出更好的方案。于是暂时绕过该技术问题，日后再说</li>
-<li>9:00：下班回家，花10分钟冥想，冷静一下</li>
-<li>9:10：写反思：明确白天的问题症结点，提出改进计划并执行</li>
-<li>9:30：开始学习</li>
-<li>11:00：放松娱乐时间</li>
-<li>11:30：洗漱，准备睡觉</li>
-</ul>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E6%88%91%E8%AF%BB%E3%80%8A%E8%AE%A4%E7%9F%A5%E8%A7%89%E9%86%92%E3%80%8B-wo-du--ren-zhi-jue-xing-/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1198,21 +703,14 @@
     <div class="post-body" itemprop="articleBody">
           <p>我们都会有一种认知闭合需求，即在做某件事时，只要有一个自认为合理的判定其完成的标准，我们就会认为这件事已经完成，从而丧失对它的兴趣。</p>
 <p>这种心态，也叫做任务心态。</p>
-<p>最为典型的，莫过于工作时的打工人心态——一件事，无论有没有达到自己期望的完成效果，但只要领导说完成了，我们就会认定它完成了，几乎也不会再花什么时间去弥补任务完成和自己的期望之间的差距。</p>
-<p>还有日常所谓打卡，当然不是指所有人，至少对大多数人是这样的，打卡所定的目标，会对学习效果大打折扣，如果我们没有时间，会为了完成打卡敷衍了事，如果我们有充裕的时间，在早早地完成了打卡任务后，学习激情会几乎归于零，导致浪费接下来的时间，其效果是非常差的。</p>
-<p>所以我总是说，只要是flag，是一定会倒的。</p>
-<p>说这件事时，感觉是在自己啪啪打脸，随随便便就能举出一大堆</p>
-<ul>
-<li><p>上周写代码时，涉及到一个查询方案，在临上线前，我还会左思右想，到底如何做能够使得查询效率最高，其过程非常沉醉。但因为客观原因被临时上线使用，在线上也能够正常运行。于是我停下了继续探寻的脚步。在内心把这个任务标记为completed。</p>
-<p>  但如果我能够继续探寻，对自己带来的提升，可能比之前想那么久，带来的都大。</p>
-</li>
-<li><p>读一本书，或者看一篇文档时，我通常是以一篇笔记或大纲梳理结尾。完成后就几乎不会再去碰它了，直到以后用到，这种时候差不多就是下次换工作面试。也就是几乎不再看它。</p>
-<p>  这其实是一种损失，如果我再次基础之上进行进一步的反思，将其应用于自己之前的知识体系，这是能够带给自己真正提升的。</p>
-</li>
-</ul>
-<p>说这些不是在否定自己，在看到相关书籍之前，我就已经隐隐约约觉察到一些问题，并在某些方面做出了反映。这是反思，提醒以后自己要做的好一点。以真正求取学问为目的，目的要纯粹，在不应该的地方，不要抱有任务心态。</p>
-<p>看书时不要盯着页码，学习时不要盯着时间，写代码时不要盯着deadline，要明确自己做一件事的真正目的，眼光放长远。做到最自己负责。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E4%BB%BB%E5%8A%A1%E5%BF%83%E6%80%81%E7%9A%84%E5%8F%8D%E6%80%9D-ren-wu-xin-tai-de-fan-si/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1292,41 +790,14 @@
 <li>整理并输出笔记</li>
 </ul>
 <p>于是，我得到了这本书的缩减版，所谓的，把书读薄。</p>
-<p>效果如何呢？我想是很大的，就拿《深入理解kafka》这本书来说，在读完的一个月之内，我对kafka的理解都算是不错的，并且今后对kafka的复习也有了较为快捷的资料，不必去看网上水平参差不齐、各种各样不痛不痒的文章，也不用重新去看一遍整本书，毕竟太长了。</p>
-<p>但这样做的缺点很明显，那就是耗时，极度耗时。具体来讲，有这几个缺点</p>
-<ul>
-<li>耗时，速度极慢。通读，需要大量整块的时间，时间短了无法进入状态，太大块的时间又是很难能够抽出来的。</li>
-<li>读完之后整理笔记，更加耗时，且枯燥乏味，完全是凭借毅力在做这件事</li>
-<li>阅读过程中会失焦，就算你带着问题，其中还是会涉及到很多平时可能根本接触不到也用不到的知识，它们其实没啥用，还会分散你的注意力。</li>
-</ul>
-<p>总体看下来，就是读书性价比不高。虽然效果很好，但是时间成本过高，对于还有很多重要知识需要学习的我来说，是不划算的。</p>
-<p>就好比最近，我想读一读我们熟悉的那些技术的RFC，如WebSocket、HTTP1.1、HTTP2.0、MQTT、AMPQ等，但每一篇RFC都几乎可以等同于一本书，还是全英文的，我读英文资料的速度会比中文的慢一倍，如果还是照我上面的方法去读，客观理性角度来讲，不大现实。都不是效率高不高的问题了，已经到了无法完成的地步了。因为除此之外，我还想学习历史、哲学。最为重要的，我是一个程序员，需要大量的时间去写代码。想想就可怕。</p>
-<h2 id="有所启发和感悟"><a href="#有所启发和感悟" class="headerlink" title="有所启发和感悟"></a>有所启发和感悟</h2><p>按照我读书的节奏，不仅效率低、性价比不高，还容易使人产生焦虑。看似效率问题重要，其实焦虑更应该值得注意。现代人们最大的痛苦来源，莫过于焦虑。</p>
-<p>今日读到一本书，说：”在读一本书时，只去全书最触动自己的点，然后尽可能去实践、改变。这样读书不仅收获更大，而且不会焦虑“。</p>
-<p>这就是所谓的，借助感性去读书。</p>
-<p>我非常赞同，于是结合自己的实际情况，对不同的书，做不同的阅读策略。</p>
-<ul>
-<li>对文学作品<ul>
-<li>通读</li>
-<li>写读后感，非感性，不是一首小诗，不是些感慨的话。而是纯理性角度去讨论最令人印象深刻的话题。</li>
-<li>如果我不知道它讲了啥，去看别的书评。然后想想再写</li>
-</ul>
-</li>
-<li>对技术书籍<ul>
-<li>搜索相关技术的面试笔试题（技术的关键点是纯客观的，面试题无疑是一个很好的点）</li>
-<li>目录</li>
-<li>根据以下要义选择性粗读或精读相关章节<ul>
-<li>这项技术是什么</li>
-<li>解决了什么问题</li>
-<li>面试题相关内容如何解决</li>
-</ul>
-</li>
-<li>整理笔记：记录对准备的题目的答案即可</li>
-</ul>
-</li>
-</ul>
-<h2 id="还有哪里可改进"><a href="#还有哪里可改进" class="headerlink" title="还有哪里可改进"></a>还有哪里可改进</h2><p>上面给出的策略是拍脑袋想出来的，但其实会有更加科学的阅读方式可以参考。我想，我还需要去阅读《如何阅读一本书》。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E8%AF%BB%E4%B9%A6%E4%B8%8D%E5%BA%94%E8%AF%A5%E8%BF%87%E4%BA%8E%E7%90%86%E6%80%A7-du-shu-bu-ying-gai-guo-yu-li-xing/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1520,51 +991,14 @@
 <blockquote>
 <p>那么你知道，将CURRENT_TIMESTAMP赋值给一个timstamp类型的字段会发生什么吗？</p>
 </blockquote>
-<h2 id="时区？偏移量？"><a href="#时区？偏移量？" class="headerlink" title="时区？偏移量？"></a>时区？偏移量？</h2><p>在搞清楚数据库和代码中的时区表达之前，必须掌握好基础知识。</p>
-<blockquote>
-<p>你能分清GMT、UTC、夏令时、时区等概念吗？</p>
-</blockquote>
-<p>对于上面四个概念，下面这篇文章算是讲的比较清楚。</p>
-<p>简单来说，GMT就是以前的时间标准，以格林威治的时间作为世界标准时间，其它各个时区以此为参考增加或减少小时数；UTC是新的世界时间标准，与GMT不同，GMT是单纯以格林威治这个地方作为标准时参考，UTC是结合了平均太阳时、地轴运动修正、国际原子钟综合得到的精确结果；夏令时，是指在天亮比较早的夏季人为将时间调早一个小时，我们对它不是很熟悉是因为我国1991年开始就已经废除了下令时；时区，理论来说，按照经度划分，每15度为一个时区，全球总共24个时区，每个时区相差一个小时，为啥是理论呢？这是因为实际还会考虑政治因素，很过国家一个国家跨多个时区，但他们都使用一个时区，所以时区不是严格按照经度划分的。</p>
-<p><a target="_blank" rel="noopener" href="https://www.cnblogs.com/champyin/p/12767852.html">这篇文章可做参考</a></p>
-<p>格林威治在哪里，看下面这张图。</p>
-<p><img src="1" alt="格林威治时间.png"></p>
-<blockquote>
-<p>你能分清+08:00、Asia/Shanghai、GMT-这几种表达的区别吗？</p>
-</blockquote>
-<p><a target="_blank" rel="noopener" href="https://blog.csdn.net/zjy_love_java/article/details/107704594">Asia/Shanghai与GMT-8的区别</a></p>
-<p>先说Asia/Shanghai，这是以地区命名的地区标准时，叫做CST；+8:00，指的是东八区。现在这个年份来说，二者表述一样，但是前者还包含一些历史时间，比如91年之前，我国实行过一段时间夏令时，如果将时区设置为Asia/Shanghai，那么在获取91年之前的时间时候就会有所差异。</p>
-<p>其实地区标准时是非常有必要的，比如我们的日历中，使用地区标准是必须的，91年之前的时间你肯定想要显示当时的计算结果。</p>
-<h2 id="LocalDateTime-ZoneOffsetDateTime-ZonedDateTime"><a href="#LocalDateTime-ZoneOffsetDateTime-ZonedDateTime" class="headerlink" title="LocalDateTime/ZoneOffsetDateTime/ZonedDateTime"></a>LocalDateTime/ZoneOffsetDateTime/ZonedDateTime</h2><p>认识它们：</p>
-<p><a target="_blank" rel="noopener" href="https://segmentfault.com/a/1190000039081645">LocalDateTime、OffsetDateTime、ZonedDateTime互转，这一篇绝对喂饱你</a></p>
-<p>ZoneOffset和Zoned的区别，通过解释Asia/Shanghai和+8:00的区别，想必已经了解了。</p>
-<p>理解上述的几个关键点</p>
-<ul>
-<li><p>LocalDateTime不带时区，不带时区不是说它的时间就是UTC时间，而是说它就是一个时间字面量，不能够标识时间线上的某个时间。核心是理解Local这个概念，即当地时间，“当地”，与时区无关。</p>
-<p>  它不能表示时间线上的点，因此无法获取其epoch值，要获取时必须指定时区变成时间线上点才行。</p>
-</li>
-<li><p>ZoneOffsetDateTime，即以偏移量表示的时间。</p>
-</li>
-<li><p>ZonedDateTime，即以地区时间表示的时间，即我们常说的时区。</p>
-</li>
-<li><p>ZoneOffsetDateTime与ZonedDateTime区别</p>
-<ul>
-<li>前者可以自由设置偏移量，后者无法设置偏移量，只能根据时区来设置</li>
-<li>后者能够很好得支持夏令时，前者不行</li>
-</ul>
-</li>
-<li><p>为什么它们之间能够相互转换？</p>
-<ul>
-<li>LocalDateTime不能直接转换为其它两种类型，除非它指定是在哪个时区的本地时间。这也能够理解，本地时间+时区，不就成了通用时间了吗。</li>
-<li>偏移量和地区时间如何转换呢？前者转后者比较好做，因为时区包含了偏移量。</li>
-</ul>
-</li>
-</ul>
-<h2 id="数据库应该使用带时区还是不带时区的类型？"><a href="#数据库应该使用带时区还是不带时区的类型？" class="headerlink" title="数据库应该使用带时区还是不带时区的类型？"></a>数据库应该使用带时区还是不带时区的类型？</h2><p>当然是带时区的类型啦。</p>
-<p>如果不带时区，是无法表示时间线上的某个点的；就会出现，如果数据库的时区设置在东八区，则生成的时间就是东八区的本地时间；如果设置在0时区，则生成的就是0时区的本地时间；二者是不一样的。也就是说，生成的时间在时间线上的位置会随着数据库时区的变化而变化，这显然是不合理的。</p>
-<p>如果使用带时区的类型，只不过是在显示该日期时会有所差别，但实际上的时间是没有问题的。</p>
-<p>其实，理论上最好的方式是存储epoch值，这样就不用管各种不同的数据库之间时间类型的差异了。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E6%97%B6%E5%8C%BA%E9%97%AE%E9%A2%98-%E6%97%B6%E5%8C%BA%E9%97%AE%E9%A2%98/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1641,31 +1075,14 @@
 </ul>
 <h2 id="发达国家？发展中国家？区别？谁说了算？"><a href="#发达国家？发展中国家？区别？谁说了算？" class="headerlink" title="发达国家？发展中国家？区别？谁说了算？"></a>发达国家？发展中国家？区别？谁说了算？</h2><p>首先说，这并没有一个统一的国际标准说怎么样才是发达国家或者发展中国家。各国际组织标准也不一样。在之前，世界银行、国际货币基金组织、联合国开发计划署等国际机构都已经将韩国列为发达国家。而前几天新闻上说的是联合国贸易与发展会议正式将韩国列为发达国家。</p>
 <p>那么，为什么这次韩国反应这么大呢？是因为联合国贸易与发展会议比较重要吗？</p>
-<p><strong>联合国贸易与发展会议</strong></p>
-<p>联合国常设机构之一，主要宗旨是促进发展中国家的贸易、投资机会。</p>
-<p>韩国转为发达国家，是1964年该会议成立后，第一次有国家转为发达国家。</p>
-<p><strong>发达国家 VS 发展中国家</strong></p>
-<p>直接理解看，二者的区别在于经济水平的差别。实际上，虽然没有统一标准，但通常以如下几个指标进行评判</p>
-<ul>
-<li>人均国民生产总值</li>
-<li>工业化水平</li>
-<li>科学技术水准等</li>
-</ul>
-<h2 id="发达国家还有哪些？"><a href="#发达国家还有哪些？" class="headerlink" title="发达国家还有哪些？"></a>发达国家还有哪些？</h2><p>如果以世界上主要组织的认定，那么几乎所有欧洲国家、美国、加拿大、日韩、四小龙等，都是发达国家。</p>
-<p>但如果只是看此次的贸易与发展会议。</p>
-<p>发达国家，即该会议的B类，只有32个国家是发达国家：安道尔、澳大利亚、奥地利、比利时、加拿大、塞浦路斯、丹麦、芬兰、法国、德国、希腊、梵蒂冈、冰岛、爱尔兰、意大利、日本、韩国、列支敦士登、卢森堡、马耳他、摩纳哥、荷兰、新西兰、挪威、葡萄牙、圣马力诺、西班牙、瑞典、瑞士、土耳其、英国和美国。</p>
-<p>可以看到，几乎全是欧美国家。日韩、也算欧美。</p>
-<h2 id="发达国家有什么好处？"><a href="#发达国家有什么好处？" class="headerlink" title="发达国家有什么好处？"></a>发达国家有什么好处？</h2><p>找了半天也没有找到发达国家的好处。倒是发展中国家往往能够受到经济、政策上的优惠。那么为什么韩国成为发达国家这么高兴呢？</p>
-<p>我想应该是反向逻辑吧：韩国经济水平发展很高，很长时间都被当做发达国家来对待，但名分上确没有发达国家。所以这次算是一个名分？</p>
-<p>其次，发达国家，也是国际地位的变化，机会不一样，话语权也不一样。</p>
-<h2 id="我国距离发达国家还有多大距离？"><a href="#我国距离发达国家还有多大距离？" class="headerlink" title="我国距离发达国家还有多大距离？"></a>我国距离发达国家还有多大距离？</h2><p>只看几个水平的话。</p>
-<ul>
-<li>人均国民生产总值：国际货币基金组织预测我国2021排名56，韩国26，台湾27</li>
-<li>工业化水平：这个找不到，但我国应该很高</li>
-<li>人类发展指数：联合国开发计划署，我国2020排名85，韩国23，台湾23，</li>
-</ul>
-<p>此外，发达国家以服务业为主，发展中国家以工业为主。从这个特征上看，我国正是发展中呀。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E7%A7%91%E6%8A%80%E9%9A%8F%E6%83%B3-20210711-ke-ji-sui-xiang--20210711/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1743,45 +1160,14 @@
 <li>去除所有标签</li>
 <li>除换行之外的所有格式全都去除</li>
 </ul>
-<h2 id="实现"><a href="#实现" class="headerlink" title="实现"></a>实现</h2><p>目前市面上并没有一步实现该需求的方案，最为接近可行的方案是Jsoup:<a target="_blank" rel="noopener" href="https://github.com/jhy/jsoup">https://github.com/jhy/jsoup</a>；它能够将html文本转换为dom树，并能提取其中文本和元素。</p>
-<p>我们的实现逻辑如下：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">private</span> <span class="string">fun</span> <span class="string">Document.format():</span> <span class="string">String</span> &#123;</span><br><span class="line">    <span class="string">return</span> <span class="string">StringBuffer().apply</span> &#123; <span class="string">this@format.body().format(this)</span> &#125;<span class="string">.toString()</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="string">private</span> <span class="string">fun</span> <span class="string">Element.format(sb:</span> <span class="string">StringBuffer)</span> &#123;</span><br><span class="line">    <span class="string">if</span> <span class="string">(this.childNodeSize()</span> <span class="string">==</span> <span class="number">0</span><span class="string">)</span> <span class="string">return</span></span><br><span class="line">    <span class="string">this.childNodes().forEach</span> &#123;</span><br><span class="line">        <span class="string">when</span> <span class="string">(it)</span> &#123;</span><br><span class="line">            <span class="string">is</span> <span class="string">TextNode</span> <span class="string">-&gt;</span> &#123;</span><br><span class="line">                <span class="string">sb.append(it.wholeText.trim())</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="string">is</span> <span class="string">Element</span> <span class="string">-&gt;</span> <span class="string">when</span> <span class="string">(it.tagName())</span> &#123;</span><br><span class="line">                <span class="string">&quot;div&quot;</span>, <span class="string">&quot;p&quot;</span>, <span class="string">&quot;ul&quot;</span> <span class="string">-&gt;</span> &#123;</span><br><span class="line">                    <span class="string">it.format(sb)</span></span><br><span class="line">                &#125;</span><br><span class="line">                <span class="string">&quot;li&quot;</span> <span class="string">-&gt;</span> &#123;</span><br><span class="line">                    <span class="string">sb.append(&quot;-</span> <span class="string">&quot;)</span></span><br><span class="line"><span class="string">                    it.format(sb)</span></span><br><span class="line"><span class="string">                &#125;</span></span><br><span class="line"><span class="string">                &quot;</span><span class="string">span&quot;</span>, <span class="string">&quot;pre&quot;</span> <span class="string">-&gt;</span> &#123;</span><br><span class="line">                    <span class="string">it.format(sb)</span></span><br><span class="line">                    <span class="string">sb.append(&quot;</span> <span class="string">&quot;)</span></span><br><span class="line"><span class="string">                &#125;</span></span><br><span class="line"><span class="string">                &quot;</span><span class="string">br&quot;</span> <span class="string">-&gt;</span> <span class="string">Unit</span></span><br><span class="line">                <span class="string">&quot;a&quot;</span> <span class="string">-&gt;</span> &#123;</span><br><span class="line">                    <span class="string">sb.append(&quot;&lt;$</span>&#123;<span class="string">it.attr(&quot;href&quot;)</span>&#125;<span class="string">&gt;&quot;)</span></span><br><span class="line">                    <span class="string">it.format(sb)</span></span><br><span class="line">                &#125;</span><br><span class="line">                <span class="string">else</span> <span class="string">-&gt;</span> <span class="string">println(it)</span></span><br><span class="line">            &#125;</span><br><span class="line">            <span class="string">is</span> <span class="string">Comment</span> <span class="string">-&gt;</span> <span class="string">Unit</span></span><br><span class="line">            <span class="string">else</span> <span class="string">-&gt;</span> <span class="string">println(it)</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="string">//</span> <span class="string">如果下一个标签是这些，则需要换行</span></span><br><span class="line">        <span class="string">if</span> <span class="string">(it.nextSibling()</span> <span class="string">is</span> <span class="string">Element</span> <span class="string">&amp;&amp;</span></span><br><span class="line">            <span class="string">(it.nextSibling()</span> <span class="string">as</span> <span class="string">Element).tagName()</span> <span class="string">in</span> <span class="string">listOf(&quot;div&quot;</span>, <span class="string">&quot;p&quot;</span>, <span class="string">&quot;ul&quot;</span>, <span class="string">&quot;li&quot;</span>, <span class="string">&quot;a&quot;</span>, <span class="string">&quot;br&quot;</span><span class="string">)</span></span><br><span class="line">        <span class="string">)</span></span><br><span class="line">            <span class="string">sb.append(&quot;\n&quot;)</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="string">fun</span> <span class="string">main()</span> &#123;</span><br><span class="line">    <span class="string">val</span> <span class="string">html</span> <span class="string">=</span> <span class="string">&quot;&quot;</span><span class="string">&quot;</span></span><br><span class="line"><span class="string">        这是你的html温拌</span></span><br><span class="line"><span class="string">    &quot;</span><span class="string">&quot;&quot;</span><span class="string">.trimIndent()</span></span><br><span class="line">    <span class="string">println(Jsoup.parse(html).body())</span></span><br><span class="line">    <span class="string">println(Jsoup.parse(html).format())</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>我们输入如下内容</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&lt;div&gt;</span></span><br><span class="line"> <span class="number">18</span><span class="string">/47/284</span></span><br><span class="line"><span class="string">&lt;/div&gt;</span></span><br><span class="line"><span class="string">&lt;div&gt;</span></span><br><span class="line"> <span class="string">&lt;br&gt;</span></span><br><span class="line"><span class="string">&lt;/div&gt;</span></span><br><span class="line"><span class="string">&lt;div&gt;</span></span><br><span class="line"> <span class="string">&lt;br&gt;</span></span><br><span class="line"><span class="string">&lt;/div&gt;</span></span><br><span class="line"><span class="string">&lt;div&gt;</span></span><br><span class="line"> <span class="string">北京&amp;nbsp;</span></span><br><span class="line"><span class="string">&lt;/div&gt;</span></span><br><span class="line"><span class="string">&lt;div&gt;</span></span><br><span class="line"> <span class="string">李诞</span></span><br><span class="line"><span class="string">&lt;/div&gt;</span></span><br><span class="line"><span class="string">&lt;div&gt;</span></span><br><span class="line"> <span class="string">李丹</span></span><br><span class="line"> <span class="string">&lt;br&gt;</span></span><br><span class="line"><span class="string">&lt;/div&gt;</span></span><br><span class="line"><span class="string">&lt;div&gt;</span></span><br><span class="line"> <span class="string">&lt;p&gt;&lt;br&gt;&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;p&gt;成都&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;p&gt;尺子&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;p&gt;&lt;br&gt;&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;p&gt;上海&amp;nbsp;&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;p&gt;池子&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;p&gt;格桑酒店&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;p&gt;&lt;br&gt;&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;p&gt;杭州&amp;nbsp;&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;p&gt;&lt;br&gt;&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;div&gt;</span></span><br><span class="line">  <span class="string">&lt;p&gt;深圳&lt;/p&gt;</span></span><br><span class="line">  <span class="string">&lt;p&gt;建国&lt;/p&gt;</span></span><br><span class="line">  <span class="string">&lt;p&gt;&lt;br&gt;&lt;/p&gt;</span></span><br><span class="line">  <span class="string">&lt;p&gt;西安&lt;/p&gt;</span></span><br><span class="line">  <span class="string">&lt;p&gt;李雪琴&lt;/p&gt;</span></span><br><span class="line">  <span class="string">&lt;p&gt;&lt;br&gt;&lt;/p&gt;</span></span><br><span class="line">  <span class="string">&lt;p&gt;武汉&lt;/p&gt;</span></span><br><span class="line">  <span class="string">&lt;p&gt;王建国&lt;/p&gt;</span> </span><br><span class="line">  <span class="string">&lt;p&gt;&lt;br&gt;&lt;span&gt;&lt;/span&gt;&lt;/p&gt;</span></span><br><span class="line"> <span class="string">&lt;/div&gt;</span></span><br><span class="line"><span class="string">&lt;/div&gt;</span></span><br></pre></td></tr></table></figure>
-
-<p>得到的输出，完全满足需求</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="number">18</span><span class="string">/47/284</span></span><br><span class="line"></span><br><span class="line"><span class="string">北京</span></span><br><span class="line"><span class="string">李诞</span></span><br><span class="line"><span class="string">李丹</span></span><br><span class="line"></span><br><span class="line"><span class="string">成都</span></span><br><span class="line"><span class="string">尺子</span></span><br><span class="line"></span><br><span class="line"><span class="string">上海</span></span><br><span class="line"><span class="string">池子</span></span><br><span class="line"><span class="string">格桑酒店</span></span><br><span class="line"></span><br><span class="line"><span class="string">杭州</span></span><br><span class="line"></span><br><span class="line"><span class="string">深圳</span></span><br><span class="line"><span class="string">建国</span></span><br></pre></td></tr></table></figure>
-
-<h3 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h3><p>这里说明编写中的注意事项</p>
-<ul>
-<li><p>dom结构</p>
-<p>  明白dom结构很重要，最开始我就搞错了文本本身也是一个节点</p>
-  <figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">&lt;!-- 评论 --&gt;</span></span><br><span class="line">文本1</span><br><span class="line"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">    文本1</span><br><span class="line">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">p</span>&gt;</span></span><br><span class="line">  文本2</span><br><span class="line"><span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<p>  节点结构如下</p>
-  <figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Comment</span><br><span class="line">TextNode</span><br><span class="line">Element(div)</span><br><span class="line">  - Element(div)</span><br><span class="line">    - TextNode</span><br><span class="line">Element(p)</span><br><span class="line">  - TextNode</span><br></pre></td></tr></table></figure></li>
-<li><p>换行符的处理</p>
-<p>  不能直接在块标签后增加换行符，因为块标签会嵌套，从早造成多余的换行</p>
-<p>  取而代之的，应该看下一个兄弟元素是否是块标签或换行标签</p>
-  <figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">  <span class="tag">&lt;<span class="name">div</span>&gt;</span></span><br><span class="line">    文本1</span><br><span class="line">  <span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">div</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;<span class="name">p</span>&gt;</span></span><br><span class="line">  文本2</span><br><span class="line"><span class="tag">&lt;/<span class="name">p</span>&gt;</span></span><br></pre></td></tr></table></figure>
-
-<p>  如上文本肯定想要得到如下结果</p>
-  <figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">文本1</span><br><span class="line">文本2</span><br></pre></td></tr></table></figure>
-
-<p>  如果按块标签换行，则会得到如下结果，显然是不正确的。</p>
-  <figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">文本1</span><br><span class="line"></span><br><span class="line">文本2</span><br></pre></td></tr></table></figure>
-
-<p>  “下一个相邻元素”，jsoup中有提供nextSibling()方法进行获取</p>
-</li>
-<li><p>超链接的处理</p>
-<p>  超链接提供getAttr()获取href属性。</p>
-</li>
-<li><p>评论标签的处理</p>
-<p>  评论标签有专门的节点类型——Comment，可以直接识别以忽略。</p>
-</li>
-</ul>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E5%B0%86html%E8%BD%AC%E6%8D%A2%E4%B8%BA%E6%A0%BC%E5%BC%8F%E5%8C%96%E6%96%87%E6%9C%AC-jiang-html-zhuan-huan-wei-ge-shi-hua-wen-ben/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1861,28 +1247,14 @@
 <p>如果仅看618的话，我在PDD上买了一堆生活用品，但他们貌似并没有在618更便宜多少。</p>
 <p>但如果把618拉长到601来看的话，我买了Apple Watch，然后再618前夕使用保价政策优惠了300块。</p>
 <p>今年618动静大吗？我想，除了在朋友圈京东的同学发出来一些备战的状态，其它时候并没有收到太多的宣传。相反，它将整个周期拉长了，从五月下旬就开始预热，部分商品已经便宜了。</p>
-<p>原因是什么呢？</p>
-<ul>
-<li>周期拉长，人们不必再等到618凌晨那个时间点去抢购优惠</li>
-<li>用户对所谓购物节优惠有所免疫，信任度有所下降。都是前两年过于复杂的优惠政策导致的，一顿操作下来，可能就便宜一二十块。</li>
-<li>平台所扮演的角色在人们心中的低位不再那么高。直播的兴起、私域流量的兴起，降低了用户的决策成本。平台的吸引力在降低。</li>
-<li>国内用户红利到头，平台不再像之前那样大张旗鼓宣传。</li>
-</ul>
-<h2 id="私域流量"><a href="#私域流量" class="headerlink" title="私域流量"></a>私域流量</h2><p>私域流量，就是具有一定影响力的大佬自带的粉丝群体。</p>
-<p>私域流量，从表象看，就是一个微信群，但貌似并不止于此。传统平台的流量只能根据用户针对商品的购买、浏览、收藏行为对用户画像，进行推荐。但私域流量能够通过推送用户文章等提供更为完整的用户画像，从而更好地知道用户想要什么。但从另一个方面说，这又是有一个平台——构建私域流量的平台之间的战斗。</p>
-<h2 id="卖货的新方式"><a href="#卖货的新方式" class="headerlink" title="卖货的新方式"></a>卖货的新方式</h2><p>我的购物习惯是京东，它的核心竞争力物流；身边很多女性朋友是淘宝天猫，当然购买服饰居多，淘宝的竞争力是品类齐全；还有很多边缘用户比如父母是拼多多，它的竞争力是便宜、购物流程超级简单。</p>
-<p>但所有这些平台，他们说到底都只是充当了一个货架的角色。而这两年掀起风潮的直播带货，私域流量，也扮演着重要角色。他们的好处是一个品类多数时候只有一个产品，品质有一定保证，为我们省下了很大一部分决策成本。</p>
-<p>想一想，如果直播带货使用顺丰发货，能够抵消掉京东部分竞争力；决策成本抵消掉淘宝的部分竞争力；品质有保证的前提下价格相对合理，也能侵蚀掉拼多多的部分流量。</p>
-<p>这样说来，传统平台的购物方式（没错，淘宝京东算传统了哈哈哈），也有他们的焦虑点在。</p>
-<h2 id="字节跳动做CDN了"><a href="#字节跳动做CDN了" class="headerlink" title="字节跳动做CDN了"></a>字节跳动做CDN了</h2><p>CDN相信大家都知道是什么了，那么字节跳动为什么要自建CDN呢？原因主要有几点</p>
-<ul>
-<li><p>流量较小时，CDN看似便宜，但以字节跳动这么庞大的流量，用于CDN上的费用想必是相当昂贵的，因此从节约成本上来说，自建是一个较好的选择。</p>
-<p>  为什么现在搞？字节大部分产品线日趋成熟，出现冗余的技术资源，可以搞这件事</p>
-</li>
-<li><p>云服务卡脖子：阿里云高速通道开始收费了！！！之前可是不收费的。我们一直说云服务多么好多么好，从技术上说，云服务当然是好的。但其缺点就是将自己的核心业务乃至全部身家都托付给云平台，如果出现一波阿里云高速通道这样的操作，就玩完儿。</p>
-</li>
-</ul>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E7%A7%91%E6%8A%80%E9%9A%8F%E6%83%B3-20210704-%E7%A7%91%E6%8A%80%E9%9A%8F%E6%83%B3-20210704/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1961,49 +1333,14 @@
 <p>上学的意义，读书的意义，工作的意义，以及终极问题——活着的意义、人生的意义。</p>
 <p>人是需要驱动力的，而驱动力的很大一部分，来自于对自身当前境况及前途的希望和预期。当不停地对自己进行灵魂拷问，往往会发现你的生活，你的存在并无多大意义，又或者是生活的意义太过遥远，遥远导致短期的心灵空虚。希望变得若隐若现，驱动力时有时无。轻则彷徨度日，重则丧失生活的信心，走向极端。</p>
 <p>因此，学习如何和无意义感相处，是一项重要的课题。是每个人总会遇到的问题，迟早而已。</p>
-<h2 id="意识到荒诞"><a href="#意识到荒诞" class="headerlink" title="意识到荒诞"></a>意识到荒诞</h2><p>常玩笑似地说，希望和理想，是这个世界上最毒的毒药，但其实我是讲真。一个充满理想主义的人，要么是极度幸福的，要么是悲惨的。</p>
-<p>理想是预期，生活是现实，当现实情况与预期发展偏差越来越大时，会给人一种荒诞感，继而是挫败，接着是失望，然后是消极躺平。</p>
-<p>大多数人都能觉察到的荒诞：刚出校园满怀理想，要在多少年内达成某某成就，但日子一天天过去，发现自己陷入了 起床-上班-吃饭-午休-上班-吃饭-下班-公交地铁-出租屋-睡觉 的死循环，原本的理想变得越来越遥远。你被封印了，封印在出租屋-公司的两点一线，封印在一座城市。开始思考：我这样无限死循环的生活到底有什么意义。开始恐惧，因为你看到了几十年时光隧道另一头的自己，这种对未来的已知性，让人不寒而栗。</p>
-<p>当然，大多数人并不会感到恐惧，更多的仅仅是感到无聊。然后就会寻找消磨时间的事情——刷刷刷，让大脑陷入无意识状态，求得一种爽感，度日。私认为，这更让人担心。</p>
-<h2 id="人间值不值得？"><a href="#人间值不值得？" class="headerlink" title="人间值不值得？"></a>人间值不值得？</h2><p>我们常在思考：活着的意义是什么，又常常为找不到答案而苦恼和沮丧。但其实大可不必这样，因为这本身就是一个非常复杂的命题。</p>
-<p>并不能简单地下结论说人生是有意义，人间不值得之类的话。没有银弹，这句话同样适用于此。</p>
-<p>加缪说：”回答人生中还不值得活，等于回答哲学的根本问题“。对一个没有多少阅读经验、没多少人生阅历、啥都缺的年轻人来说，这个问题没有答案并不可耻，甚至很正常。</p>
-<p>但对这个问题的思考，不应该停止——尽管大多数时候得到的答案都是一致的。</p>
-<h2 id="如何应对"><a href="#如何应对" class="headerlink" title="如何应对"></a>如何应对</h2><p>应对无意义，加缪提出了三种方法</p>
-<ul>
-<li><p>物理自杀</p>
-<p>  顾名思义，就是自杀。自杀确实是一个问题，曾问过周边的人，相当一部分都曾有过自杀的想法。但自杀只是在逃避问题，并没有解决问题，不可取。</p>
-</li>
-<li><p>哲学自杀</p>
-<p>  宗教信仰。不为自己而活，为上帝而活，或者万事皆有上帝参与或保佑。作为一个虔诚的信徒，不必再思考活着的意义，谨遵上帝指引即可。</p>
-<p>  但这简直就是在作弊！直接越过自身生命的无意义。因无法回答而拒绝回答，也是一种逃避问题的方式，个人认为不可取。</p>
-</li>
-<li><p>直接面对</p>
-<p>  正面硬刚，是最勇敢的出路，也是永恒的出路。</p>
-<p>  我们先有生活的习惯，后有思想的习惯。当我们日复一日跑近死亡，肉体始终行进着，不可折返。先有肉体行进，后有思想。活着、活得精彩是作为人的责任。责任，不可推卸，不可逃避。一说逃避可耻但有用，于我，光可耻这一点就无法接受。</p>
-<p>  思考生活的意义没有任何问题，甚至可以说是作为人的责任。但不该因为该问题的消极答案而打乱生活的节奏和轨迹。成年人应当用于承担起生活的责任。</p>
-</li>
-</ul>
-<h2 id="西西弗斯"><a href="#西西弗斯" class="headerlink" title="西西弗斯"></a>西西弗斯</h2><p>你一定见过下面这张图，他叫西西弗斯（西西弗是法语的音译，在希腊语中，应该译作西西弗斯）</p>
-<p><img src="https://5b0988e595225.cdn.sohucs.com/images/20180511/fd19c3efac2b490fa26279602bf36c4b.jpeg"></p>
-<p>西西弗斯，是希腊神话中，被惩罚的人，他的惩罚方式是，将一块巨石从山底推到山顶，但是每次快到山顶时，巨石又会滑落到山底，如此循环往复，永无止境。（这块巨石的设定就是到山顶就会滑落到山底，没有平台，没有停靠点，别想了。。。）</p>
-<p>西西弗神话是一个法国谚语，借喻永久无望又无用的人生状况。人的本质就是复读机，循环往复，day by day, year after year 。</p>
-<p>在大多数的图片中，巨石下的西西弗都是一个浑身肌肉，充满能量的形象。没错，对西西弗斯的神话，不同人有不同的解读。可能认为他的命运极其悲惨，重复此无尽又无用的动作，西西弗斯定是悲伤的。但站在西西弗的角度上，如果就此悲伤沉沦，那就是巨石的胜利，是惩罚它的诸神的胜利。要同命运抗争到底。</p>
-<p>西西弗斯告诉我们，还有更高的忠实，它可以否定神灵，举起巨石。他最终也发现，一切安好。从此，这个没有主人的宇宙在他看来，既不贫瘠、也非无望。那块石头的每一颗微粒，那座夜色笼罩的山上的每一片矿石，本身都是一个世界。迈向高处的挣扎足够填充一个人的心灵。人们应当想象西西弗斯是快乐的。</p>
-<h3 id="吴刚伐桂"><a href="#吴刚伐桂" class="headerlink" title="吴刚伐桂"></a>吴刚伐桂</h3><p>中国古代神话也有类似的人物——吴刚。</p>
-<p>传说吴刚的妻子与炎帝之孙伯陵私通，吴刚一怒之下杀了伯陵，因而惹怒太阳神炎帝，被发配到月亮砍伐不死之树。但月桂树随砍即合，吴刚每砍一斧，斧子砍下的枝叶就会长回树上，经过了这么久，吴刚仍然没能砍倒月桂树。</p>
-<blockquote>
-<p>神话总是喜欢这种死循环，西西弗斯的巨石和高山；吴刚的斧头与桂树；普罗米修斯的恶鹰与肝脏。。。。。。复读机无疑。</p>
-</blockquote>
-<h2 id="两句诗"><a href="#两句诗" class="headerlink" title="两句诗"></a>两句诗</h2><ul>
-<li>吾魂兮无求乎永生</li>
-<li>竭尽兮人事之所能</li>
-</ul>
-<h2 id="PS"><a href="#PS" class="headerlink" title="PS"></a>PS</h2><p>自杀、人生的意义，是哲学讨论的两个终极课题，哲学对我而言，目前还是艰深晦涩的。</p>
-<p>本文零散表达，缺乏有力论据，仅作为个人小感想。</p>
-<p>且上述观点也仅仅是存在主义的一种表达。</p>
-<p>但同时，我们聊过技术、团队建设、人力资源，甚至聊过中医，本着国家不禁止，我们就能聊的原则，人生的意义这一话题自此也算是有开端了。耶！</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E5%A6%82%E4%BD%95%E5%BA%94%E5%AF%B9%E6%97%A0%E6%84%8F%E4%B9%89%E6%84%9F-ru-he-ying-dui-wu-yi-yi-gan/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -2242,302 +1579,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h1 id="馒"><a href="#馒" class="headerlink" title="馒"></a>馒</h1><h2 id="写在前面"><a href="#写在前面" class="headerlink" title="写在前面"></a>写在前面</h2><p>在遥远而古老的二十世纪末、二十一世纪初，的四川东北部乡村，家里的面食几乎只有一种——挂面。自家种的小麦，大夏天吭哧吭哧背到大队加工厂，制面机震耳欲聋，眼看着小麦变成面粉，再变成面条，上杆、晾晒，从早上等到下午，中午吃自带的干粮。晾干、切断，用精心裁剪的报纸包装成束，装袋，再吭哧吭哧背回家。半年的面食就算完成了。这几乎是人生前十来年每年必做的工作，就像死亡和税收——无法逃脱。</p>
-<p><img src="https://iknow-pic.cdn.bcebos.com/86d6277f9e2f07082b79175be424b899a901f268?x-bce-process=image/resize,m_lfit,w_600,h_800,limit_1"></p>
-<p>对面食的厌恶，也是从这些记忆开始。按照村里的习惯，早、午饭是正餐，晚上可以随便对付——吃面。再好吃的东西，也架不住”每天“这个频率。更何况自家种的小麦其实并不好吃，加上贫乏的调料，面的口感和味道着实不敢恭维。以至于后来闻到挂面的味道就想吐，只能中午留剩饭，晚上家人吃面我吃饭。这个状态，持续到上大学。</p>
-<p>对面食态度的大转弯，从北方开始。初到北方，受同学影响，开始尝试各种各样的面：打卤面、大同勾刀面、龙须面、刀削面，算是打开了新世界的大门，不到一个月，甚至连向来鄙夷的挂面也不再觉得难吃；后到西北，肉夹馍、臊子面、比昂比昂面、油泼面，更让自己一度怀疑我可能是个北方人。对面食的喜爱，扩展到了一切以面为主的食物。</p>
-<p>对馒头的特殊记忆，来自大三暑假留校，食堂关闭剩一个，早中晚窗口仅开放一个小时。整天泡在实验室，早中饭都行，惟独晚饭怎么也赶不及。于是馒头+泡面+《暴走大事件》陪伴了我大半个暑假（泡面换了好几种，统一香辣牛肉面为最佳；馒头，则一定要是北方大馒头，一个，抵一碗）。</p>
-<p><img src="http://n.sinaimg.cn/sinacn10116/205/w640h365/20181211/dbf6-hqackaa2936278.bmp"></p>
-<p>有时候会炒个菜，蒸两个馒头，一方面是让自己的住处多一点生活气息，另一方面则只是为了好玩。如果做饭成功，还能顺便改善一下伙食，何乐而不为呢？不过，饭这个东西，不能常常做。一周下厨一两次，是享受生活；一天下厨一两次，就只是生活了。</p>
-<h2 id="写在中间"><a href="#写在中间" class="headerlink" title="写在中间"></a>写在中间</h2><h3 id="北方馒头、南方馒头"><a href="#北方馒头、南方馒头" class="headerlink" title="北方馒头、南方馒头"></a>北方馒头、南方馒头</h3><p>南北馒头是不同的，这些差异主要提现在如下几个方面：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>北方馒头</th>
-<th>南方馒头</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>口感</td>
-<td>紧实、有嚼劲，能有效训练咀嚼肌</td>
-<td>松软、弹牙</td>
-</tr>
-<tr>
-<td>形状</td>
-<td>多为圆形，个头较大</td>
-<td>多为刀切馒头，个头较小</td>
-</tr>
-<tr>
-<td>味道</td>
-<td>一般无味</td>
-<td>一般为甜味，甚至可以沾炼乳</td>
-</tr>
-<tr>
-<td>防身</td>
-<td>个头质量都较大，冬季室外冻硬后可防身</td>
-<td>质量、体积、密度均不如北方馒头，因此即使冻硬后也无法防身</td>
-</tr>
-<tr>
-<td>工艺</td>
-<td>制作工艺较复杂，尤其在发酵这一步，时间长，工序多，常需要碱面</td>
-<td>制作工艺相对简单，一般发酵只需两小时</td>
-</tr>
-<tr>
-<td>示例</td>
-<td><img src="https://ss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=1750289358,327831799&fm=26&gp=0.jpg" alt="北方馒头"></td>
-<td><img src="https://ss1.bdstatic.com/70cFvXSh_Q1YnxGkpoWK1HF6hhy/it/u=364620683,599338928&fm=26&gp=0.jpg" alt="南方馒头"></td>
-</tr>
-</tbody></table>
-<p>我认为比较确切的说法</p>
-<ul>
-<li>北方馒头更加使用用来当做主食，可代替米饭在午饭这样重要的场合下发挥作用</li>
-<li>南方馒头偏向点心，顶多只能在早餐这种级别的场合下有所表现</li>
-</ul>
-<p><strong>这次，我们要做的是：南方馒头</strong></p>
-<h3 id="高、中、低筋粉"><a href="#高、中、低筋粉" class="headerlink" title="高、中、低筋粉"></a>高、中、低筋粉</h3><p>常说的高筋、中筋、低筋面粉，其中“筋”指的是蛋白质含量。蛋白质亲水，因此蛋白质含量越高，吸水性越好，做出来的成品越劲道。它们具体区别如下</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>高筋粉</th>
-<th>中筋粉</th>
-<th>低筋粉</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>蛋白质含量</td>
-<td>&gt; 12%</td>
-<td>9% ~ 11%</td>
-<td>&lt; 9%</td>
-</tr>
-<tr>
-<td>适用于</td>
-<td>面条、面包等</td>
-<td>馒头、包子等</td>
-<td>蛋糕、点心等</td>
-</tr>
-<tr>
-<td>制成来源</td>
-<td>特殊小麦品种；或中筋粉加工</td>
-<td>一般小麦</td>
-<td>中筋粉加工</td>
-</tr>
-</tbody></table>
-<p>市面上买到的面粉产品，如未标明，多半属于中筋粉，一般小麦去壳制作即得到中筋面粉。</p>
-<h3 id="酵母粉、小苏打、泡打粉"><a href="#酵母粉、小苏打、泡打粉" class="headerlink" title="酵母粉、小苏打、泡打粉"></a>酵母粉、小苏打、泡打粉</h3><p>这几种材料都是用来发面的，但其工作原理不同，得到的结果也不尽相同，区别如下</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>酵母粉</th>
-<th>小苏打</th>
-<th>泡打粉</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>主要成分</td>
-<td>酵母菌</td>
-<td>碳酸氢钠(NaHCO3)</td>
-<td>碳酸氢钠(NaHCO3) + 酸性材料 + 玉米粉</td>
-</tr>
-<tr>
-<td>发面原理</td>
-<td>生物反映：酵母菌在有氧的情况下将糖分分解成二氧化碳和水</td>
-<td>化学反应：碳酸氢钠加热产生二氧化碳</td>
-<td>化学反应：碳酸氢钠加热产生二氧化碳，但因加入了酸性材料，使得结果呈中性</td>
-</tr>
-<tr>
-<td>性质</td>
-<td>弱酸性</td>
-<td>弱碱性</td>
-<td>中性</td>
-</tr>
-<tr>
-<td>使用场景</td>
-<td>馒头等</td>
-<td>馒头等</td>
-<td>糕点</td>
-</tr>
-</tbody></table>
-<p>常用来做馒头的只有酵母粉和小苏打，泡打粉并不适合。而酵母粉由于主要成分是酵母菌，高温下会死亡，30°效果最好。小苏打目前还未使用过，不做评价。</p>
-<h3 id="用料比例"><a href="#用料比例" class="headerlink" title="用料比例"></a>用料比例</h3><p>这一项不怎么算理论值，可归于经验值。</p>
-<ul>
-<li>水:面粉 = 1:2</li>
-<li>酵母粉:面粉 = 1:100</li>
-<li>人工食用色素：面粉 = 1:1000</li>
-</ul>
-<h2 id="材料准备"><a href="#材料准备" class="headerlink" title="材料准备"></a>材料准备</h2><h3 id="食材"><a href="#食材" class="headerlink" title="食材"></a>食材</h3><ul>
-<li>中筋面粉</li>
-<li>酵母粉</li>
-<li>色素：自制天然色素或购买的人工色素</li>
-<li>温水、清水</li>
-</ul>
-<h3 id="用具"><a href="#用具" class="headerlink" title="用具"></a>用具</h3><ul>
-<li>厨房用称（分辨率0.1g）</li>
-<li>不锈钢盆</li>
-<li>擀面台</li>
-<li>擀面杖</li>
-<li>菜刀（锋利，刀切馒头必备）</li>
-<li>保鲜膜（用于发酵）</li>
-<li>蒸锅 + 纱布</li>
-<li>榨汁机（如需使用天然色素）</li>
-</ul>
-<h2 id="调色"><a href="#调色" class="headerlink" title="调色"></a>调色</h2><h3 id="天然色素"><a href="#天然色素" class="headerlink" title="天然色素"></a>天然色素</h3><p>天然色素即从日常食材中获取到的颜色，做了一些实验，分别得到了如下效果。</p>
-<table>
-<thead>
-<tr>
-<th>材料</th>
-<th>操作方法</th>
-<th>结果</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>南瓜段</td>
-<td>蒸</td>
-<td>黄色</td>
-</tr>
-<tr>
-<td>紫薯</td>
-<td>蒸</td>
-<td>紫色</td>
-</tr>
-<tr>
-<td>草莓+蓝莓</td>
-<td>混合榨汁</td>
-<td>紫红色</td>
-</tr>
-<tr>
-<td>草莓+蓝莓+牛奶</td>
-<td>混合榨汁</td>
-<td>紫色</td>
-</tr>
-<tr>
-<td>甘蓝叶+水</td>
-<td>混合榨汁</td>
-<td>紫色</td>
-</tr>
-<tr>
-<td>甘蓝叶+蓝莓</td>
-<td>混合榨汁</td>
-<td>紫红色</td>
-</tr>
-<tr>
-<td>甘蓝叶+橘子</td>
-<td>混合榨汁</td>
-<td>紫红色</td>
-</tr>
-<tr>
-<td>甘蓝叶+小苏打</td>
-<td>混合榨汁</td>
-<td></td>
-</tr>
-</tbody></table>
-<p>结合实际来看，黄色和紫色最容易得到，且较为稳定，在和面后颜色基本不丢失。通过榨汁得到的颜色在和面后明显变淡，与最初的颜色差异大，着色效果非常不理想。</p>
-<p>这里记录了部分调色和加上面粉之后的颜色效果。</p>
-<table>
-<thead>
-<tr>
-<th>调色效果</th>
-<th>和面效果</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>黄色：南瓜泥巴；紫红色：草莓+蓝莓+牛奶；紫色：甘蓝汁</td>
-<td>黄色：南瓜泥；紫色：紫薯泥；灰色：草莓+蓝莓+牛奶</td>
-</tr>
-<tr>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220225102760.png" alt="image-20201220225102760"></td>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220225038338.png" alt="image-20201220225038338"></td>
-</tr>
-<tr>
-<td>成品效果（最终口感失败）</td>
-<td></td>
-</tr>
-<tr>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220225647342.png" alt="image-20201220225647342" style="zoom:60%;" /></td>
-<td></td>
-</tr>
-</tbody></table>
-<p>此外，调色效果最好的南瓜泥和紫薯泥因本身成分非常重，即要着色成效果较好的黄色需要较多南瓜泥，此时面粉比例被稀释，口感和发面效果都有所影响，不便把控。需要多次探索才能找到较好的解决方式。</p>
-<h3 id="人工色素"><a href="#人工色素" class="headerlink" title="人工色素"></a>人工色素</h3><p>人工色素，即人工合成色素，相比于天然色素，其优点众多：色彩鲜艳、着色效果好、性质稳定。但人工色素本身无营养价值，使用过量甚至会有害健康，这点需注意。一定要从正规渠道购买。使用天空蓝着色效果如下</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220230646364.png" alt="image-20201220230646364"></p>
-<p><strong>重要：人工色素的使用请严格按照GB2760标准使用，一把推荐比例为1:1000，即1kg成品使用1g人工色素。</strong></p>
-<h2 id="和"><a href="#和" class="headerlink" title="和"></a>和</h2><p>和面的两个关键点</p>
-<ul>
-<li>用料比例：用料比例推荐为：面粉:水=2:1；面粉:酵母粉=100:1；面粉:人工色素=1000:1。</li>
-<li>和面：体力活，原料按比例混合后，和啊和啊就OK了，和面过程大约会持续十几分钟，直至面不沾手，面不沾盆。当然没经验的同学可能需要几个回合才能学会。</li>
-</ul>
-<p>关于和面忘记拍照，不过可以参考网上大把的教程，比如这个：<a target="_blank" rel="noopener" href="https://www.bilibili.com/video/BV1S7411m72C">https://www.bilibili.com/video/BV1S7411m72C</a></p>
-<h2 id="发"><a href="#发" class="headerlink" title="发"></a>发</h2><p>发面是个人认为最最简单但也是最重要的一步，将和好的面摊在盆底，使用保鲜膜封好，放置于30度左右的环境中。</p>
-<p>发面的时间依据实际环境温度大约持续1-3小时不等，标准是面蓬松为原先的两倍大即可。</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220232103569.png" alt="image-20201220232103569"></p>
-<h2 id="预加工"><a href="#预加工" class="headerlink" title="预加工"></a>预加工</h2><p>上锅前预加工包括</p>
-<ul>
-<li><p>揉出气体</p>
-<p>面发开后会产生大量蜂窝状气孔，需再次和面，直至气孔几乎消失，否则会影响馒头形状。检查的方式是用刀切断面团，<strong>横截面几无气孔即可</strong>。</p>
-</li>
-</ul>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220230646364.png" alt="image-20201220230646364"></p>
-<ul>
-<li><p>定型</p>
-<p>即为上锅的馒头确定形状，可折花、直接刀切、做圆等，可网上搜索具体步骤。我们直接刀切。</p>
-<table>
-<thead>
-<tr>
-<th>刀切馒头</th>
-<th>刀切馒头、刀切花卷馒头</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220233818840.png" alt="image-20201220233818840"></td>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220233840221.png" alt="image-20201220233840221"></td>
-</tr>
-</tbody></table>
-</li>
-</ul>
-<h2 id="蒸"><a href="#蒸" class="headerlink" title="蒸"></a>蒸</h2><p>上锅，盖盖，不开火发约15分钟，开大火，水开后转中小火，蒸15分钟。为防水汽四溅，可按下图加上纸巾。</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220234554450.png" alt="image-20201220234554450"></p>
-<p><strong>熄火后不可马上揭盖，需等待5分钟，否则馒头会遇冷迅速收缩，影响外观和口感。</strong></p>
-<p>最终得到结果如下</p>
-<table>
-<thead>
-<tr>
-<th>所有馒头</th>
-<th>拆开</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220234653166.png" alt="image-20201220234653166"></td>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220234758516.png" alt="image-20201220234758516"></td>
-</tr>
-</tbody></table>
-<h2 id="再加热"><a href="#再加热" class="headerlink" title="再加热"></a>再加热</h2><p>一次蒸馒头太多吃不完怎么办，再加热无法避免。最好的方式当然是上锅蒸咯，这样出来的旧馒头不会因为缺乏水分显得干巴巴。</p>
-<p>但公司只有微波炉，因此还是有必要探究一下如何使用微波炉加热馒头，这里做了个实验说明。</p>
-<p>加热之前的馒头如下：</p>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220213944476.png" alt="image-20201220213944476"></p>
-<p>以不同火候，加热不同的时间，对比如下：</p>
-<table>
-<thead>
-<tr>
-<th>中高火、4分钟：糊了</th>
-<th>中高火、4分钟、旁边放杯水：干了</th>
-<th>中火、2分钟、旁边放杯水：刚好</th>
-<th>中火、2分钟、表面喷水：刚好</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220214003262.png" alt="image-20201220214003262"></td>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220214017973.png" alt="image-20201220214017973"></td>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220214031920.png" alt="image-20201220214031920"></td>
-<td><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC.assets/image-20201220214046563.png" alt="image-20201220214046563"></td>
-</tr>
-</tbody></table>
-<p>可见，中火2分钟较为合适，而表面喷水和一旁放置一杯水得到的效果差别不大。因此暂得出以下推荐方式。</p>
-<p><strong>使用微波炉加热，控制在中火、2分钟、与一杯水同时加热为最好</strong>。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文介绍了“我”对面食、对馒头喜爱的由来，介绍了关于蒸馒头的几个关键性问题，并列举了在调色、实际操作上的经验，方式不一定对，但都是自己切身体会，仅供大家参考。如有更好建议，欢迎一起讨论。</p>
-<p>蒸馒头步骤总结：和面 -&gt; 发面 -&gt; 预加工 -&gt; 蒸，其中和面和发面至关重要，上锅蒸之前的预发也很重要，以此步骤，多重复几次，定能做出令人满意的结果。</p>
-<p>蒸馒头看似简单，但其实相当耗时，以实际经验来看，整个过程比较顺利的情况下也要超过两小时，但在此过程中，找到快乐，享受每一个步骤带来的乐趣，感受蒸锅揭开瞬间时失败带来的失落或成功带来的喜悦，正如年少时的我们在探索未知世界时感受到挫败与成就。这个事，可以做！！！</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E9%A6%92-%E9%A6%92%E5%A4%B4%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E7%82%BC/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 

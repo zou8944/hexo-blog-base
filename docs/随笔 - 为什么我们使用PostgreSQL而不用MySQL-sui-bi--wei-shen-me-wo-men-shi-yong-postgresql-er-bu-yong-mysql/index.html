@@ -20,12 +20,12 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"zou8944.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="与MySQL相比，有何优势 SQL标准的null判断用is null，而不是&#x3D;null。PG可以设置transform_null_equals把&#x3D;null翻译成is null  MySQL显示emojji时，需要将字符集设置为utf8mb4。而PG就不用 在MySQL中，对Unicode的支持，主要又如下几种字符集  utf8mb4 utf8mb3 utf8 ucs2 utf16 utf16le">
+<meta name="description" content="与MySQL相比，有何优势 SQL标准的null判断用is null，而不是&#x3D;null。PG可以设置transform_null_equals把&#x3D;null翻译成is null">
 <meta property="og:type" content="article">
 <meta property="og:title" content="随笔 - 为什么我们使用PostgreSQL而不用MySQL">
 <meta property="og:url" content="https://zou8944.com/%E9%9A%8F%E7%AC%94%20-%20%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E4%BD%BF%E7%94%A8PostgreSQL%E8%80%8C%E4%B8%8D%E7%94%A8MySQL-sui-bi--wei-shen-me-wo-men-shi-yong-postgresql-er-bu-yong-mysql/index.html">
 <meta property="og:site_name" content="果冻 | Jelly">
-<meta property="og:description" content="与MySQL相比，有何优势 SQL标准的null判断用is null，而不是&#x3D;null。PG可以设置transform_null_equals把&#x3D;null翻译成is null  MySQL显示emojji时，需要将字符集设置为utf8mb4。而PG就不用 在MySQL中，对Unicode的支持，主要又如下几种字符集  utf8mb4 utf8mb3 utf8 ucs2 utf16 utf16le">
+<meta property="og:description" content="与MySQL相比，有何优势 SQL标准的null判断用is null，而不是&#x3D;null。PG可以设置transform_null_equals把&#x3D;null翻译成is null">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2020-07-07T15:45:29.000Z">
 <meta property="article:modified_time" content="2021-02-16T15:45:53.959Z">
@@ -122,7 +122,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-count">77</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -215,8 +215,11 @@
     
     <div class="post-body" itemprop="articleBody">
         <h2 id="与MySQL相比，有何优势"><a href="#与MySQL相比，有何优势" class="headerlink" title="与MySQL相比，有何优势"></a>与MySQL相比，有何优势</h2><ol>
-<li><p>SQL标准的null判断用is null，而不是=null。PG可以设置transform_null_equals把=null翻译成is null</p>
-</li>
+<li>SQL标准的null判断用is null，而不是=null。PG可以设置transform_null_equals把=null翻译成is null</li>
+</ol>
+<span id="more"></span>
+
+<ol start="2">
 <li><p>MySQL显示emojji时，需要将字符集设置为<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/charset-unicode.html">utf8mb4</a>。而PG就不用</p>
 <p>在MySQL中，对Unicode的支持，主要又如下几种字符集</p>
 <ul>

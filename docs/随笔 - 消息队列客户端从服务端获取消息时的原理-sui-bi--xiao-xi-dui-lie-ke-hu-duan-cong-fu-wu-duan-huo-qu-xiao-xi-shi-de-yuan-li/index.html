@@ -122,7 +122,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-count">77</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -218,6 +218,8 @@
 <p>同事：阿里云MNS获取消息的API使用起来不够方便，需要不断手动长轮询，看起来有点原始。<br>我：em。。。那其它消息队列使用什么方式？难道不是长轮询？</p>
 </blockquote>
 <p>在使用<a target="_blank" rel="noopener" href="https://help.aliyun.com/product/27412.html?spm=a2c4g.11186623.6.540.42f17e2f0aTqZl">阿里云MNS（Message Notification Service）</a>服务时，意识到其从服务端获取消息的方式是手动长轮询。写代码时可能会用到while-true看似危险的控制结构，而查看手册这也是官方推荐的使用方式。于是想找找其它消息队列拉取消息的原理。</p>
+<span id="more"></span>
+
 <h2 id="长轮询"><a href="#长轮询" class="headerlink" title="长轮询"></a>长轮询</h2><p>在此之前，我们首先做一些基础知识准备——什么是长轮询？<br>而要回答这个问题之前，我们需要区分：长连接、短链接、长轮询、短轮询。</p>
 <h3 id="长连接、短连接"><a href="#长连接、短连接" class="headerlink" title="长连接、短连接"></a>长连接、短连接</h3><p>长短连接，指的的TCP连接。当客户端通过socket连接到服务端时，就建立了一个TCP连接，当双方都不关闭该连接时，它就是长连接。而如果在一次请求-响应后，关闭了这个TCP连接，则称这个连接为短链接。</p>
 <p>在TCP协议中，并没有长连接、短连接的概念，这完全是根据使用方法区分。</p>

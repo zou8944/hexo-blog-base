@@ -119,7 +119,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-count">77</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -661,62 +661,14 @@
 <p>尽管Open API也提供了对Response Body的定义，允许用户描述响应的消息格式，但由于其不具有强制性——语法上可以不写，写了也不与实际返回内容有深入结合，因此无法验证真实API的响应是否符合预期，这也是从一开始不愿写响应体的原因。</p>
 <p>而关于验证API响应的重要性，是不言而喻的，截止目前，至少有两个时刻让我有了“如果能够在单元测试就验证响应体格式就好了”的想法。</p>
 <p>其一：今年上半年的一次down time，彼时是上线真米视频，其video id要做到可控（手动编写，数位字符串），而原逻辑使用了阿里云生成的video id——32位字符串。使用的方案是将手动生成的video id替换了阿里云video id，结果由于测试上的不周全导致所有视频的video id都被替换，对于那些没有分配手动id的音视频，其video id自然变成了null。而该问题因为机缘巧合对视频无影响，仅对音频产生影响。导致较长时间才发现。回首该问题，出在video id字段的格式上，如果有对响应体做约束——要求video id必须有值，且长度为32位，则该问题能够在单元测试就发现。</p>
-<p>其二：呼啦亲子项目已进行了多次迭代，大致如下</p>
-<ul>
-<li>初版</li>
-<li>增加了呼啦圈，其内容与文章接近，封面图需要记录宽高和媒体类型；为了保持格式一致，原本文章的封面格式也改为如此</li>
-<li>首页文章的封面的显示增加多图效果，其它页面保持原有格式不变，且多图效果要求类随机——即要对封面字段格式化输出</li>
-<li>创作者中心用于编辑上面多图的选项，因此获取的封面字段要原样输出</li>
-<li>每一次升级都要兼容之前的版本</li>
-</ul>
-<p>光看文章这一项的元数据，就有下面四种格式</p>
-<p>首页文章格式（其中coverSrc用于兼容最初版本、cover用于兼容次初版本API、covers+style是最新版的API需要的字段）</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;meta&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;各国孩子吃什么零食之法国篇&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;covers&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg?x-oss-process=image/auto-orient,1/interlace,1/resize,m_lfit,w_828/quality,q_90/format,jpg&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;width&quot;</span>: <span class="number">800</span>,</span><br><span class="line">            <span class="attr">&quot;height&quot;</span>: <span class="number">600</span>,</span><br><span class="line">            <span class="attr">&quot;mediaType&quot;</span>: <span class="string">&quot;image&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;coverSrc&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cover&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg?x-oss-process=image/auto-orient,1/interlace,1/resize,m_lfit,w_828/quality,q_90/format,jpg&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;width&quot;</span>: <span class="number">800</span>,</span><br><span class="line">        <span class="attr">&quot;height&quot;</span>: <span class="number">600</span>,</span><br><span class="line">        <span class="attr">&quot;mediaType&quot;</span>: <span class="string">&quot;image&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;style&quot;</span>: <span class="string">&quot;singleMinImage&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>普通文章列表页格式（多图显示仅对首页生效，普通列表页保持次初版本格式）</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;meta&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;各国孩子吃什么零食之法国篇&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;coverSrc&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cover&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg?x-oss-process=image/auto-orient,1/interlace,1/resize,m_lfit,w_828/quality,q_90/format,jpg&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;width&quot;</span>: <span class="number">800</span>,</span><br><span class="line">        <span class="attr">&quot;height&quot;</span>: <span class="number">600</span>,</span><br><span class="line">        <span class="attr">&quot;mediaType&quot;</span>: <span class="string">&quot;image&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>文章详情页格式（多出来了jsVersion和cssVersion）</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;meta&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;各国孩子吃什么零食之法国篇&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;coverSrc&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cover&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg?x-oss-process=image/auto-orient,1/interlace,1/resize,m_lfit,w_828/quality,q_90/format,jpg&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;width&quot;</span>: <span class="number">800</span>,</span><br><span class="line">        <span class="attr">&quot;height&quot;</span>: <span class="number">600</span>,</span><br><span class="line">        <span class="attr">&quot;mediaType&quot;</span>: <span class="string">&quot;image&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;jsVersion&quot;</span>: <span class="string">&quot;awbegiwaubegwug&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cssVersion&quot;</span>: <span class="string">&quot;weignwoegowibhg&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>创作者中心文章格式（多出来了jsVersion, cssVersion, coverDisplayCount(用于用户选择该文章显示几张图)）</p>
-<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;meta&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;各国孩子吃什么零食之法国篇&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;covers&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg?x-oss-process=image/auto-orient,1/interlace,1/resize,m_lfit,w_828/quality,q_90/format,jpg&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;width&quot;</span>: <span class="number">800</span>,</span><br><span class="line">            <span class="attr">&quot;height&quot;</span>: <span class="number">600</span>,</span><br><span class="line">            <span class="attr">&quot;mediaType&quot;</span>: <span class="string">&quot;image&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">    ],,</span><br><span class="line">    <span class="attr">&quot;jsVersion&quot;</span>: <span class="string">&quot;awbegiwaubegwug&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cssVersion&quot;</span>: <span class="string">&quot;weignwoegowibhg&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;coverDisplayCount&quot;</span>: <span class="number">1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>一个文章的mata就有四种格式，再加上呼啦圈的meta格式，如果需要同时对他们进行修改，一定会令人相当头大。此时如果能够在单元测试约束meta的格式，要求哪些字段是必须的，不需要哪些字段，则可大大减轻心智负担，对API质量也是一个保证。</p>
-<h2 id="可能的约束方法"><a href="#可能的约束方法" class="headerlink" title="可能的约束方法"></a>可能的约束方法</h2><p>那么有什么好的方法来做这件事呢？一般我们有几种方法</p>
-<p><strong>编程测试</strong></p>
-<p>最原始也是最直接的方法，直接编程验证每个字段的格式。这种方式砖量太大，如果要对拥有数十个字段的响应，针对每个字段验证类型、长度、多余字段等。如果多几个这样的接口，会头晕的。</p>
-<p>有针对此做一些优化的，即使用一些json validator进行验证，但这些工具的局限性太大，不能完全满足需求。</p>
-<p>使用编程测试最终的归宿很可能会变成只测试几个重要的字段的格式，但<strong>往往出问题的都是没有关注的字段，而重视的字段一般没那么容易出问题</strong>。</p>
-<p><strong>使用JSON Schema</strong></p>
-<p>铺垫那么多，就是想说JSON Schema。一个真正满足需求的东西。JSON Schema是一个规范，用于全方位描述json的格式，包括一个json中必须包含哪些字段、只能包含哪些字段、字段的类型、是否可为空、字段最大最小值、字段的长度等。如同我们使用Open API描述文件来描述我们接口的输入参数；使用JSON Schema描述API响应消息体并在单元测试进行验证。这样把控API输入和输出，在安全性上会有比较大的提升。</p>
-<h2 id="Json-Schema"><a href="#Json-Schema" class="headerlink" title="Json Schema"></a>Json Schema</h2><p>JSON Schema官网<a target="_blank" rel="noopener" href="https://json-schema.org/%EF%BC%8C%E7%9B%AE%E5%89%8D%E6%9C%80%E6%96%B0%E7%89%88%E6%98%AF2019-09">https://json-schema.org/，目前最新版是2019-09</a>.</p>
-<p>按照官网的话说，JSON Schema是一个用于描述和验证JSON文档的规范。</p>
-<p>使用JSON Schema时最大的问题是会把描述文件写得太大，尤其是使用JSON Schema生成工具(<a target="_blank" rel="noopener" href="https://jsonschema.net/home)%E6%97%B6%E3%80%82%E5%88%9A%E5%BC%80%E5%A7%8B%E5%B0%86/feeds%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%93%8D%E5%BA%94%E8%87%AA%E5%8A%A8%E7%94%9F%E6%88%90%E4%BA%86%E6%95%B0%E7%99%BE%E8%A1%8C%E6%8F%8F%E8%BF%B0%E6%96%87%E4%BB%B6%EF%BC%8C%E8%BF%99%E6%97%A0%E7%96%91%E6%98%AF%E4%B8%8D%E5%8F%AF%E6%8E%A5%E5%8F%97%E7%9A%84%E3%80%82">https://jsonschema.net/home)时。刚开始将/feeds接口的响应自动生成了数百行描述文件，这无疑是不可接受的。</a></p>
-<p>解决此问题的最好办法，以目前我的认知来看，是全部手写+定义复用的方式——仅增加自己需要的特性，再将公共结构抽取出来，在合适的地方使用$ref引用。具体可参考<a target="_blank" rel="noopener" href="https://json-schema.org/understanding-json-schema/structuring.html">如何定义一个复杂的schema</a>（该文章对应的书籍<a target="_blank" rel="noopener" href="https://json-schema.org/understanding-json-schema/index.html">Understanding Json Schema</a>也是学习JSON Schema的不错的资料）。</p>
-<p>同时，官网也列出了<a target="_blank" rel="noopener" href="https://json-schema.org/implementations.html">各语言下验证JSON Schema的库</a>，在Java下，我推荐<a target="_blank" rel="noopener" href="https://github.com/networknt/json-schema-validator">这个</a></p>
-<h2 id="使用JSON-Schema"><a href="#使用JSON-Schema" class="headerlink" title="使用JSON Schema"></a>使用JSON Schema</h2><p>我们举例如何使用JSON SChema验证/feeds接口文章类型的数据</p>
-<h3 id="定义Schema"><a href="#定义Schema" class="headerlink" title="定义Schema"></a>定义Schema</h3><h4 id="公共属性"><a href="#公共属性" class="headerlink" title="公共属性"></a>公共属性</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;definitions&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;nullableString&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;oneOf&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;null&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">      ]</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;encodedId&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;minLength&quot;</span>: <span class="number">20</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;mediaType&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;enum&quot;</span>: [</span><br><span class="line">        <span class="string">&quot;image&quot;</span>,</span><br><span class="line">        <span class="string">&quot;video&quot;</span></span><br><span class="line">      ]</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;stateEnum&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;enum&quot;</span>: [</span><br><span class="line">        <span class="string">&quot;normal&quot;</span>,</span><br><span class="line">        <span class="string">&quot;draft&quot;</span></span><br><span class="line">      ]</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;postFeedStyle&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;enum&quot;</span>: [</span><br><span class="line">        <span class="string">&quot;textOnly&quot;</span>,</span><br><span class="line">        <span class="string">&quot;singleMinImage&quot;</span>,</span><br><span class="line">        <span class="string">&quot;singleMaxImage&quot;</span>,</span><br><span class="line">        <span class="string">&quot;twoImages&quot;</span>,</span><br><span class="line">        <span class="string">&quot;threeImages&quot;</span></span><br><span class="line">      ]</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="作者"><a href="#作者" class="headerlink" title="作者"></a>作者</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;id&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/encodedId&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;nickname&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/nullableString&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;avatar&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/nullableString&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;id&quot;</span>,</span><br><span class="line">    <span class="string">&quot;nickname&quot;</span>,</span><br><span class="line">    <span class="string">&quot;avatar&quot;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;additionalProperties&quot;</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="媒体类型"><a href="#媒体类型" class="headerlink" title="媒体类型"></a>媒体类型</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;url&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/nullableString&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;width&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;integer&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;height&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;integer&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;mediaType&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/mediaType&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;url&quot;</span>,</span><br><span class="line">    <span class="string">&quot;width&quot;</span>,</span><br><span class="line">    <span class="string">&quot;height&quot;</span>,</span><br><span class="line">    <span class="string">&quot;mediaType&quot;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;additionalProperties&quot;</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="标签类型"><a href="#标签类型" class="headerlink" title="标签类型"></a>标签类型</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;id&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/encodedId&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;name&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;hotted&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;boolean&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;id&quot;</span>,</span><br><span class="line">    <span class="string">&quot;name&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hotted&quot;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;additionalProperties&quot;</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="元数据"><a href="#元数据" class="headerlink" title="元数据"></a>元数据</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;title&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;coverSrc&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="string">&quot;为了兼容最初的API而留存的字段&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;cover&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../base/media.json&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="string">&quot;为了兼容V2.0前期而存在的字段&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;covers&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;array&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="string">&quot;目前线上版本在用的字段&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;items&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../base/media.json&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">      ]</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;style&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../../public-definitions.json#/definitions/postFeedStyle&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;title&quot;</span>,</span><br><span class="line">    <span class="string">&quot;cover&quot;</span>,</span><br><span class="line">    <span class="string">&quot;covers&quot;</span>,</span><br><span class="line">    <span class="string">&quot;coverSrc&quot;</span>,</span><br><span class="line">    <span class="string">&quot;style&quot;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;additionalProperties&quot;</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h4 id="汇总成-feeds接口返回的数据"><a href="#汇总成-feeds接口返回的数据" class="headerlink" title="汇总成/feeds接口返回的数据"></a>汇总成/feeds接口返回的数据</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;definitions&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;item&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;allOf&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;base/public-properties.json&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">            <span class="attr">&quot;meta&quot;</span>: &#123;</span><br><span class="line">              <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;base/meta-feed.json&quot;</span></span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="attr">&quot;author&quot;</span>: &#123;</span><br><span class="line">              <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../base/author.json&quot;</span></span><br><span class="line">            &#125;</span><br><span class="line">          &#125;,</span><br><span class="line">          <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">            <span class="string">&quot;meta&quot;</span>,</span><br><span class="line">            <span class="string">&quot;author&quot;</span></span><br><span class="line">          ]</span><br><span class="line">        &#125;</span><br><span class="line">      ]</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;list&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;array&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;items&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;#/definitions/item&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">      ]</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;list&quot;</span></span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>可以看到，最终定义的文章schema也没有很长，而前面的公共属性、作者等提取出来的结构由于会被众多其它定义使用，因此总体长度是可以接受的。</p>
-<h3 id="使用schema验证响应体"><a href="#使用schema验证响应体" class="headerlink" title="使用schema验证响应体"></a>使用schema验证响应体</h3><p>我们使用json-schema-validator库加载定义好的schema来验证接口响应。</p>
-<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> WebClient.<span class="title">validateAPIResponseSchema</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">  path: <span class="type">String</span>, params: <span class="type">Map</span>&lt;<span class="type">String</span>, String&gt; = mapOf()</span></span>, schemaPath: String</span><br><span class="line">) &#123;</span><br><span class="line">  <span class="keyword">val</span> request = <span class="keyword">this</span></span><br><span class="line">    .<span class="keyword">get</span>(path)</span><br><span class="line">    .host(serverHost)</span><br><span class="line">    .port(serverPort)</span><br><span class="line">    .putHeader(<span class="string">&quot;token&quot;</span>, testToken)</span><br><span class="line"></span><br><span class="line">  params.forEach &#123; (k, v) -&gt; request.addQueryParam(k, v) &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">val</span> response = request.<span class="keyword">expect</span>(ResponsePredicate.JSON)</span><br><span class="line">    .<span class="keyword">expect</span>(ResponsePredicate.SC_OK)</span><br><span class="line">    .sendAwait().bodyAsJsonObject()</span><br><span class="line"></span><br><span class="line">  <span class="keyword">val</span> schemaURI = File(schemaPath).toURI()</span><br><span class="line">  <span class="keyword">val</span> schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7).getSchema(schemaURI)</span><br><span class="line">  <span class="keyword">val</span> node = withContext(Dispatchers.IO) &#123; ObjectMapper().readTree(response.encode()) &#125;</span><br><span class="line">  schema.assertLegal(node)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">testGetPostFeeds</span><span class="params">(vertx: <span class="type">Vertx</span>, tc: <span class="type">VertxTestContext</span>)</span></span> &#123;</span><br><span class="line">    launch5e(tc) &#123;</span><br><span class="line">      webClient.validateAPIResponseSchema(</span><br><span class="line">        path = <span class="string">&quot;/feeds&quot;</span>,</span><br><span class="line">        params = mapOf(<span class="string">&quot;content_type&quot;</span> to <span class="string">&quot;post&quot;</span>, <span class="string">&quot;limit&quot;</span> to <span class="string">&quot;20&quot;</span>),</span><br><span class="line">        schemaPath = <span class="string">&quot;src/main/resources/jsonschema/content/post/profile-feed.json&quot;</span></span><br><span class="line">      )</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
-
-<p>运行测试函数testGetPostFeeds，如果验证失败，可得到具体错误原因，方便排查。</p>
-<p>至此，使用JSON Schema进行API响应的验证就完成了。只要描述文件不动，就能及时发现响应格式上的错误，保证了接口的正确性。</p>
-<h2 id="Open-API与Json-Schema"><a href="#Open-API与Json-Schema" class="headerlink" title="Open API与Json Schema"></a>Open API与Json Schema</h2><p>不止一次前端或客户端的同志直接或间接要求我们写Response格式描述，但由于写起来耗时且该描述与实际响应没有强耦合关系，改动很可能不及时，带来很多问题。如果能够将上面定义的JSON Schema描述文件应用到Open API描述文件中，岂不美哉。</p>
-<p>然而现实是残酷的，Swagger确实<a target="_blank" rel="noopener" href="https://swagger.io/docs/specification/data-models/keywords/">支持JSON Schema</a>，但支持的是个子集，因此无法直接使用上面定义的描述文件。美梦落空。。。淡淡的忧桑。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E4%BD%BF%E7%94%A8JSON%20Schema%E9%AA%8C%E8%AF%81API%E5%93%8D%E5%BA%94-shi-yong-jsonschema-yan-zheng-api-xiang-ying/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -790,33 +742,14 @@
 <p>同事：阿里云MNS获取消息的API使用起来不够方便，需要不断手动长轮询，看起来有点原始。<br>我：em。。。那其它消息队列使用什么方式？难道不是长轮询？</p>
 </blockquote>
 <p>在使用<a target="_blank" rel="noopener" href="https://help.aliyun.com/product/27412.html?spm=a2c4g.11186623.6.540.42f17e2f0aTqZl">阿里云MNS（Message Notification Service）</a>服务时，意识到其从服务端获取消息的方式是手动长轮询。写代码时可能会用到while-true看似危险的控制结构，而查看手册这也是官方推荐的使用方式。于是想找找其它消息队列拉取消息的原理。</p>
-<h2 id="长轮询"><a href="#长轮询" class="headerlink" title="长轮询"></a>长轮询</h2><p>在此之前，我们首先做一些基础知识准备——什么是长轮询？<br>而要回答这个问题之前，我们需要区分：长连接、短链接、长轮询、短轮询。</p>
-<h3 id="长连接、短连接"><a href="#长连接、短连接" class="headerlink" title="长连接、短连接"></a>长连接、短连接</h3><p>长短连接，指的的TCP连接。当客户端通过socket连接到服务端时，就建立了一个TCP连接，当双方都不关闭该连接时，它就是长连接。而如果在一次请求-响应后，关闭了这个TCP连接，则称这个连接为短链接。</p>
-<p>在TCP协议中，并没有长连接、短连接的概念，这完全是根据使用方法区分。</p>
-<p>需要注意TCP长连接会因为网络波动、操作系统环境等问题出现连接丢失的问题，需要进行额外的连接保活工作，如发送定时心跳（心跳保活机制在很多场景下都有使用，比如Zookeeper；比如AMQP）。</p>
-<h3 id="长轮询、短轮询"><a href="#长轮询、短轮询" class="headerlink" title="长轮询、短轮询"></a>长轮询、短轮询</h3><p>轮询，即客户端与客户端不断重复 请求数据-消费数据 这一过程。有两种策略</p>
-<ul>
-<li>客户端请求，服务端有数据则返回数据，没有数据则返回空。</li>
-<li>客户端请求，服务端有数据则返回数据，没有数据则将连接保持，等有数据时再返回。<h3 id="HTTP的keep-alive"><a href="#HTTP的keep-alive" class="headerlink" title="HTTP的keep-alive"></a>HTTP的keep-alive</h3>TCP是传输层协议，而HTTP是应用层协议。而头部Connection: Keep-Alive表示维持TCP连接，即我们常说的HTTP长连接。<br>Keep-Alive的工作原理如下：</li>
-<li>客户端请求携带Connection: Keep-Alive头部，服务端接收后，会在响应该条HTTP请求后继续保持TCP连接；否则关闭。</li>
-<li>客户端在收到的服务端响应后，如果有携带Connection: Keep-Alive头部，则会使用同一个TCP连接发送下一个HTTP请求。</li>
-</ul>
-<p>此外，Keep-Alive还可以设置timeout参数，用于指定预期的连接超时时间。</p>
-<p>注意HTTP协议本身是一个请求-响应协议，无状态，即一个事务在请求-响应后就结束了，再次请求就是一个新事务。而HTTP协议中定义了几种HTTP连接：</p>
-<ul>
-<li>常规连接：即请求响应后即关闭TCP连接。</li>
-<li>持久连接（又称长连接）：即可以传输多个事务的连接，传输后不关闭TCP连接，下次传输继续使用。对应Keep-Alive。</li>
-<li>管道式连接：即在一个TCP连接上一次发送多个事务的请求，再依次接收多个事务的请求。传统的是一个事务的请求-响应完成后再进行下一个事务。</li>
-</ul>
-<h2 id="阿里云MNS"><a href="#阿里云MNS" class="headerlink" title="阿里云MNS"></a>阿里云MNS</h2><p>阿里云MNS的数据传输走的是HTTP协议，意味着无论是点对点、还是发布-订阅模式，都要通过HTTP来进行。这就导致了文章一开始所说的使用方式的问题，由于HTTP协议本身无状态，只能是客户端请求-服务端响应，客户端拉取数据时只能采用轮询的方式。而为了拉取操作过于频繁带来的损失，采用的长轮询：客户端请求，服务端没有消息时，挂起该连接，等到有消息时再响应。</p>
-<p>也许你很好奇，如果走HTTP协议，那客户端如何订阅主题，即客户端如何被动收到消息？答案是设置回调地址；或将主题消息推送到另一个队列，然后长轮询该队列。</p>
-<p>总之阿里云MNS获取消息的方式因为其采用HTTP传输协议而受到了限制。不过这也有一个好处，就是<strong>任何语言都能使用MNS服务</strong>，甚至不需要SDK，手动调起HTTP接口即可。</p>
-<h2 id="RabbitMQ"><a href="#RabbitMQ" class="headerlink" title="RabbitMQ"></a>RabbitMQ</h2><p>RabbitMQ走的是AMQP协议，它和HTTP一样，也是应用层协议，构建于TCP之上。与HTTP不同的是，它专门设计用于消息传输。客户端和服务端采用TCP长连接，前面说过，只要建立了TCP连接，数据就能双向传输。这样就能做到客户端不需要主动轮询，服务端推送消息到客户端的效果。使用起来方便很多。对AMQP协议，就是Basic.Consume。</p>
-<h2 id="WebSocket"><a href="#WebSocket" class="headerlink" title="WebSocket"></a>WebSocket</h2><p>既然说到了AMQP的双向传输功能，就联想到了WebSocket，它是如何实现双向传输的呢？在翻看一些资料后，发现它也是建立了一个持久的TCP连接，利用TCP双向传输的特性，实现服务端的消息推送。</p>
-<p>通常说WebSocket时，是对比HTTP协议，HTTP协议无状态，事务间隔离，建立在请求-响应这样的被动机制下，在应用上无法实现服务端主动推送消息的场景。WebSocket的出现就是为了解决该问题，</p>
-<p>如果把WebSocket和AMQP进行对比，在服务端主动发送消息到客户端这一点来说，二者原理一致。甚至可以说WebSocket是AMQP的功能子集。当然也不能这么说，毕竟他们目标不同，WebSocket聚焦于推送消息，而AMQP聚焦于消息模型的抽象，顺带解决消息传输的问题。且就消息推送这一点来说，尽管原理一致，实现方式可能也是不同的。</p>
-<h2 id="还可深入探索的点"><a href="#还可深入探索的点" class="headerlink" title="还可深入探索的点"></a>还可深入探索的点</h2><p>当然消息队列除了上述两个，还有很多其它的，比如流行的Kafka、RocketMQ、ActiveMQ等。由于他们并不是基于AMQP协议，因此具体方式还不知道。不过我想，传输层都是TCP，实现双向传输的机制应该逃不过TCP长连接的。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E9%9A%8F%E7%AC%94%20-%20%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%BB%8E%E6%9C%8D%E5%8A%A1%E7%AB%AF%E8%8E%B7%E5%8F%96%E6%B6%88%E6%81%AF%E6%97%B6%E7%9A%84%E5%8E%9F%E7%90%86-sui-bi--xiao-xi-dui-lie-ke-hu-duan-cong-fu-wu-duan-huo-qu-xiao-xi-shi-de-yuan-li/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -887,23 +820,14 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="破掉的FLAG"><a href="#破掉的FLAG" class="headerlink" title="破掉的FLAG"></a>破掉的FLAG</h2><p>2019年8月11日，发布博文《我有点想要写博客了》，总结了之前一段时间的个人状态，并立下从那以后每月至少两篇博文的FLAG。如今一年过去了，不出所料，FLAG倒了。这一年间按计划应该又至少24篇新发布的文章，实际数量——20篇。且其中质量较好的不到10篇。考虑到立FLAG只有几个月里写的挺积极，则近几个月如果不是公司的一月一篇的硬性博客任务，恐怕会是触目惊心的0篇文章。</p>
-<h2 id="冷启动"><a href="#冷启动" class="headerlink" title="冷启动"></a>冷启动</h2><h3 id="时间会消磨提笔的勇气"><a href="#时间会消磨提笔的勇气" class="headerlink" title="时间会消磨提笔的勇气"></a>时间会消磨提笔的勇气</h3><p>一件事，如果长时间不做，想再开始，难度会成倍上涨。这里说的难度来自各方面：心理的、生理的；自身因素、外界因素。这种现象在生活中大量存在：如果长时间不与人交流，突然和别人说话时会显得咬字不清或语无伦次；长时间不从事某项运动，想要再次开始并达到之前的运动水准需要较长时间；大脑长时间处于放空状态，反应会变慢。这种现象，我愿称之为<strong>冷启动</strong>。俗话说可以是刀久了不用会生锈。</p>
-<p>就写博客而言，冷启动的阻力主要来自于思维和身体的惰性、文笔的生疏等方面，更重要的是会消磨掉你想要分享东西给别人的热情和勇气。</p>
-<p>写代码也一样，作为一个程序员，如果长时间不写代码，对常用工具的生疏感、对自身的焦虑都会加深不自信，形成恶性循环。</p>
-<h3 id="冷启动优化-预热"><a href="#冷启动优化-预热" class="headerlink" title="冷启动优化 - 预热"></a>冷启动优化 - 预热</h3><p>技术上讲，冷启动常用的优化方式是预热。即在刀生锈之前再磨一磨。曾遇到某云服务厂商的函数计算服务长时间不调用会因冷启动时间过长而导致响应超时，解决方式就是预热，因此对此音箱深刻。</p>
-<p>写博客的预热方式，就是——常写。</p>
-<h2 id="随笔和正文"><a href="#随笔和正文" class="headerlink" title="随笔和正文"></a>随笔和正文</h2><h3 id="预热的成本和价值"><a href="#预热的成本和价值" class="headerlink" title="预热的成本和价值"></a>预热的成本和价值</h3><p>预热的成本不可太高，过高的成本会占用过多资源，相对地，正式任务的资源会减少；且对现实意义来说，预热这一操作必须具有一定的价值，不能为了预热而预热。比如用于保持状态（预热）的博客必须具有价值，不能太水。</p>
-<h3 id="随笔和正文-1"><a href="#随笔和正文-1" class="headerlink" title="随笔和正文"></a>随笔和正文</h3><p>目前为止，我们确认了两个指导方针</p>
-<ul>
-<li>博客要常写，否则会手生</li>
-<li>常写的博客成本不能太高，必须与价值均衡</li>
-</ul>
-<p>这为随笔出现在我的博客列表中提供了正当性。按照过去一年的经验，要想完成一篇知识涵盖相对完整、有稍许深度的博文，往往需要好几个工作日的下班时间来搜集资料，再花一整天时间进行资料整理、知识点提炼和总结，最后再花半天时间进行文本校对、版式重排等。可以说相当耗时。</p>
-<p>比如《可能是最全的Kotlin协程讲解》这篇文章零零总总耗费了一周的业余时间查阅整理资料，一整个周六的时间提炼和编写；《PostgreSQL - 一文看懂explain》花费了一周时间看完了整本书，再花费了两天时间整理和编写。</p>
-<p>如上列举的两篇文章，我们称之为正文，成本非常高，当然不能作为常写的目标，毕竟我还需要学习和工作。于是我需要随笔的加入。</p>
-<p>我这样定义随笔：日常学习中的某些知识点提取出来的，有一定分享价值的短篇文章。不会过于随便，又不会过于耗时。非常适合用来预热。</p>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>写了一个小时，总结就是，<strong>我要些随笔了</strong>。</p>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E5%8C%BA%E5%88%86%E9%9A%8F%E7%AC%94%E5%92%8C%E6%AD%A3%E6%96%87-qu-fen-sui-bi-he-zheng-wen/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1251,60 +1175,16 @@
     
     <div class="post-body" itemprop="articleBody">
           <h2 id="与MySQL相比，有何优势"><a href="#与MySQL相比，有何优势" class="headerlink" title="与MySQL相比，有何优势"></a>与MySQL相比，有何优势</h2><ol>
-<li><p>SQL标准的null判断用is null，而不是=null。PG可以设置transform_null_equals把=null翻译成is null</p>
-</li>
-<li><p>MySQL显示emojji时，需要将字符集设置为<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/charset-unicode.html">utf8mb4</a>。而PG就不用</p>
-<p>在MySQL中，对Unicode的支持，主要又如下几种字符集</p>
-<ul>
-<li>utf8mb4</li>
-<li>utf8mb3</li>
-<li>utf8</li>
-<li>ucs2</li>
-<li>utf16</li>
-<li>utf16le</li>
-<li>utf32</li>
-</ul>
-<p>这里我们只关心前三个，其中utf8mb4表示使用1-4字节来描述一个Unicode字符；utf8mb3表示使用1-3字节来描述一个Unicode字符。而utf8是utf8mb3的别名。</p>
-<p>而Unicode字符分两种</p>
-<ul>
-<li><p>基本的BMP字符</p>
-<p>码点位于U+0000 到 U+FFFF之间；能够使用1-3个字节变长表示；也能使用2字节定长表示；它之间包含了世界上的绝大多数语言。</p>
-</li>
-<li><p>BMP字符之外的附加字符</p>
-<p>码点在U+10000 到 U+10FFFF之间；需要最多四个字节表示</p>
-</li>
-</ul>
-<p>emojji字符也在unicode中，2010年Unicode开始为emojji分配码点。而它就在基础的BMP码点之外。因此utf8mb3是无法表示emojji字符的。</p>
-<p>那PostgreSQL是如何做的呢？</p>
-<p>依据<a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/10/multibyte.html">手册</a>，PostgreSQL的text能够存各种类型的字符集，其中针对Unicode的UTF8，是1-4字节变长，因此PG天然就能存emojji字符。而PG服务端和客户端具体支持的其他字符集类型，还是参见手册。</p>
-</li>
+<li>SQL标准的null判断用is null，而不是=null。PG可以设置transform_null_equals把=null翻译成is null</li>
 </ol>
-<h2 id="与其他关系型数据库，有何优势"><a href="#与其他关系型数据库，有何优势" class="headerlink" title="与其他关系型数据库，有何优势"></a>与其他关系型数据库，有何优势</h2><ol>
-<li>自带NoSQL属性：可以存储array和json，甚至可以在array和json上建立索引，他的jsonb的性能已经比MongoDB的BSON性能要好了。</li>
-<li>自带全文搜索功能，不过中文的话就要额外安装中文分词插件。</li>
-<li>他有GIS，即地理信息扩展，可以非常方便地进行地理位置计算，可做地图服务器。这是PG的杀手级功能。</li>
-<li>能够高效地处理图结构。</li>
-<li>能够当作时序数据库</li>
-</ol>
-<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>PostgreSQL功能强大，基本日常用到的需求它都有了，并且做的都不错。它是一个全栈数据库。</p>
-<p>国内比较有名的使用PG的公司是探探。百万日活、上百TB数据量，数据组件还只用了PG。直到千万日活才引入独立的数据仓库。</p>
-<p><strong>OLTP</strong>：事务处理是PostgreSQL的本行</p>
-<p><strong>OLAP</strong>：citus分布式插件，ANSI SQL兼容，窗口函数，CTE，CUBE等高级分析功能，任意语言写UDF</p>
-<p><strong>流处理</strong>：PipelineDB扩展，Notify-Listen，物化视图，规则系统，灵活的存储过程与函数编写</p>
-<p><strong>时序数据</strong>：timescaledb时序数据库插件，分区表，BRIN索引</p>
-<p><strong>空间数据</strong>：PostGIS扩展（杀手锏），内建的几何类型支持，GiST索引。</p>
-<p><strong>搜索索引</strong>：全文搜索索引足以应对简单场景；丰富的索引类型，支持函数索引，条件索引</p>
-<p><strong>NoSQL</strong>：JSON，JSONB，XML，HStore原生支持，至NoSQL数据库的外部数据包装器</p>
-<p><strong>数据仓库</strong>：能平滑迁移至同属Pg生态的GreenPlum，DeepGreen，HAWK等，使用FDW进行ETL</p>
-<p><strong>图数据</strong>：递归查询</p>
-<p><strong>缓存</strong>：物化视图</p>
-<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
-<li><a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/charset-unicode.html">MySQL手册</a></li>
-<li><a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/10/multibyte.html">PostgreSQL手册</a></li>
-<li><a target="_blank" rel="noopener" href="http://www.postgres.cn/downfiles/pg2016conf_day1_s1_pm4.pdf">PostgreSQL和探探见证4亿次心动</a></li>
-<li><a target="_blank" rel="noopener" href="https://developer.aliyun.com/article/60027">https://developer.aliyun.com/article/60027</a></li>
-</ol>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/%E9%9A%8F%E7%AC%94%20-%20%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E4%BD%BF%E7%94%A8PostgreSQL%E8%80%8C%E4%B8%8D%E7%94%A8MySQL-sui-bi--wei-shen-me-wo-men-shi-yong-postgresql-er-bu-yong-mysql/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -1855,78 +1735,6 @@
   
 
   <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="https://zou8944.com/%E9%82%A3%E4%BA%9B%E9%80%92%E5%BD%92%E7%9A%84%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%9C%AF%E8%AF%AD-%E9%82%A3%E4%BA%9B%E9%80%92%E5%BD%92%E7%9A%84%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%9C%AF%E8%AF%AD/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="果冻 | Jelly">
-      <meta itemprop="description" content="Beat Jelly; Hit Jelly; Kill Jelly.">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="果冻 | Jelly">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/%E9%82%A3%E4%BA%9B%E9%80%92%E5%BD%92%E7%9A%84%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%9C%AF%E8%AF%AD-%E9%82%A3%E4%BA%9B%E9%80%92%E5%BD%92%E7%9A%84%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%9C%AF%E8%AF%AD/" class="post-title-link" itemprop="url">那些递归的计算机术语</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">发表于</span>
-
-      <time title="创建时间：2020-03-15 20:12:13" itemprop="dateCreated datePublished" datetime="2020-03-15T20:12:13+08:00">2020-03-15</time>
-    </span>
-      <span class="post-meta-item">
-        <span class="post-meta-item-icon">
-          <i class="far fa-calendar-check"></i>
-        </span>
-        <span class="post-meta-item-text">更新于</span>
-        <time title="修改时间：2021-02-16 23:22:30" itemprop="dateModified" datetime="2021-02-16T23:22:30+08:00">2021-02-16</time>
-      </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>GNU<br>GNOME<br>GTK<br>CURL<br>WINE<br>YAML<br>RPM<br>BING<br>PNG</p>
-<p>参考文档：<a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Recursive_acronym#cite_note-1">https://en.wikipedia.org/wiki/Recursive_acronym#cite_note-1</a></p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
     <link itemprop="mainEntityOfPage" href="https://zou8944.com/Vert.x%20-%20Web%20API%20Contract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86-vertx-webapicontract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -1991,6 +1799,93 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/Vert.x%20-%20Web%20API%20Contract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86-vertx-webapicontract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+        <div class="post-eof"></div>
+      
+    </footer>
+  </article>
+</div>
+
+
+
+
+    
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/Python%20-%20%E6%97%A5%E5%BF%97-python-%E6%97%A5%E5%BF%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="果冻 | Jelly">
+      <meta itemprop="description" content="Beat Jelly; Hit Jelly; Kill Jelly.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="果冻 | Jelly">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          <a href="/Python%20-%20%E6%97%A5%E5%BF%97-python-%E6%97%A5%E5%BF%97/" class="post-title-link" itemprop="url">Python - 日志</a>
+        </h2>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-03-07 16:16:23" itemprop="dateCreated datePublished" datetime="2020-03-07T16:16:23+08:00">2020-03-07</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-02-16 23:22:51" itemprop="dateModified" datetime="2021-02-16T23:22:51+08:00">2021-02-16</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/Python/" itemprop="url" rel="index"><span itemprop="name">Python</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+          <p>我的Python是从使用开始的，因此很多Python基础理论并不是很足，之前在使用Celery时，因为日志无法正常打印而排查了一天。所以，为了节省时间，同时知其所以然，是时候系统梳理一下Python中日志的使用方法了。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/Python%20-%20%E6%97%A5%E5%BF%97-python-%E6%97%A5%E5%BF%97/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>

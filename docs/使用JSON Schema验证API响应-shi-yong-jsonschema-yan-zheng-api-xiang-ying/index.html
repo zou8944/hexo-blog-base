@@ -122,7 +122,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-count">77</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -218,6 +218,8 @@
 <p>尽管Open API也提供了对Response Body的定义，允许用户描述响应的消息格式，但由于其不具有强制性——语法上可以不写，写了也不与实际返回内容有深入结合，因此无法验证真实API的响应是否符合预期，这也是从一开始不愿写响应体的原因。</p>
 <p>而关于验证API响应的重要性，是不言而喻的，截止目前，至少有两个时刻让我有了“如果能够在单元测试就验证响应体格式就好了”的想法。</p>
 <p>其一：今年上半年的一次down time，彼时是上线真米视频，其video id要做到可控（手动编写，数位字符串），而原逻辑使用了阿里云生成的video id——32位字符串。使用的方案是将手动生成的video id替换了阿里云video id，结果由于测试上的不周全导致所有视频的video id都被替换，对于那些没有分配手动id的音视频，其video id自然变成了null。而该问题因为机缘巧合对视频无影响，仅对音频产生影响。导致较长时间才发现。回首该问题，出在video id字段的格式上，如果有对响应体做约束——要求video id必须有值，且长度为32位，则该问题能够在单元测试就发现。</p>
+<span id="more"></span>
+
 <p>其二：呼啦亲子项目已进行了多次迭代，大致如下</p>
 <ul>
 <li>初版</li>

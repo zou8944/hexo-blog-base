@@ -20,12 +20,12 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"zou8944.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="我会写Java反射，我知道反射是用来获取、改变程序运行时状态的方式，通过反射API我们能够获取类对象、类的方法、成员变量、注解等。 我不会写Java反射，我不知道Type和Class有啥关系，ParameteredType、TypeVariable呢？ 我会Java反射吗？不，我不会。 反射是什么？反射是什么，镜子里看自己。往小了说，就是Java提供的一组能够在运行时查看和修改对象信息的API；往">
+<meta name="description" content="我会写Java反射，我知道反射是用来获取、改变程序运行时状态的方式，通过反射API我们能够获取类对象、类的方法、成员变量、注解等。 我不会写Java反射，我不知道Type和Class有啥关系，ParameteredType、TypeVariable呢？ 我会Java反射吗？不，我不会。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="我不会Java反射">
 <meta property="og:url" content="https://zou8944.com/%E6%88%91%E4%B8%8D%E4%BC%9AJava%E5%8F%8D%E5%B0%84-wo-bu-hui-java-fan-she/index.html">
 <meta property="og:site_name" content="果冻 | Jelly">
-<meta property="og:description" content="我会写Java反射，我知道反射是用来获取、改变程序运行时状态的方式，通过反射API我们能够获取类对象、类的方法、成员变量、注解等。 我不会写Java反射，我不知道Type和Class有啥关系，ParameteredType、TypeVariable呢？ 我会Java反射吗？不，我不会。 反射是什么？反射是什么，镜子里看自己。往小了说，就是Java提供的一组能够在运行时查看和修改对象信息的API；往">
+<meta property="og:description" content="我会写Java反射，我知道反射是用来获取、改变程序运行时状态的方式，通过反射API我们能够获取类对象、类的方法、成员变量、注解等。 我不会写Java反射，我不知道Type和Class有啥关系，ParameteredType、TypeVariable呢？ 我会Java反射吗？不，我不会。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021122902091.png">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021125002864.png">
@@ -131,7 +131,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-count">77</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -228,6 +228,8 @@
         <p>我会写Java反射，我知道反射是用来获取、改变程序运行时状态的方式，通过反射API我们能够获取类对象、类的方法、成员变量、注解等。</p>
 <p>我不会写Java反射，我不知道Type和Class有啥关系，ParameteredType、TypeVariable呢？</p>
 <p>我会Java反射吗？不，我不会。</p>
+<span id="more"></span>
+
 <h2 id="反射是什么？"><a href="#反射是什么？" class="headerlink" title="反射是什么？"></a>反射是什么？</h2><p>反射是什么，镜子里看自己。往小了说，就是Java提供的一组能够在运行时查看和修改对象信息的API；往大了说，从计算机专业来看，是编程语言提供的运行时动态更新自身状态的能力，Java的反射只是其中的一种。Go、C#、JS等都实现了自己的反射机制。</p>
 <p>吐槽”反射“这个翻译，英文”Reflection“、”Reflective“。说这个翻译名不好吧，它是直译，且一定程度能够反应其含义：程序能够看到本身；但说他准确也并不能让人信服，翻译成内省个人认为会更好一点，但无奈Java中内省是另外一套API。</p>
 <p>照我的意思，就别翻译了，就Reflection和Instropection就好，英文原意，哪怕你不能完全理解，总比被翻译曲解来得好。</p>
