@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"zou8944.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="与MySQL相比，有何优势 SQL标准的null判断用is null，而不是&#x3D;null。PG可以设置transform_null_equals把&#x3D;null翻译成is null  MySQL显示emojji时，需要将字符集设置为utf8mb4。而PG就不用 在MySQL中，对Unicode的支持，主要又如下几种字符集  utf8mb4 utf8mb3 utf8 ucs2 utf16 utf16le">
+<meta property="og:type" content="article">
+<meta property="og:title" content="随笔 - 为什么我们使用PostgreSQL而不用MySQL">
+<meta property="og:url" content="https://zou8944.com/%E9%9A%8F%E7%AC%94%20-%20%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E4%BD%BF%E7%94%A8PostgreSQL%E8%80%8C%E4%B8%8D%E7%94%A8MySQL-sui-bi--wei-shen-me-wo-men-shi-yong-postgresql-er-bu-yong-mysql/index.html">
+<meta property="og:site_name" content="果冻 | Jelly">
+<meta property="og:description" content="与MySQL相比，有何优势 SQL标准的null判断用is null，而不是&#x3D;null。PG可以设置transform_null_equals把&#x3D;null翻译成is null  MySQL显示emojji时，需要将字符集设置为utf8mb4。而PG就不用 在MySQL中，对Unicode的支持，主要又如下几种字符集  utf8mb4 utf8mb3 utf8 ucs2 utf16 utf16le">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-07-07T15:45:29.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:45:53.959Z">
+<meta property="article:author" content="果冻 | Jelly">
+<meta property="article:tag" content="果冻 博客">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="https://zou8944.com/%E9%9A%8F%E7%AC%94%20-%20%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E4%BD%BF%E7%94%A8PostgreSQL%E8%80%8C%E4%B8%8D%E7%94%A8MySQL-sui-bi--wei-shen-me-wo-men-shi-yong-postgresql-er-bu-yong-mysql/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://zou8944.com/%E9%9A%8F%E7%AC%94%20-%20%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E4%BD%BF%E7%94%A8PostgreSQL%E8%80%8C%E4%B8%8D%E7%94%A8MySQL-sui-bi--wei-shen-me-wo-men-shi-yong-postgresql-er-bu-yong-mysql/","path":"随笔 - 为什么我们使用PostgreSQL而不用MySQL-sui-bi--wei-shen-me-wo-men-shi-yong-postgresql-er-bu-yong-mysql/","title":"随笔 - 为什么我们使用PostgreSQL而不用MySQL"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>随笔 - 为什么我们使用PostgreSQL而不用MySQL | 果冻 | Jelly</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">果冻 | Jelly</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8EMySQL%E7%9B%B8%E6%AF%94%EF%BC%8C%E6%9C%89%E4%BD%95%E4%BC%98%E5%8A%BF"><span class="nav-number">1.</span> <span class="nav-text">与MySQL相比，有何优势</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8E%E5%85%B6%E4%BB%96%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93%EF%BC%8C%E6%9C%89%E4%BD%95%E4%BC%98%E5%8A%BF"><span class="nav-number">2.</span> <span class="nav-text">与其他关系型数据库，有何优势</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BB%93%E5%B0%BE"><span class="nav-number">3.</span> <span class="nav-text">结尾</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">果冻 | Jelly</p>
+  <div class="site-description" itemprop="description">Beat Jelly; Hit Jelly; Kill Jelly.</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/%E9%9A%8F%E7%AC%94%20-%20%E4%B8%BA%E4%BB%80%E4%B9%88%E6%88%91%E4%BB%AC%E4%BD%BF%E7%94%A8PostgreSQL%E8%80%8C%E4%B8%8D%E7%94%A8MySQL-sui-bi--wei-shen-me-wo-men-shi-yong-postgresql-er-bu-yong-mysql/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="果冻 | Jelly">
+      <meta itemprop="description" content="Beat Jelly; Hit Jelly; Kill Jelly.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="果冻 | Jelly">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          随笔 - 为什么我们使用PostgreSQL而不用MySQL
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-07-07 23:45:29" itemprop="dateCreated datePublished" datetime="2020-07-07T23:45:29+08:00">2020-07-07</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-02-16 23:45:53" itemprop="dateModified" datetime="2021-02-16T23:45:53+08:00">2021-02-16</time>
+      </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <h2 id="与MySQL相比，有何优势"><a href="#与MySQL相比，有何优势" class="headerlink" title="与MySQL相比，有何优势"></a>与MySQL相比，有何优势</h2><ol>
+<li><p>SQL标准的null判断用is null，而不是=null。PG可以设置transform_null_equals把=null翻译成is null</p>
+</li>
+<li><p>MySQL显示emojji时，需要将字符集设置为<a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/charset-unicode.html">utf8mb4</a>。而PG就不用</p>
+<p>在MySQL中，对Unicode的支持，主要又如下几种字符集</p>
+<ul>
+<li>utf8mb4</li>
+<li>utf8mb3</li>
+<li>utf8</li>
+<li>ucs2</li>
+<li>utf16</li>
+<li>utf16le</li>
+<li>utf32</li>
+</ul>
+<p>这里我们只关心前三个，其中utf8mb4表示使用1-4字节来描述一个Unicode字符；utf8mb3表示使用1-3字节来描述一个Unicode字符。而utf8是utf8mb3的别名。</p>
+<p>而Unicode字符分两种</p>
+<ul>
+<li><p>基本的BMP字符</p>
+<p>码点位于U+0000 到 U+FFFF之间；能够使用1-3个字节变长表示；也能使用2字节定长表示；它之间包含了世界上的绝大多数语言。</p>
+</li>
+<li><p>BMP字符之外的附加字符</p>
+<p>码点在U+10000 到 U+10FFFF之间；需要最多四个字节表示</p>
+</li>
+</ul>
+<p>emojji字符也在unicode中，2010年Unicode开始为emojji分配码点。而它就在基础的BMP码点之外。因此utf8mb3是无法表示emojji字符的。</p>
+<p>那PostgreSQL是如何做的呢？</p>
+<p>依据<a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/10/multibyte.html">手册</a>，PostgreSQL的text能够存各种类型的字符集，其中针对Unicode的UTF8，是1-4字节变长，因此PG天然就能存emojji字符。而PG服务端和客户端具体支持的其他字符集类型，还是参见手册。</p>
+</li>
+</ol>
+<h2 id="与其他关系型数据库，有何优势"><a href="#与其他关系型数据库，有何优势" class="headerlink" title="与其他关系型数据库，有何优势"></a>与其他关系型数据库，有何优势</h2><ol>
+<li>自带NoSQL属性：可以存储array和json，甚至可以在array和json上建立索引，他的jsonb的性能已经比MongoDB的BSON性能要好了。</li>
+<li>自带全文搜索功能，不过中文的话就要额外安装中文分词插件。</li>
+<li>他有GIS，即地理信息扩展，可以非常方便地进行地理位置计算，可做地图服务器。这是PG的杀手级功能。</li>
+<li>能够高效地处理图结构。</li>
+<li>能够当作时序数据库</li>
+</ol>
+<h2 id="结尾"><a href="#结尾" class="headerlink" title="结尾"></a>结尾</h2><p>PostgreSQL功能强大，基本日常用到的需求它都有了，并且做的都不错。它是一个全栈数据库。</p>
+<p>国内比较有名的使用PG的公司是探探。百万日活、上百TB数据量，数据组件还只用了PG。直到千万日活才引入独立的数据仓库。</p>
+<p><strong>OLTP</strong>：事务处理是PostgreSQL的本行</p>
+<p><strong>OLAP</strong>：citus分布式插件，ANSI SQL兼容，窗口函数，CTE，CUBE等高级分析功能，任意语言写UDF</p>
+<p><strong>流处理</strong>：PipelineDB扩展，Notify-Listen，物化视图，规则系统，灵活的存储过程与函数编写</p>
+<p><strong>时序数据</strong>：timescaledb时序数据库插件，分区表，BRIN索引</p>
+<p><strong>空间数据</strong>：PostGIS扩展（杀手锏），内建的几何类型支持，GiST索引。</p>
+<p><strong>搜索索引</strong>：全文搜索索引足以应对简单场景；丰富的索引类型，支持函数索引，条件索引</p>
+<p><strong>NoSQL</strong>：JSON，JSONB，XML，HStore原生支持，至NoSQL数据库的外部数据包装器</p>
+<p><strong>数据仓库</strong>：能平滑迁移至同属Pg生态的GreenPlum，DeepGreen，HAWK等，使用FDW进行ETL</p>
+<p><strong>图数据</strong>：递归查询</p>
+<p><strong>缓存</strong>：物化视图</p>
+<h2 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://dev.mysql.com/doc/refman/8.0/en/charset-unicode.html">MySQL手册</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/10/multibyte.html">PostgreSQL手册</a></li>
+<li><a target="_blank" rel="noopener" href="http://www.postgres.cn/downfiles/pg2016conf_day1_s1_pm4.pdf">PostgreSQL和探探见证4亿次心动</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.aliyun.com/article/60027">https://developer.aliyun.com/article/60027</a></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/Postgresql%E7%9A%84Listen-Notify%E6%9C%BA%E5%88%B6-postgresql%E7%9A%84listen-notify%E6%9C%BA%E5%88%B6/" rel="prev" title="Postgresql的Listen-Notify机制">
+                  <i class="fa fa-chevron-left"></i> Postgresql的Listen-Notify机制
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/PostgreSQL%20-%20%E4%B8%80%E6%96%87%E7%9C%8B%E6%87%82explain-postgresql-yi-wen-kan-dong-explain/" rel="next" title="PostgreSQL - 一文看懂explain">
+                  PostgreSQL - 一文看懂explain <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻 | Jelly</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

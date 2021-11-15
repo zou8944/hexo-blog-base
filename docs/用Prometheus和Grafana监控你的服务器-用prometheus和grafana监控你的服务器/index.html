@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"zou8944.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="本文介绍使用Prometheus和Grafana搭建服务器监控的步骤，并简单介绍其中会涉及到的概念。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用Prometheus和Grafana监控你的服务器">
+<meta property="og:url" content="https://zou8944.com/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8-%E7%94%A8prometheus%E5%92%8Cgrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/index.html">
+<meta property="og:site_name" content="果冻 | Jelly">
+<meta property="og:description" content="本文介绍使用Prometheus和Grafana搭建服务器监控的步骤，并简单介绍其中会涉及到的概念。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321213622180.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321220315917.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321222203367.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321222820888.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321223310983.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321223803850.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321223832988.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321224015143.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321224109344.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321224240393.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321224349682.png">
+<meta property="article:published_time" content="2020-03-21T12:38:53.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:22:16.599Z">
+<meta property="article:author" content="果冻 | Jelly">
+<meta property="article:tag" content="Prometheus | Grafana">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321213622180.png">
+
+
+<link rel="canonical" href="https://zou8944.com/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8-%E7%94%A8prometheus%E5%92%8Cgrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://zou8944.com/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8-%E7%94%A8prometheus%E5%92%8Cgrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/","path":"用Prometheus和Grafana监控你的服务器-用prometheus和grafana监控你的服务器/","title":"用Prometheus和Grafana监控你的服务器"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>用Prometheus和Grafana监控你的服务器 | 果冻 | Jelly</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">果冻 | Jelly</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80"><span class="nav-number">1.</span> <span class="nav-text">基础</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%AF%E8%AF%AD"><span class="nav-number">1.1.</span> <span class="nav-text">术语</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%AE%80%E4%BB%8B"><span class="nav-number">2.</span> <span class="nav-text">简介</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Prometheus"><span class="nav-number">2.1.</span> <span class="nav-text">Prometheus</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Grafana"><span class="nav-number">2.2.</span> <span class="nav-text">Grafana</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%90%AD%E5%BB%BA"><span class="nav-number">3.</span> <span class="nav-text">搭建</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Prometheus-Exporter"><span class="nav-number">3.1.</span> <span class="nav-text">Prometheus Exporter</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Prometheus-Server"><span class="nav-number">3.2.</span> <span class="nav-text">Prometheus Server</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Grafana-1"><span class="nav-number">3.3.</span> <span class="nav-text">Grafana</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0Prometheus%E6%95%B0%E6%8D%AE%E6%BA%90"><span class="nav-number">3.3.1.</span> <span class="nav-text">添加Prometheus数据源</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%BB%E5%8A%A0Dashboard"><span class="nav-number">3.3.2.</span> <span class="nav-text">添加Dashboard</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BD%BB%E5%BE%AE%E6%8E%A2%E7%B4%A2"><span class="nav-number">3.3.3.</span> <span class="nav-text">轻微探索</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%86%E8%A7%A3%E6%9B%B4%E5%A4%9A"><span class="nav-number">5.</span> <span class="nav-text">了解更多</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">6.</span> <span class="nav-text">参考文档</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">果冻 | Jelly</p>
+  <div class="site-description" itemprop="description">Beat Jelly; Hit Jelly; Kill Jelly.</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8-%E7%94%A8prometheus%E5%92%8Cgrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="果冻 | Jelly">
+      <meta itemprop="description" content="Beat Jelly; Hit Jelly; Kill Jelly.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="果冻 | Jelly">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          用Prometheus和Grafana监控你的服务器
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2020-03-21 20:38:53" itemprop="dateCreated datePublished" datetime="2020-03-21T20:38:53+08:00">2020-03-21</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">更新于</span>
+        <time title="修改时间：2021-02-16 23:22:16" itemprop="dateModified" datetime="2021-02-16T23:22:16+08:00">2021-02-16</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E8%BF%90%E7%BB%B4/" itemprop="url" rel="index"><span itemprop="name">运维</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>本文介绍使用Prometheus和Grafana搭建服务器监控的步骤，并简单介绍其中会涉及到的概念。</p>
+<span id="more"></span>
+
+<h1 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h1><h2 id="术语"><a href="#术语" class="headerlink" title="术语"></a>术语</h2><ul>
+<li><p>时序数据库：Time Series Database（TSDB），顾名思义，就是存放时序数据的数据库，每条数据有时间戳，支持对该类数据的快速读写、持久化、聚合查询等操作。由于有了时间，就可以根据数据回溯，可用于监控、大数据分析、机器学习等。</p>
+<p>常见的TSDB有OpenTSDB、InfluxDBm、Prometheus等</p>
+</li>
+<li><p>Metrics：度量，是Prometheus中的核心概念。直接来看，度量就是一串标识符，例如http_requests_total表示所有http请求的总数</p>
+</li>
+<li><p>Tags：标签，一个metric可能会记录多种类型数据，比如http_requests_total，可能同时记录了请求的uri，此时就需要标签进行区隔，一个metric可以对应多个标签，此时它就是一个多维数据。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">http_request_total&#123;uri=&quot;ergedd/hello&quot;&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><h2 id="Prometheus"><a href="#Prometheus" class="headerlink" title="Prometheus"></a>Prometheus</h2><p>Prometheus是一个开源的监控报警软件，整体结构如下</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321213622180.png" alt="image-20200321213622180"></p>
+<p>主要组件如下</p>
+<ul>
+<li><p>Prometheus Server：服务端，包含数据接收模块、时序数据库模块、Http服务模块等</p>
+<p>数据接收模块用于连接监控目标，监控目标可以是静态配置的单个服务，也可以是基于服务发现的得到的服务。</p>
+<p>时序数据库模块用于存储接收到的时序数据，并存储于硬盘</p>
+<p>Http服务暴露API，用于PromQL查询</p>
+<p>服务端工作在pull模式，即监控目标需要暴露接口，服务端通过该接口主动拉取数据。</p>
+</li>
+<li><p>Push Gateway：推送网关。用于接收监控目标主动推送的数据，同时接受服务端的数据拉取</p>
+</li>
+<li><p>Alter Manager：报警管理器。接收来自服务端的报警推送，并将报警消息发送出去</p>
+</li>
+<li><p>UI：通过PromQL查询服务端存储的数据，并通过Web页面的形式展示。一般我们不用Prometheus自带的UI模块，而是将数据接入到图形展示功能更加强大的Grafana</p>
+</li>
+</ul>
+<p>此外，完整的Prometheus还应包含针对特定监控目标所编写的Exporter，用于暴露监控数据，对于常规需求，会有开源公共的Exporter，对于特殊需求，可实现自定义的Exporter。</p>
+<h2 id="Grafana"><a href="#Grafana" class="headerlink" title="Grafana"></a>Grafana</h2><p>Grafana是一个开源的数据分析和展示系统，有两个主要优点：</p>
+<ul>
+<li>支持各种数据库：Elasticsearch、Graphite、influxDB、Prometheus</li>
+<li>丰富的展示功能，可以图表、文字等各种方式展示数据，全凭使用者的想象力。</li>
+</ul>
+<h1 id="搭建"><a href="#搭建" class="headerlink" title="搭建"></a>搭建</h1><p>这里仅搭建一个最简单的系统，打通从exporter到grafana数据流，push网关和报警管理器都暂时忽略。</p>
+<h2 id="Prometheus-Exporter"><a href="#Prometheus-Exporter" class="headerlink" title="Prometheus Exporter"></a>Prometheus Exporter</h2><p>监控Linux系统状态，需要用到<a target="_blank" rel="noopener" href="https://github.com/prometheus/node_exporter">Node_Exporter</a>，安装它有两种方式，一种是通过源码编译，另一种是直接下载运行，在<a target="_blank" rel="noopener" href="https://github.com/prometheus/node_exporter/releases">这里</a>，</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321220315917.png" alt="image-20200321220315917"></p>
+<p>下载合适的版本，运行，如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">$ ./node_exporter </span><br><span class="line">INFO[0000] Starting node_exporter (version=0.18.1, branch=HEAD, revision=3db77732e925c08f675d7404a8c46466b2ece83e)  <span class="built_in">source</span>=<span class="string">&quot;node_exporter.go:156&quot;</span></span><br><span class="line">INFO[0000] Build context (go=go1.12.5, user=root@b50852a1acba, date=20190604-16:41:18)  <span class="built_in">source</span>=<span class="string">&quot;node_exporter.go:157&quot;</span></span><br><span class="line">INFO[0000] Enabled collectors:                           <span class="built_in">source</span>=<span class="string">&quot;node_exporter.go:97&quot;</span></span><br><span class="line">INFO[0000]  - arp                                        <span class="built_in">source</span>=<span class="string">&quot;node_exporter.go:104&quot;</span></span><br><span class="line">INFO[0000]  - bcache                                     <span class="built_in">source</span>=<span class="string">&quot;node_exporter.go:104&quot;</span></span><br><span class="line">. . . . . .</span><br><span class="line">INFO[0000]  - zfs                                        <span class="built_in">source</span>=<span class="string">&quot;node_exporter.go:104&quot;</span></span><br><span class="line">INFO[0000] Listening on :9100                            <span class="built_in">source</span>=<span class="string">&quot;node_exporter.go:170&quot;</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>此时在本地9100端口暴露了metrics数据，访问<code>http://localhost:9100/metrics</code>可以获取到所有数据，数据格式是直接可读的：metric name + tag: value</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">$ curl http://localhost:9100/metrics</span><br><span class="line"></span><br><span class="line"><span class="comment"># HELP go_gc_duration_seconds A summary of the GC invocation durations.</span></span><br><span class="line"><span class="comment"># TYPE go_gc_duration_seconds summary</span></span><br><span class="line">go_gc_duration_seconds&#123;quantile=<span class="string">&quot;0&quot;</span>&#125; 1.8648e-05</span><br><span class="line">go_gc_duration_seconds&#123;quantile=<span class="string">&quot;0.25&quot;</span>&#125; 1.8648e-05</span><br><span class="line">go_gc_duration_seconds&#123;quantile=<span class="string">&quot;0.5&quot;</span>&#125; 4.6304e-05</span><br><span class="line">go_gc_duration_seconds&#123;quantile=<span class="string">&quot;0.75&quot;</span>&#125; 4.6304e-05</span><br><span class="line">go_gc_duration_seconds&#123;quantile=<span class="string">&quot;1&quot;</span>&#125; 4.6304e-05</span><br><span class="line">go_gc_duration_seconds_sum 6.4952e-05</span><br><span class="line">go_gc_duration_seconds_count 2</span><br><span class="line"><span class="comment"># HELP go_goroutines Number of goroutines that currently exist.</span></span><br><span class="line"><span class="comment"># TYPE go_goroutines gauge</span></span><br><span class="line">go_goroutines 7</span><br><span class="line"><span class="comment"># HELP go_info Information about the Go environment.</span></span><br><span class="line"><span class="comment"># TYPE go_info gauge</span></span><br><span class="line">go_info&#123;version=<span class="string">&quot;go1.12.5&quot;</span>&#125; 1</span><br><span class="line">. . . . . .</span><br></pre></td></tr></table></figure>
+
+<h2 id="Prometheus-Server"><a href="#Prometheus-Server" class="headerlink" title="Prometheus Server"></a>Prometheus Server</h2><p>Prometheus在github开源，因此可<a target="_blank" rel="noopener" href="https://github.com/prometheus/prometheus/releases">直接下载最新版</a>，这里就不再贴图了，假设已经下载好了，我们从解压后开始，在解压后的目录下可观察到有如下几个文件</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">$ ls</span><br><span class="line">console_libraries  consoles  data  LICENSE  NOTICE  prometheus  prometheus.yml  promtool  tsdb</span><br></pre></td></tr></table></figure>
+
+<p>关注prometheus和prometheus.yml，前者是可执行文件，后者是配置文件。</p>
+<p>在配置文件中加上exporter数据源，设置每5秒抓取一次数据，目标地址为localhost:9100，抓取路劲默认为/metrics，因此不用再指明。</p>
+<figure class="highlight yml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">scrape_configs:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">job_name:</span> <span class="string">&#x27;floyd_T490&#x27;</span></span><br><span class="line">    <span class="attr">scrape_interval:</span> <span class="string">5s</span></span><br><span class="line">    <span class="attr">static_configs:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">targets:</span> [<span class="string">&#x27;localhost:9100&#x27;</span>]</span><br></pre></td></tr></table></figure>
+
+<p>启动，如下输出代表成功。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">./prometheus --config.file=prometheus.yml</span><br><span class="line">level=info ts=2020-03-21T14:18:55.601Z <span class="built_in">caller</span>=main.go:295 msg=<span class="string">&quot;no time or size retention was set so using the default time retention&quot;</span> duration=15d</span><br><span class="line">. . . . . .</span><br><span class="line">level=info ts=2020-03-21T14:18:55.914Z <span class="built_in">caller</span>=main.go:775 msg=<span class="string">&quot;Completed loading of configuration file&quot;</span> filename=prometheus.yml</span><br><span class="line">level=info ts=2020-03-21T14:18:55.914Z <span class="built_in">caller</span>=main.go:630 msg=<span class="string">&quot;Server is ready to receive web requests.&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>Prometheus Server默认监听9090端口，访问<code>localhost:9090</code>来到server界面，可以进行简单的查询操作。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321222203367.png" alt="image-20200321222203367"></p>
+<h2 id="Grafana-1"><a href="#Grafana-1" class="headerlink" title="Grafana"></a>Grafana</h2><p>Grafana可以安装启动，也可以用docker启动，方便起见，我们使用Docker。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">$ sudo docker run -p 3000:3000 grafana/grafana</span><br><span class="line">t=2020-03-21T14:25:09+0000 lvl=info msg=<span class="string">&quot;Starting Grafana&quot;</span> logger=server version=6.6.2 commit=3fa63cfc34 branch=HEAD compiled=2020-02-20T12:03:49+0000</span><br><span class="line">t=2020-03-21T14:25:09+0000 lvl=info msg=<span class="string">&quot;Config loaded from&quot;</span> logger=settings file=/usr/share/grafana/conf/defaults.ini</span><br><span class="line">. . . . . .</span><br><span class="line">t=2020-03-21T14:25:10+0000 lvl=info msg=<span class="string">&quot;Backend rendering via phantomJS&quot;</span> logger=rendering renderer=phantomJS</span><br><span class="line">t=2020-03-21T14:25:10+0000 lvl=warn msg=<span class="string">&quot;phantomJS is deprecated and will be removed in a future release. You should consider migrating from phantomJS to grafana-image-renderer plugin.&quot;</span> logger=rendering renderer=phantomJS</span><br><span class="line">t=2020-03-21T14:25:10+0000 lvl=info msg=<span class="string">&quot;Initializing Stream Manager&quot;</span></span><br><span class="line">t=2020-03-21T14:25:10+0000 lvl=info msg=<span class="string">&quot;HTTP Server Listen&quot;</span> logger=http.server address=[::]:3000 protocol=http subUrl= socket=</span><br></pre></td></tr></table></figure>
+
+<p>安装成功，访问<code>localhost:3000</code>，可以看到登录界面，默认用户名密码为 admin / admin</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321222820888.png" alt="image-20200321222820888"></p>
+<h3 id="添加Prometheus数据源"><a href="#添加Prometheus数据源" class="headerlink" title="添加Prometheus数据源"></a>添加Prometheus数据源</h3><p>点击设置 - Data Sources - Add data source - Prometheus</p>
+<p>来到数据源设置界面，设置URL为Prometheus Server地址<code>http://localhost:9090</code>，Access为Browser，即通过浏览器访问，点击Save &amp; Test，出现下图所示的<code>Data source is working</code>提示即添加成功。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321223310983.png" alt="image-20200321223310983"></p>
+<h3 id="添加Dashboard"><a href="#添加Dashboard" class="headerlink" title="添加Dashboard"></a>添加Dashboard</h3><p>Grafana通过Dashboard展示数据，一个Dashboard上可以有多个图表。可以自己创建，也可以将现有的导入，在<a target="_blank" rel="noopener" href="https://grafana.com/grafana/dashboards">Grafana Labs</a>中，有很多分享的Dashboard，我们找一个合适的。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321223803850.png" alt="image-20200321223803850"></p>
+<p>点进去，复制它的ID</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321223832988.png" alt="image-20200321223832988"></p>
+<p>回到Grafana，点击 创建 - Import ，输入上面的ID<code>8919</code>，加载成功可显示如下界面</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321224015143.png" alt="image-20200321224015143"></p>
+<p>点击导入，Awwwwwwwwwwwwwwwwwwwsome!!! 这里详细地展示了你的设备信息。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321224109344.png" alt="image-20200321224109344"></p>
+<h3 id="轻微探索"><a href="#轻微探索" class="headerlink" title="轻微探索"></a>轻微探索</h3><p>Dashboard中每个图表上方都有菜单按钮，可供我们修改</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321224240393.png" alt="image-20200321224240393"></p>
+<p>点击View，全屏显示该图表；点击Edit，进入编辑模式。我们点编辑看看</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/image-20200321224349682.png" alt="image-20200321224349682"></p>
+<p>可以看到图表中的每个数据来自于prometheus提供的metrics，并使用PromQL进行查询的结果。自己添加图标也是如此：写PromQL - 配置图表</p>
+<p>至此，最简单的监控服务搭建完成。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本文简单搭建了Linux的监控系统，主要目的在于展示Prometheus和Grafana的工作方式，算是科普文。也介绍了基本的工作原理，给扩展留下了空间。但其它重要部分需要读者自己去探索，比如</p>
+<ul>
+<li>Alert Manager</li>
+<li>Push Gateway</li>
+<li>Prometheus和其它TSDB的比较</li>
+</ul>
+<h1 id="了解更多"><a href="#了解更多" class="headerlink" title="了解更多"></a>了解更多</h1><p>想要更深入了解Prometheus？</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://prometheus.io/docs/concepts/metric_types/">Prometheus的四种Metric类型</a></li>
+<li><a target="_blank" rel="noopener" href="https://prometheus.io/docs/prometheus/latest/configuration/configuration/">Prometheus配置说明书</a></li>
+<li><a target="_blank" rel="noopener" href="https://prometheus.io/docs/prometheus/latest/querying/basics/">PromQL说明书</a></li>
+<li><a target="_blank" rel="noopener" href="https://prometheus.io/docs/instrumenting/exporters/">Prometheus已有Exporter</a></li>
+<li><a target="_blank" rel="noopener" href="https://prometheus.io/docs/instrumenting/writing_exporters/">自己编写Exporter</a></li>
+<li><a target="_blank" rel="noopener" href="https://prometheus.io/docs/alerting/overview/">Alert Manager</a></li>
+</ul>
+<p>想要了解Vertx、Kubernetes如何集成Prometheus?</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://vertx.io/docs/vertx-micrometer-metrics/java/">Vertx Micro-metrics</a></li>
+<li><a href="%5Bhttps://www.aliyun.com/acts/best-practice/preview?spm=a2c4g.11186623.2.25.674a1f60lTaiIT&id=89866&title=%E4%BA%91%E4%B8%8Aprometheus%E7%9B%91%E6%8E%A7%E8%BF%90%E7%BB%B4&aly_as=4Kd8zxsP%5D(https://www.aliyun.com/acts/best-practice/preview?spm=a2c4g.11186623.2.25.674a1f60lTaiIT&id=89866&title=%E4%BA%91%E4%B8%8Aprometheus%E7%9B%91%E6%8E%A7%E8%BF%90%E7%BB%B4&aly_as=4Kd8zxsP)">云上Prometheus监控运维最佳实践</a></li>
+</ul>
+<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><ol>
+<li><p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Time_series_database">TSDB维基百科</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/29367404">时间序列数据库漫谈</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/xephonhq/awesome-time-series-database">Awesome time series database</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://blog.pvincent.io/2017/12/prometheus-blog-series-part-1-metrics-and-labels/">Prometheus Blog Series (Part 1): Metrics and Labels</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://prometheus.io/docs/guides/node-exporter/">MONITORING LINUX HOST METRICS WITH THE NODE EXPORTER</a></p>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Prometheus-Grafana/" rel="tag"># Prometheus | Grafana</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/%E9%82%A3%E4%BA%9B%E9%80%92%E5%BD%92%E7%9A%84%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%9C%AF%E8%AF%AD-%E9%82%A3%E4%BA%9B%E9%80%92%E5%BD%92%E7%9A%84%E8%AE%A1%E7%AE%97%E6%9C%BA%E6%9C%AF%E8%AF%AD/" rel="prev" title="那些递归的计算机术语">
+                  <i class="fa fa-chevron-left"></i> 那些递归的计算机术语
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/Sign%20in%20with%20Apple%20-%20IOS%E5%B9%B3%E5%8F%B0%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%9A%84%E5%A4%84%E7%90%86-signinwithapple-ios%E5%B9%B3%E5%8F%B0%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%9A%84%E5%A4%84%E7%90%86/" rel="next" title="Sign in with Apple - IOS平台服务端的处理">
+                  Sign in with Apple - IOS平台服务端的处理 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻 | Jelly</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

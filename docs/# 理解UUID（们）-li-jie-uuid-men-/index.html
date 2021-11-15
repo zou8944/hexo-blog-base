@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"zou8944.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="UUID，Universal Unique Identifier，全局唯一标识符。也叫做GUID，Global Unique Identifier。 概念都了解，全局唯一嘛，但怎么实现的？多大概率重复？JDK的UUID和PostgreSQL的UUID一样吗？带着这些问题，我们从RFC，到JDK源码、PG手册，一点点看。 本文包含以下内容：  UUID实现原理 自己实现一个UUID JDK的实现方式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="果冻 | Jelly">
+<meta property="og:url" content="https://zou8944.com/#%20%E7%90%86%E8%A7%A3UUID%EF%BC%88%E4%BB%AC%EF%BC%89-li-jie-uuid-men-/index.html">
+<meta property="og:site_name" content="果冻 | Jelly">
+<meta property="og:description" content="UUID，Universal Unique Identifier，全局唯一标识符。也叫做GUID，Global Unique Identifier。 概念都了解，全局唯一嘛，但怎么实现的？多大概率重复？JDK的UUID和PostgreSQL的UUID一样吗？带着这些问题，我们从RFC，到JDK源码、PG手册，一点点看。 本文包含以下内容：  UUID实现原理 自己实现一个UUID JDK的实现方式">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20210930084244949.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20210930142313559.png">
+<meta property="article:published_time" content="2021-09-30T08:43:00.093Z">
+<meta property="article:modified_time" content="2021-09-30T08:43:00.093Z">
+<meta property="article:author" content="果冻 | Jelly">
+<meta property="article:tag" content="UUID">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20210930084244949.png">
+
+
+<link rel="canonical" href="https://zou8944.com/#%20%E7%90%86%E8%A7%A3UUID%EF%BC%88%E4%BB%AC%EF%BC%89-li-jie-uuid-men-/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://zou8944.com/#%20%E7%90%86%E8%A7%A3UUID%EF%BC%88%E4%BB%AC%EF%BC%89-li-jie-uuid-men-/","path":"# 理解UUID（们）-li-jie-uuid-men-/","title":""}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title> | 果冻 | Jelly</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">果冻 | Jelly</h1>
+      <i class="logo-line"></i>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E7%8E%B0%E5%8E%9F%E7%90%86"><span class="nav-number">1.</span> <span class="nav-text">实现原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E7%89%B9%E6%80%A7"><span class="nav-number">1.1.</span> <span class="nav-text">基本特性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%84%E6%88%90"><span class="nav-number">1.2.</span> <span class="nav-text">组成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8C%BA%E5%88%86%E7%89%88%E6%9C%AC"><span class="nav-number">1.3.</span> <span class="nav-text">区分版本</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%A6%82%E4%BD%95%E4%BF%9D%E8%AF%81%E5%94%AF%E4%B8%80%E6%80%A7"><span class="nav-number">1.4.</span> <span class="nav-text">如何保证唯一性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Version-1%E7%94%9F%E6%88%90%E9%80%BB%E8%BE%91"><span class="nav-number">1.5.</span> <span class="nav-text">Version 1生成逻辑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Version-4%E7%94%9F%E6%88%90%E9%80%BB%E8%BE%91"><span class="nav-number">1.6.</span> <span class="nav-text">Version 4生成逻辑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Version-3%E3%80%815%E7%94%9F%E6%88%90%E9%80%BB%E8%BE%91"><span class="nav-number">1.7.</span> <span class="nav-text">Version 3、5生成逻辑</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E6%97%B6%E9%97%B4%E6%88%B3%E4%BB%8E1582-10-15%E5%BC%80%E5%A7%8B"><span class="nav-number">1.8.</span> <span class="nav-text">为什么时间戳从1582-10-15开始</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%B7%B1%E5%86%99%E4%B8%80%E4%B8%AAUUID%E5%90%A7"><span class="nav-number">2.</span> <span class="nav-text">自己写一个UUID吧</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JDK-UUID"><span class="nav-number">3.</span> <span class="nav-text">JDK UUID</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Version-4"><span class="nav-number">3.1.</span> <span class="nav-text">Version 4</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Version-3"><span class="nav-number">3.2.</span> <span class="nav-text">Version 3</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#PostgreSQL%E7%9A%84UUID"><span class="nav-number">4.</span> <span class="nav-text">PostgreSQL的UUID</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#UUID%E9%87%8D%E5%A4%8D%E7%9A%84%E6%A6%82%E7%8E%87"><span class="nav-number">5.</span> <span class="nav-text">UUID重复的概率</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B6%E5%AE%83%E5%85%A8%E5%B1%80%E5%94%AF%E4%B8%80ID"><span class="nav-number">6.</span> <span class="nav-text">其它全局唯一ID</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9B%AA%E8%8A%B1%E7%AE%97%E6%B3%95%EF%BC%88SnkwFlake%EF%BC%89"><span class="nav-number">6.1.</span> <span class="nav-text">雪花算法（SnkwFlake）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%B7%E6%AE%B5%E6%A8%A1%E5%BC%8F"><span class="nav-number">6.2.</span> <span class="nav-text">号段模式</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%88%86%E5%B8%83%E5%BC%8FID%E7%9A%84%E9%80%89%E6%8B%A9"><span class="nav-number">7.</span> <span class="nav-text">分布式ID的选择</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AF%8F%E8%AE%B0%E9%80%89%E6%8B%A9UUID%E4%BD%9C%E4%B8%BAkey%EF%BC%8C%E5%90%88%E7%90%86%E5%90%97%EF%BC%9F"><span class="nav-number">7.1.</span> <span class="nav-text">每记选择UUID作为key，合理吗？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A5%BD%E6%96%87%E6%8E%A8%E8%8D%90"><span class="nav-number">8.</span> <span class="nav-text">好文推荐</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">9.</span> <span class="nav-text">总结</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">果冻 | Jelly</p>
+  <div class="site-description" itemprop="description">Beat Jelly; Hit Jelly; Kill Jelly.</div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-name">标签</span>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="返回顶部">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/#%20%E7%90%86%E8%A7%A3UUID%EF%BC%88%E4%BB%AC%EF%BC%89-li-jie-uuid-men-/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="果冻 | Jelly">
+      <meta itemprop="description" content="Beat Jelly; Hit Jelly; Kill Jelly.">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="果冻 | Jelly">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">发表于</span>
+
+      <time title="创建时间：2021-09-30 16:43:00" itemprop="dateCreated datePublished" datetime="2021-09-30T16:43:00+08:00">2021-09-30</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">分类于</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E5%90%8E%E7%AB%AF-%E7%AE%97%E6%B3%95/" itemprop="url" rel="index"><span itemprop="name">后端 | 算法</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>UUID，Universal Unique Identifier，全局唯一标识符。也叫做GUID，Global Unique Identifier。</p>
+<p>概念都了解，全局唯一嘛，但怎么实现的？多大概率重复？JDK的UUID和PostgreSQL的UUID一样吗？带着这些问题，我们从RFC，到JDK源码、PG手册，一点点看。</p>
+<p>本文包含以下内容：</p>
+<ul>
+<li>UUID实现原理</li>
+<li>自己实现一个UUID</li>
+<li>JDK的实现方式</li>
+<li>PG的实现方式</li>
+<li>其它全局唯一ID</li>
+</ul>
+<h2 id="实现原理"><a href="#实现原理" class="headerlink" title="实现原理"></a>实现原理</h2><p>老样子，要想了解一项基础技术，最好的方式是阅读一手资料。于UUID，它是<a target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/pdfrfc/rfc4122.txt.pdf">RFC4122</a>。</p>
+<p>这一节，更莫如说是对RFC的总结，毕竟规范这东西，写得太啰嗦了，全文字不说，还没有示意图。</p>
+<h3 id="基本特性"><a href="#基本特性" class="headerlink" title="基本特性"></a>基本特性</h3><ul>
+<li>长度128个bit位。一般通过16位十六进制字符表示，如：4cc9de16-414b-4f68-9b7e-6feeb8f629b0</li>
+<li>不需要中心管理，具有跨越时间和空间的唯一性</li>
+<li>按照本标准中的算法，支持每台机器每秒高达1000万次高分配速率</li>
+</ul>
+<h3 id="组成"><a href="#组成" class="headerlink" title="组成"></a>组成</h3><p>理解UUID有两个重点：一是理解其组成部分；二是理解各版本对各部分的填充方式。我们先看最重要的——组成部分。</p>
+<p>为了较为形象地展示，我画了张图。第一行是结果，第二行是十六进制说明，第三行是二进制说明。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20210930084244949.png" alt="image-20210930084244949"></p>
+<ul>
+<li>time-low：时间戳低位，占用32个bit</li>
+<li>time-mid：时间戳中位，占用16个bit</li>
+<li>time-high-and-version：时间戳高位+版本号，前者占12个bit，后者占4个bit，注意区分版本号是在前的</li>
+<li>clock-seq-high-and-reserved：时钟序列高位+预留位。前者占6个bit，后者占2个bit，也注意他们的前后顺序</li>
+<li>clock-seq-low：时间序列低位，占8个bit</li>
+<li>node：节点，占用48个bit</li>
+</ul>
+<p>引出新概念，time、clock-seq、node</p>
+<ul>
+<li>time：即时间戳</li>
+<li>clock-seq：当时间戳或node重复时，使用clock-seq作为附加保证唯一性</li>
+<li>node：机器的节点，一般是机器的MAC地址</li>
+</ul>
+<h3 id="区分版本"><a href="#区分版本" class="headerlink" title="区分版本"></a>区分版本</h3><p>注意到上面说组成时，有一个version字段。UUID是有多个版本的，目前总计5个。</p>
+<p>版本规定了各字段的填充方式，版本2比较特殊这里忽略，其它版本如下</p>
+<table>
+<thead>
+<tr>
+<th>版本</th>
+<th>Timestamp</th>
+<th>Clock sequence</th>
+<th>node</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1</td>
+<td>从UTC时间1582-10-15 00:00:00起，100ns的个数</td>
+<td>第一个clock sequence应该是随机产生的<br />如果知道本机上一次生成UUID的clock sequence，则此次只需要在其基础上加一<br /> 如果不知道，该字段需要设置成一个随机数</td>
+<td>MAC地址 如果没有，则使用随机数</td>
+</tr>
+<tr>
+<td>3</td>
+<td>命名空间+名称的MD5只的一部分</td>
+<td>命名空间+名称的MD5只的一部分</td>
+<td>命名空间+名称的MD5只的一部分</td>
+</tr>
+<tr>
+<td>4</td>
+<td>随机数的一部分</td>
+<td>随机数的一部分</td>
+<td>随机数的一部分</td>
+</tr>
+<tr>
+<td>5</td>
+<td>命名空间+名称的SHA1只的一部分</td>
+<td>命名空间+名称的SHA1只的一部分</td>
+<td>命名空间+名称的SHA1只的一部分</td>
+</tr>
+</tbody></table>
+<p>可以看到，所谓的时间戳、时钟序列、node这些字段，仅对版本1有效，其它版本填充进去的值并无逻辑意义。</p>
+<h3 id="如何保证唯一性"><a href="#如何保证唯一性" class="headerlink" title="如何保证唯一性"></a>如何保证唯一性</h3><ul>
+<li>对Version 1：它通过MAC地址保证空间唯一性，时间戳+序列号保证时间唯一性</li>
+<li>对Version 2：和Version 1类似，只不过会把时间戳的前4位置换为POSIX的UID或GID</li>
+<li>对Version 3、5：它纯依赖于名字保证唯一性，这就需要一个规整的命名系统：命名空间+名称</li>
+<li>对Version 4：它纯通过随机数保证唯一性，此时一个高质量的随机数发生器就显得尤为重要</li>
+</ul>
+<h3 id="Version-1生成逻辑"><a href="#Version-1生成逻辑" class="headerlink" title="Version 1生成逻辑"></a>Version 1生成逻辑</h3><ol>
+<li><p>获取一个系统级别的全局时钟</p>
+</li>
+<li><p>从一个系统全局共享的的存储位置，读取上一个UUID的状态：时间戳、始终序列、node等</p>
+</li>
+<li><p>获取当前时间戳：从UTC时间1582-10-15 00:00:00起，100ns的个数</p>
+</li>
+<li><p>获取nodeid，即MAC地址</p>
+</li>
+<li><p>如果上一个UUID状态不稳定（不存在、nodeid与新获取的nodeid不一样），生成一个随机clock value</p>
+</li>
+<li><p>如果状态存在，但时间戳比当前时间戳还晚，则clock sequence自增</p>
+</li>
+<li><p>将新的状态保存</p>
+</li>
+<li><p>将上面的三个部分按照格式组成UUID</p>
+</li>
+</ol>
+<p><strong>有一个bug</strong></p>
+<p>MAC地址直接放在nodeid中，就是一个bug，这会暴露用户的MAC地址：梅丽莎病毒制作者的位置就是这么暴露的</p>
+<h3 id="Version-4生成逻辑"><a href="#Version-4生成逻辑" class="headerlink" title="Version 4生成逻辑"></a>Version 4生成逻辑</h3><ol>
+<li>获取一个随机数</li>
+<li>将预留位、版本位之外的位，使用该随机数填充，填充位对应方式，参考RFC</li>
+</ol>
+<h3 id="Version-3、5生成逻辑"><a href="#Version-3、5生成逻辑" class="headerlink" title="Version 3、5生成逻辑"></a>Version 3、5生成逻辑</h3><ol>
+<li>命名空间+名字组成字符串，使用MD5或者SHA1计算摘要</li>
+<li>将预留位、版本位之外的位，使用该摘要填充，填充位对应方式，参考RFC</li>
+</ol>
+<h3 id="为什么时间戳从1582-10-15开始"><a href="#为什么时间戳从1582-10-15开始" class="headerlink" title="为什么时间戳从1582-10-15开始"></a>为什么时间戳从1582-10-15开始</h3><p>这是公历改革到基督教日历的日期，说来话长，我也没啥兴趣去详细了解，如果需要，<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/300868434">看看知乎吧</a></p>
+<h2 id="自己写一个UUID吧"><a href="#自己写一个UUID吧" class="headerlink" title="自己写一个UUID吧"></a>自己写一个UUID吧</h2><p>尝试着实现了一下抽象定义和基于时间戳的版本，发现主要有几个难点：kotlin的进制转换、二进制操作等。</p>
+<p>这是一个不能实际使用的UUID版本（实现它也不是本文的目的），仅作演示。</p>
+<p>先是UUID的抽象定义，我们使用两个Long作为底层bit持有对象，定义各字段的set方法，主要是二进制操作。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">UUID</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> TIME_LOW_MASK = (<span class="number">0xFFFFFFFFL</span>).shl(<span class="number">32</span>)</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> TIME_MID_MASK = (<span class="number">0xFFFFFFFFL</span>).shl(<span class="number">16</span>)</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> VERSION_MASK = (<span class="number">0xFFL</span>).shl(<span class="number">12</span>)</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> TIME_HIGH_MASK = <span class="number">0xFFFFFFL</span></span><br><span class="line"></span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> RESERVED_MASK = (<span class="number">0xFL</span>).shl(<span class="number">62</span>)</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> CLOCK_SEQ_HIGH_MASK = (<span class="number">0xFFFL</span>).shl(<span class="number">56</span>)</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> CLOCK_SEQ_LOW_MASK = (<span class="number">0xFFFFL</span>).shl(<span class="number">48</span>)</span><br><span class="line">        <span class="keyword">const</span> <span class="keyword">val</span> NODE_MASK = <span class="number">0xFFFFFFFFFFFFL</span></span><br><span class="line"></span><br><span class="line">        <span class="function"><span class="keyword">fun</span> <span class="title">timeBasedUUID</span><span class="params">()</span></span>: UUID = UUIDVersion1()</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 高有效位们：靠右</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> mostSignificantBits = <span class="number">0L</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 低有效位：靠左</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">var</span> leastSignificantBits = <span class="number">0L</span></span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">setTimeLow</span><span class="params">(timeLow: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">        leastSignificantBits = leastSignificantBits.or(timeLow.toLong().shl(<span class="number">32</span>).and(TIME_LOW_MASK))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">setTimeMid</span><span class="params">(timeMid: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">        leastSignificantBits = leastSignificantBits.or(timeMid.toLong().shl(<span class="number">16</span>).and(TIME_MID_MASK))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">setVersion</span><span class="params">(version: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">        leastSignificantBits = leastSignificantBits.or(version.toLong().shl(<span class="number">12</span>).and(VERSION_MASK))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">setTimeHigh</span><span class="params">(timeHigh: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">        leastSignificantBits = leastSignificantBits.or(timeHigh.toLong().and(TIME_HIGH_MASK))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">setReserved</span><span class="params">(reserved: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">        mostSignificantBits = mostSignificantBits.or(reserved.toLong().shl(<span class="number">62</span>).and(RESERVED_MASK))</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">setClockSeqHigh</span><span class="params">(clockSeqHigh: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">        mostSignificantBits = mostSignificantBits.or(clockSeqHigh.toLong().shl(<span class="number">56</span>).and(CLOCK_SEQ_HIGH_MASK))</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">setClockSeqLow</span><span class="params">(clockSeqLow: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">        mostSignificantBits = mostSignificantBits.or(clockSeqLow.toLong().shl(<span class="number">48</span>).and(CLOCK_SEQ_LOW_MASK))</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">setNode</span><span class="params">(nodeId: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">        mostSignificantBits = mostSignificantBits.or(nodeId.toLong().and(NODE_MASK))</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">toString</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">        <span class="keyword">val</span> lsbString = leastSignificantBits.toHexString()</span><br><span class="line">        <span class="keyword">val</span> msgString = mostSignificantBits.toHexString()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">val</span> seg1 = lsbString.substring(<span class="number">0</span>, <span class="number">8</span>)</span><br><span class="line">        <span class="keyword">val</span> seg2 = lsbString.substring(<span class="number">8</span>, <span class="number">12</span>)</span><br><span class="line">        <span class="keyword">val</span> seg3 = lsbString.substring(<span class="number">12</span>, <span class="number">16</span>)</span><br><span class="line">        <span class="keyword">val</span> seg4 = msgString.substring(<span class="number">0</span>, <span class="number">4</span>)</span><br><span class="line">        <span class="keyword">val</span> seg5 = msgString.substring(<span class="number">4</span>, <span class="number">16</span>)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;<span class="variable">$seg1</span>-<span class="variable">$seg2</span>-<span class="variable">$seg3</span>-<span class="variable">$seg4</span>-<span class="variable">$seg5</span>&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后是一个粗糙的实现类，实现Version 1</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UUIDVersion1</span> : <span class="type">UUID</span></span>() &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span> &#123;</span><br><span class="line">        <span class="comment">// 计算time</span></span><br><span class="line">        <span class="keyword">val</span> start = LocalDateTime.of(<span class="number">1582</span>, <span class="number">10</span>, <span class="number">15</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>)</span><br><span class="line">        <span class="keyword">val</span> end = LocalDateTime.now(ZoneId.of(<span class="string">&quot;UTC&quot;</span>))</span><br><span class="line">        <span class="keyword">val</span> duration = Duration.between(start, end)</span><br><span class="line">        <span class="keyword">val</span> time = duration.toMillis() * <span class="number">10</span></span><br><span class="line">        <span class="comment">// 计算clock seq</span></span><br><span class="line">        <span class="keyword">val</span> clock = <span class="number">0</span></span><br><span class="line">        <span class="comment">// 获取node，我们用随机数替换</span></span><br><span class="line">        <span class="keyword">val</span> node = Random.nextInt()</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>.setTimeLow(time.toInt())</span><br><span class="line">        <span class="keyword">this</span>.setTimeMid(time.shr(<span class="number">32</span>).toInt())</span><br><span class="line">        <span class="keyword">this</span>.setTimeHigh(time.shr(<span class="number">48</span>).toInt())</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>.setClockSeqHigh(clock.shr(<span class="number">8</span>))</span><br><span class="line">        <span class="keyword">this</span>.setClockSeqLow(clock)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>.setNode(node)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">this</span>.setVersion(<span class="number">0b001</span>)</span><br><span class="line">        <span class="keyword">this</span>.setReserved(<span class="number">0b10</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们还可以将生成的UUID转换为JDK的UUID进行验证。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> uuidString = UUID.timeBasedUUID().toString()</span><br><span class="line">    println(uuidString)</span><br><span class="line">    <span class="keyword">val</span> uuid = java.util.UUID.fromString(uuidString)</span><br><span class="line">    println(uuid.version())</span><br><span class="line">    println(uuid.variant())</span><br><span class="line">    println(uuid.timestamp())</span><br><span class="line">    println(uuid.clockSequence())</span><br><span class="line">    println(uuid.node())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>能够得到如下输出</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">51d8c022-7dfc-1000-8000-ffffd963e9ed</span><br><span class="line">1</span><br><span class="line">2</span><br><span class="line">138522658390050</span><br><span class="line">0</span><br><span class="line">281474328947181</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>仔细想想，这个时间戳也不一定要从1580年开始，也可以换成自定义的时间戳，完全看需求。</p>
+</blockquote>
+<h2 id="JDK-UUID"><a href="#JDK-UUID" class="headerlink" title="JDK UUID"></a>JDK UUID</h2><p>JDK只提供Version 3和Version 4两种UUID，实现上也超级简单。</p>
+<p>类似地，它也用两个long来组成128位，构建时直接分配位即可</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  * The most significant 64 bits of this UUID.</span></span><br><span class="line"><span class="comment">  *</span></span><br><span class="line"><span class="comment">  * @serial</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> mostSigBits;</span><br><span class="line"></span><br><span class="line"><span class="comment">/*</span></span><br><span class="line"><span class="comment">  * The least significant 64 bits of this UUID.</span></span><br><span class="line"><span class="comment">  *</span></span><br><span class="line"><span class="comment">  * @serial</span></span><br><span class="line"><span class="comment">  */</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">long</span> leastSigBits;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">UUID</span><span class="params">(<span class="keyword">byte</span>[] data)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">long</span> msb = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">long</span> lsb = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">assert</span> data.length == <span class="number">16</span> : <span class="string">&quot;data must be 16 bytes in length&quot;</span>;</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">0</span>; i&lt;<span class="number">8</span>; i++)</span><br><span class="line">    msb = (msb &lt;&lt; <span class="number">8</span>) | (data[i] &amp; <span class="number">0xff</span>);</span><br><span class="line">  <span class="keyword">for</span> (<span class="keyword">int</span> i=<span class="number">8</span>; i&lt;<span class="number">16</span>; i++)</span><br><span class="line">    lsb = (lsb &lt;&lt; <span class="number">8</span>) | (data[i] &amp; <span class="number">0xff</span>);</span><br><span class="line">  <span class="keyword">this</span>.mostSigBits = msb;</span><br><span class="line">  <span class="keyword">this</span>.leastSigBits = lsb;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Version-4"><a href="#Version-4" class="headerlink" title="Version 4"></a>Version 4</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> UUID <span class="title">randomUUID</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  SecureRandom ng = Holder.numberGenerator;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">byte</span>[] randomBytes = <span class="keyword">new</span> <span class="keyword">byte</span>[<span class="number">16</span>];</span><br><span class="line">  ng.nextBytes(randomBytes);</span><br><span class="line">  randomBytes[<span class="number">6</span>]  &amp;= <span class="number">0x0f</span>;  <span class="comment">/* clear version        */</span></span><br><span class="line">  randomBytes[<span class="number">6</span>]  |= <span class="number">0x40</span>;  <span class="comment">/* set to version 4     */</span></span><br><span class="line">  randomBytes[<span class="number">8</span>]  &amp;= <span class="number">0x3f</span>;  <span class="comment">/* clear variant        */</span></span><br><span class="line">  randomBytes[<span class="number">8</span>]  |= <span class="number">0x80</span>;  <span class="comment">/* set to IETF variant  */</span></span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">new</span> UUID(randomBytes);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，重点其实在Holder.numberGenerator，它的随机性决定了UUID的重复概率。而其实现SecureRandom，则涉及到另一个知识点——随机数，我们这里挖个坑，后面再探究随机数生成器到底有多随机。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">Holder</span> </span>&#123;</span><br><span class="line">  <span class="keyword">static</span> <span class="keyword">final</span> SecureRandom numberGenerator = <span class="keyword">new</span> SecureRandom();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Version-3"><a href="#Version-3" class="headerlink" title="Version 3"></a>Version 3</h3><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> static UUID nameUUIDFromBytes(byte[] name) &#123;</span><br><span class="line">  MessageDigest md;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    md = MessageDigest.getInstance(<span class="string">&quot;MD5&quot;</span>);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (NoSuchAlgorithmException nsae) &#123;</span><br><span class="line">    <span class="keyword">throw</span> new InternalError(<span class="string">&quot;MD5 not supported&quot;</span>, nsae);</span><br><span class="line">  &#125;</span><br><span class="line">  byte[] md5Bytes = md.digest(name);</span><br><span class="line">  md5Bytes[<span class="number">6</span>]  &amp;= <span class="number">0x0f</span>;  <span class="comment">/* clear version        */</span></span><br><span class="line">  md5Bytes[<span class="number">6</span>]  |= <span class="number">0x30</span>;  <span class="comment">/* set to version 3     */</span></span><br><span class="line">  md5Bytes[<span class="number">8</span>]  &amp;= <span class="number">0x3f</span>;  <span class="comment">/* clear variant        */</span></span><br><span class="line">  md5Bytes[<span class="number">8</span>]  |= <span class="number">0x80</span>;  <span class="comment">/* set to IETF variant  */</span></span><br><span class="line">  <span class="keyword">return</span> new UUID(md5Bytes);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这个更简单，做一下MD5，修改相应的bit填入即可，它的唯一性就完全依赖于传入的name了。</p>
+<h2 id="PostgreSQL的UUID"><a href="#PostgreSQL的UUID" class="headerlink" title="PostgreSQL的UUID"></a>PostgreSQL的UUID</h2><p>根据<a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/current/functions-uuid.html">手册</a>描述，PG的UUID也是Version 4，即基于随机数生成。</p>
+<h2 id="UUID重复的概率"><a href="#UUID重复的概率" class="headerlink" title="UUID重复的概率"></a>UUID重复的概率</h2><p>就是个好奇，我们能够大致算一算，UUID重复的概率有多大，其实可以归结如下。</p>
+<ul>
+<li><p>对基于时间戳的情况，node稳定时，多个节点不可能重复，而单个节点，由于有记录上一个UUID的状态，因此也不会重复。只不过有生成速率限制，以RFC的方式来说，每个节点每100ns，最多能够生成2^14=16384个UUID，换算成秒，即每秒1.6亿个。</p>
+</li>
+<li><p>基于随机数的情况，取决于随机数生成器的质量</p>
+</li>
+<li><p>基于名字的情况，取决于命名系统，这种情况UUID只是命名系统的延伸，应该说不会考虑UUID重复的情况，而是命名系统本身的性能</p>
+</li>
+<li><p>128bit空间本身是否可能重复呢？用尽了就会，不过这个概率，类似流星撞地球吧。</p>
+</li>
+</ul>
+<h2 id="其它全局唯一ID"><a href="#其它全局唯一ID" class="headerlink" title="其它全局唯一ID"></a>其它全局唯一ID</h2><p>最为大家熟知的恐怕就是雪花算法了吧，此外号段模式也算一个。</p>
+<h3 id="雪花算法（SnkwFlake）"><a href="#雪花算法（SnkwFlake）" class="headerlink" title="雪花算法（SnkwFlake）"></a>雪花算法（SnkwFlake）</h3><p>了解了UUID Version 1的生成方式后，雪花算法就很容易理解，也是由时间戳-机器id-序列号组成，不同的是其只需要64个bit。且各字段可以根据实际需求调整bit的个数。雪花算法只是一种思想：将各位打散，再赋予不同的用途。UUID Version 1也是这种思想。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20210930142313559.png" alt="image-20210930142313559"></p>
+<p><strong>几个需要考虑的问题</strong></p>
+<ul>
+<li>时钟回拨问题：常见的方式是容忍小范围回拨，即如果当前时间戳比上一个生成的时间戳早，且在一定范围内，则依旧使用上一次的时间戳。这算一种校准方式，即回拨的这个时间差会被算到上一个时间戳的序列中，随着时间的推移，时间回拨问题会被抹平，但这段期间的生成效率会降低。</li>
+<li>机器ID的生成方式：机器ID必须是稳定的，常见的解决方式是融合MAC地址。</li>
+</ul>
+<p><strong>雪花算法和UUID差别</strong></p>
+<p>雪花算法得到的id依旧是64位，就是一个long，且时间戳在高位，是有序递增的。有序性，往往很重要。</p>
+<p><strong>一些雪花算法的实现</strong></p>
+<ul>
+<li><p>百度UidGenerator</p>
+<p>它解决时钟回拨的方式，是不容忍任何回拨，直接报错</p>
+</li>
+<li><p>美团Leaf</p>
+<p>可选基于雪花算法或基于号段模式两种方案。其中使用雪花算法时，依赖于Zookeeper来分配WorkerID</p>
+<p>它解决时钟回拨问题，和上面我们说的类似</p>
+</li>
+</ul>
+<h3 id="号段模式"><a href="#号段模式" class="headerlink" title="号段模式"></a>号段模式</h3><p>这并不是什么算法，而是一种数据库自增ID的用法，一次取一批ID，用完了再取，保证了唯一性，降低了数据库的访问频率。</p>
+<h2 id="分布式ID的选择"><a href="#分布式ID的选择" class="headerlink" title="分布式ID的选择"></a>分布式ID的选择</h2><p>你看，我们已经了解了最重要的全局唯一ID生成方式，那就可以讨论这个问题：分布式ID应该用哪种呢？</p>
+<p>UUID优点在于生成简单，唯一性好，几乎所有语言都有标准实现。缺点在于长度过长、不具有单调性，且无意义。</p>
+<p>雪花算法优点在于具有单调性，长度适中。缺点在于需要自己实现或引入第三方库。（一说雪花算法缺点在于依赖时间，但要在跨时间上保证唯一性，除了依赖时间，就是依赖随机数，所以我认为也算不上缺点，且时间回拨不是已经有解决方式了嘛）</p>
+<p>如果ID需要存入数据库，由于UUID的无序性，可能会使得索引重建花费较长时间，当然使用<strong>雪花算法比较好</strong>。</p>
+<h3 id="每记选择UUID作为key，合理吗？"><a href="#每记选择UUID作为key，合理吗？" class="headerlink" title="每记选择UUID作为key，合理吗？"></a>每记选择UUID作为key，合理吗？</h3><p>作为一个离线客户端软件，我们面临以下问题</p>
+<ul>
+<li>客户端环境千奇百怪，多平台（PC、网页、安卓、IOS等），多版本，总之，就很难信任客户端环境</li>
+<li>离线时也要能正常使用</li>
+</ul>
+<p>如果使用雪花算法，会有几个问题</p>
+<ul>
+<li>首先，工作机器ID的确定，需要考虑的情况就会比较多，即生成算法需要调试。客户端的时间回拨，那可不就是修正就能够完事的。</li>
+<li>其次，即使有序性有了，但多个设备上传的顺序依旧无法保证，受网络、环境影响较大，依旧会造成索引重建时候较多数据的移动</li>
+</ul>
+<p>如果使用UUID，其实就只有一个问题</p>
+<ul>
+<li><p>数据库存储的效率：索引重建。如果是聚簇索引，索引重建时移动的数据会很多，这对MySQL的innodb这类引擎来说可能是灾难。但是PgstgreSQL并非以B+树存储数据，所以性能损失并非想象的那么严重。具体如何，待后面详细研究一波PG的各种原理（完蛋，又挖了一个坑）</p>
+<p>且，即使是MySQL，依然可以解决：主键设为单调自增的number，来自客户端的UUID仅作为普通字段，在该字段创建索引，会好很多。</p>
+</li>
+</ul>
+<p>综上所述，使用UUID对客户端更方便，在服务端性能也算可以接受，所以说<strong>是合理的</strong>。</p>
+<p>作为佐证，我抓了一个印象笔记下类每记产品”印象清单“，它就更加直白了，id字段名为”taskGuid“，值就是UUID。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line">[</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;syncDataObject&quot;</span>:&#123;</span><br><span class="line">      <span class="attr">&quot;tasks&quot;</span>:[</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;state&quot;</span>:<span class="number">1</span>,</span><br><span class="line">          <span class="attr">&quot;ruleId&quot;</span>:<span class="string">&quot;&quot;</span>,</span><br><span class="line">          <span class="attr">&quot;description&quot;</span>:<span class="string">&quot;&quot;</span>,</span><br><span class="line">          <span class="attr">&quot;clientUpdatedTime&quot;</span>:<span class="number">1632988316566</span>,</span><br><span class="line">          <span class="attr">&quot;sortIndex&quot;</span>:<span class="number">0</span>,</span><br><span class="line">          <span class="attr">&quot;dueTime&quot;</span>:<span class="number">1632988311635</span>,</span><br><span class="line">          <span class="attr">&quot;operation&quot;</span>:<span class="number">0</span>,</span><br><span class="line">          <span class="attr">&quot;title&quot;</span>:<span class="string">&quot;æµè¯&quot;</span>,</span><br><span class="line">          <span class="attr">&quot;finishedTime&quot;</span>:<span class="number">-1</span>,</span><br><span class="line">          <span class="attr">&quot;taskGuid&quot;</span>:<span class="string">&quot;a1e4836c-4d59-409d-bf00-864d6d31cba0&quot;</span>,</span><br><span class="line">          <span class="attr">&quot;createTime&quot;</span>:<span class="number">1632988316566</span>,</span><br><span class="line">          <span class="attr">&quot;taskListId&quot;</span>:<span class="string">&quot;default&quot;</span>,</span><br><span class="line">          <span class="attr">&quot;reminderTime&quot;</span>:<span class="number">-1</span>,</span><br><span class="line">          <span class="attr">&quot;reminderType&quot;</span>:<span class="number">0</span>,</span><br><span class="line">          <span class="attr">&quot;taskRelatedNote&quot;</span>:[</span><br><span class="line">            </span><br><span class="line">          ]</span><br><span class="line">        &#125;</span><br><span class="line">      ],</span><br><span class="line">      <span class="attr">&quot;rules&quot;</span>:[</span><br><span class="line">        </span><br><span class="line">      ],</span><br><span class="line">      <span class="attr">&quot;taskLists&quot;</span>:[</span><br><span class="line">        </span><br><span class="line">      ]</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure>
+
+<h2 id="好文推荐"><a href="#好文推荐" class="headerlink" title="好文推荐"></a>好文推荐</h2><p>这篇UUID的文章写的不错，如果结合起来看，可以增进理解：<a target="_blank" rel="noopener" href="https://www.cnblogs.com/throwable/p/14343086.html#namespace-name-based-md5%E7%89%88%E6%9C%AC%E5%AE%9E%E7%8E%B0">冷饭新炒：理解JDK中UUID的底层实现</a></p>
+<p>雪花算法呢，这篇文章看起来还行：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/402822041">SnowFlake</a></p>
+<p>美团的Leaf，美团技术团队博客有进行说明：<a target="_blank" rel="noopener" href="https://tech.meituan.com/2017/04/21/mt-leaf.html">Leaf——美团点评分布式ID生成系统</a></p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>研究UUID的出发点，只是其RFC很短，仅三十多页，有效内容不到二十页。过程中却有几点意外之喜：</p>
+<ul>
+<li>顺着UUID的实现原理，了解到JDK的实现方式，自此，UUID于我，成了白盒；</li>
+<li>能够体会JDK不提供Version1的原因（它太依赖具体系统，而语言级别的实现，一定是要所有情况通用的，显然Version 1的通用实现，不大好办）；</li>
+<li>思路发散到分布式ID，详细了解了雪花算法，它和Version 1是如此接近，却只因为将node和seq换了个位置就能够单调递增，如此相似，结果却如此不同；</li>
+<li>离线客户端用SnowFlake如何？它们看起来是大型分布式系统，实则与我们后端常说的分布式系统很不一样，这其中最大的不同是客户端环境不可控。</li>
+<li>同时，还挖了两个坑：深入研究随机数、深入研究PostgreSQL</li>
+</ul>
+<p>本着输出驱动输入的方法完成本文，预期一两天，实则因思路发散花了更多时间，结果是令人满意的，因为它让我对技术，又少了一个模糊地带。</p>
+<p>也应验了那句话：持续不断地学习，一定会给你带来惊喜。关键词是：<strong>持续不断</strong></p>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/UUID/" rel="tag"># UUID</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/Spring%E6%89%AB%E7%9B%B2%E2%80%94%E2%80%94Spring%20Data%20JPA-spring-sao-mang-springdatajpa/" rel="prev" title="Spring扫盲——Spring Data JPA">
+                  <i class="fa fa-chevron-left"></i> Spring扫盲——Spring Data JPA
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%20-%20%E7%90%86%E8%AE%BA%E9%83%A8%E5%88%86-she-ji-mo-shi--li-lun-bu-fen/" rel="next" title="设计模式 - 理论部分">
+                  设计模式 - 理论部分 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻 | Jelly</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
