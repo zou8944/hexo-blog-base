@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="前两天使用K8S的ingress配置，遇到两个有包含关系的uri需要匹配到两个不同的容器中的情况，找了一下具体的匹配规则，主要来自这篇文章  根据墨菲定律，可能会发生的事就一定会发生。如果对Nginx的路径配置一直存疑，迟早会出问题。因此，搞懂很重要。 总体来说，Nginx将配置根据不同的server分成了不同的块，每当一个请求过来时，Nginx都会根据一定的算法确定哪一个配置块来处理该请求。其">
+<meta property="og:type" content="article">
+<meta property="og:title" content="深入Nginx的server和location匹配算法">
+<meta property="og:url" content="http://example.com/2020/02/22/%E6%B7%B1%E5%85%A5Nginx%E7%9A%84server%E5%92%8Clocation%E5%8C%B9%E9%85%8D%E7%AE%97%E6%B3%95-%E6%B7%B1%E5%85%A5nginx%E7%9A%84server%E5%92%8Clocation%E5%8C%B9%E9%85%8D%E7%AE%97%E6%B3%95/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="前两天使用K8S的ingress配置，遇到两个有包含关系的uri需要匹配到两个不同的容器中的情况，找了一下具体的匹配规则，主要来自这篇文章  根据墨菲定律，可能会发生的事就一定会发生。如果对Nginx的路径配置一直存疑，迟早会出问题。因此，搞懂很重要。 总体来说，Nginx将配置根据不同的server分成了不同的块，每当一个请求过来时，Nginx都会根据一定的算法确定哪一个配置块来处理该请求。其">
+<meta property="og:locale" content="en_US">
+<meta property="article:published_time" content="2020-02-22T13:05:35.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:23:37.898Z">
+<meta property="article:author" content="John Doe">
+<meta name="twitter:card" content="summary">
+
+
+<link rel="canonical" href="http://example.com/2020/02/22/%E6%B7%B1%E5%85%A5Nginx%E7%9A%84server%E5%92%8Clocation%E5%8C%B9%E9%85%8D%E7%AE%97%E6%B3%95-%E6%B7%B1%E5%85%A5nginx%E7%9A%84server%E5%92%8Clocation%E5%8C%B9%E9%85%8D%E7%AE%97%E6%B3%95/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2020/02/22/%E6%B7%B1%E5%85%A5Nginx%E7%9A%84server%E5%92%8Clocation%E5%8C%B9%E9%85%8D%E7%AE%97%E6%B3%95-%E6%B7%B1%E5%85%A5nginx%E7%9A%84server%E5%92%8Clocation%E5%8C%B9%E9%85%8D%E7%AE%97%E6%B3%95/","path":"2020/02/22/深入Nginx的server和location匹配算法-深入nginx的server和location匹配算法/","title":"深入Nginx的server和location匹配算法"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>深入Nginx的server和location匹配算法 | Hexo</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Hexo</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#server"><span class="nav-number">1.</span> <span class="nav-text">server</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#listen"><span class="nav-number">1.1.</span> <span class="nav-text">listen</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#server-name"><span class="nav-number">1.2.</span> <span class="nav-text">server_name</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#location"><span class="nav-number">2.</span> <span class="nav-text">location</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%AD%E6%B3%95"><span class="nav-number">2.1.</span> <span class="nav-text">语法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8C%B9%E9%85%8D%E7%AE%97%E6%B3%95"><span class="nav-number">2.2.</span> <span class="nav-text">匹配算法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#location%E8%B7%B3%E5%88%B0%E5%85%B6%E5%AE%83location%E7%9A%84%E6%83%85%E5%86%B5"><span class="nav-number">2.3.</span> <span class="nav-text">location跳到其它location的情况</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#kubernetes-ingress"><span class="nav-number">3.</span> <span class="nav-text">kubernetes ingress</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">5.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">John Doe</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">79</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2020/02/22/%E6%B7%B1%E5%85%A5Nginx%E7%9A%84server%E5%92%8Clocation%E5%8C%B9%E9%85%8D%E7%AE%97%E6%B3%95-%E6%B7%B1%E5%85%A5nginx%E7%9A%84server%E5%92%8Clocation%E5%8C%B9%E9%85%8D%E7%AE%97%E6%B3%95/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="John Doe">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          深入Nginx的server和location匹配算法
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2020-02-22 21:05:35" itemprop="dateCreated datePublished" datetime="2020-02-22T21:05:35+08:00">2020-02-22</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-02-16 23:23:37" itemprop="dateModified" datetime="2021-02-16T23:23:37+08:00">2021-02-16</time>
+      </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <blockquote>
+<p>前两天使用K8S的ingress配置，遇到两个有包含关系的uri需要匹配到两个不同的容器中的情况，找了一下具体的匹配规则，主要来自<a target="_blank" rel="noopener" href="https://www.digitalocean.com/community/tutorials/understanding-Nginx-server-and-location-block-selection-algorithms">这篇文章</a></p>
+</blockquote>
+<p>根据墨菲定律，可能会发生的事就一定会发生。如果对Nginx的路径配置一直存疑，迟早会出问题。因此，搞懂很重要。</p>
+<p>总体来说，Nginx将配置根据不同的server分成了不同的块，每当一个请求过来时，Nginx都会根据一定的算法确定哪一个配置块来处理该请求。其中起关键性作用的是server块和location块。前者定义了一个虚拟服务器，管理员通常会定义多个server块，然后根据请求的域名，端口或IP决定匹配到哪一个；后者存在于server块内，根据URI对虚拟服务器进行更加详细的区分。二者组合起来能够实现非常灵活的配置。</p>
+<span id="more"></span>
+
+<h1 id="server"><a href="#server" class="headerlink" title="server"></a>server</h1><p>在server块内，主要通过listen指令和server_name指令配置</p>
+<h2 id="listen"><a href="#listen" class="headerlink" title="listen"></a>listen</h2><p>首先，Nginx查看请求的IP地址和端口，将它与每个server块的listen匹配。</p>
+<p>listen指令用于定义server块需要响应的IP和端口。默认情况下，任何不包含listen指令的server块都将被分配一个默认值：对于root用户，将被设置为0.0.0.0:80；对于普通用户，将被设置为0.0.0.0:8080。</p>
+<p>listen指令有如下几种可能性。</p>
+<ul>
+<li>IP + Port</li>
+<li>单独的IP，此时Port将被设为默认值80</li>
+<li>单独的Port， 此时将会监听该端口上的所有接口</li>
+<li>Unix的socket文件路径</li>
+</ul>
+<p>匹配时，算法如下</p>
+<ul>
+<li>首先将不完整的listen指令使用默认值填充完整<ul>
+<li>没有设置listen指令的，使用0.0.0.0:80替换</li>
+<li>单独的IP，端口默认设为80</li>
+<li>单独的端口，IP默认设为0.0.0.0</li>
+</ul>
+</li>
+<li>将IP-Port和请求的IP-Port对比</li>
+<li>如果只有一个server块匹配成功，则该server为最终结果。如果有多个server块匹配成功，则继续根据server_name进行匹配。</li>
+</ul>
+<p>注意哟：server_name只有在需要区分listen匹配的多个结果时才会被使用。一个典型的例子，如果example.com被解析到192.168.1.10，此时要在80上进行匹配。则下面两个配置永远只会匹配到第一个。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">192.168.1.10</span>;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> example.com;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="server-name"><a href="#server-name" class="headerlink" title="server_name"></a>server_name</h2><p>当listen指令匹配到多个结果时，server_name就发挥作用了。</p>
+<p>Nginx会检查请求的<strong>Host头部</strong>，根据如下算法，将其值与server_name指令配置内容进行对比</p>
+<ul>
+<li>首先进行精确匹配，如果匹配数量为1，则使用；如果精确匹配到多个，则使用第一个；如果匹配为0，则继续</li>
+<li>匹配以*开头的配置值，如匹配数量为1，则使用；如匹配到多个，则使用最长那个；如果匹配为0，则继续</li>
+<li>匹配以*结尾的配置值，如匹配数量为1，则使用；如匹配到多个，则使用最长那个；如果匹配为0，则继续</li>
+<li>使用正则表达式匹配，使用匹配到的第一个；如果匹配为0，则继续</li>
+<li>到这里还没有匹配到，则使用该IP和Port对应的默认server块</li>
+</ul>
+<p>注意哟：一个IP和Port对应的默认server块，就是根据listen匹配结果集的第一个，或包含了default_server选项的server块。</p>
+<p>例一：host1.example.com会匹配第二个server块。满足算法第一点。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> <span class="regexp">*.example.com</span>;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> host1.example.com;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>例二：<a target="_blank" rel="noopener" href="http://www.example.org匹配第二个server块.满足算法第二点./">www.example.org匹配第二个server块。满足算法第二点。</a></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> <span class="regexp">www.example.*</span>;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> <span class="regexp">*.example.org</span>;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> <span class="regexp">*.org</span>;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>例三：<a target="_blank" rel="noopener" href="http://www.example.org匹配第三个server块.满足算法第三点./">www.example.org匹配第三个server块。满足算法第三点。</a></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> host1.example.com;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> example.com;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> <span class="regexp">www.example.*</span>;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>例四：<a target="_blank" rel="noopener" href="http://www.example.org匹配第二个server块.满足算法第四点./">www.example.org匹配第二个server块。满足算法第四点。</a></p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> example.com;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> ~^(www|host1).*\.example\.com$;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="section">server</span> &#123;</span><br><span class="line">    <span class="attribute">listen</span> <span class="number">80</span>;</span><br><span class="line">    <span class="attribute">server_name</span> ~^(subdomain|set|www|host1).*\.example\.com$;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="location"><a href="#location" class="headerlink" title="location"></a>location</h1><h2 id="语法"><a href="#语法" class="headerlink" title="语法"></a>语法</h2><p>介绍算法前，先讲讲语法，标准语法如下</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> optional_modifier location_match &#123;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中optional_modifier取下面几种可能的值</p>
+<ul>
+<li>(none) : 即没有optional_modifier，按照前缀进行匹配</li>
+<li>= : 完全匹配</li>
+<li>~ : 按照大小写敏感的正则表达式匹配</li>
+<li>~* : 按照大小写不敏感的正则表达式匹配</li>
+<li>^~ : 不按照正则表达式匹配，注意，这里是显式地抑制正则表达式的解析</li>
+</ul>
+<p>下面举例</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 匹配/site /site/page/index.html /site/index.html等</span></span><br><span class="line"><span class="attribute">location</span> /site &#123;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 只能匹配 /site</span></span><br><span class="line"><span class="attribute">location</span> = /site &#123;</span><br><span class="line">     . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 可匹配/hello.jpg，但是不能匹配/hello.JPG</span></span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~ \.(jpe?g|png|gif|ico)$</span> &#123;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment"># 上面的大小写不敏感版本</span></span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~* \.(jpe?g|png|gif|ico)$</span> &#123;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 能够匹配/customs/hello.html</span></span><br><span class="line"><span class="attribute">location</span><span class="regexp"> ^~</span> /customs &#123;</span><br><span class="line">    . . . </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="匹配算法"><a href="#匹配算法" class="headerlink" title="匹配算法"></a>匹配算法</h2><p>location的匹配方式和server块类似，都是找最优匹配，具体算法如下</p>
+<ul>
+<li>找出所有匹配URI前缀的location块，作为备选</li>
+<li>检查精确匹配的项（即=修饰的项），如果有结果，则直接使用它最为最终匹配结果。否则进行下一步</li>
+<li>如果没有精确项匹配，开始匹配不精确项。找出最长前缀匹配的项，按照如下规则检查<ul>
+<li>若最长前缀匹配的项被^~修饰，则使用它作为结果</li>
+<li>若最长前缀匹配的项未被^~修饰，则此结果会被Nginx暂存起来</li>
+</ul>
+</li>
+<li>解析正则表达式（包含了大小写敏感和不敏感），在上面的按照最长前缀匹配的项中有任何包含正则表达式的项，则进行正则表达式匹配。一旦匹配成功，则用它作为结果</li>
+<li>如果没有正则表达式匹配成功，就使用之前被暂存的匹配项作为结果</li>
+</ul>
+<p>注意哟：这里所说的基于前缀，意思是location指定的值和请求URI的前缀能够匹配。比如 URI 为 /customs/hello/halo时，<code>location /custom</code>、<code>location /custom/hello</code>、<code>location ~ /.*/hello</code>都是能够匹配的</p>
+<p>注意哟：所谓最长前缀匹配项，即尽可能多地匹配URI。比如<code>location /custom/hello</code>相比<code>location /custom</code>，就是较长的匹配项。</p>
+<p>注意哟：默认情况下，相对使用前缀，Nginx会优先使用正则表达式进行匹配。但在这里，ngin首先检查所有前缀location，从而允许我们使用=和^~修饰符来覆盖这个原则。</p>
+<p>注意哟：Nginx会匹配最长最具体的location，但当一个location被当做匹配结果时，正则表达式的解析就停止了，因此location之间的相对位置也会有所影响。比如例四。</p>
+<p>下面举例</p>
+<p>例一：访问 /hello/hello，匹配到的是第一个。满足匹配算法第二点。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> = /hello/hello &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~* /.*/hello</span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>例二：访问/hello/hello，匹配到的是第二个。满足匹配算法第四点。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> /hello/hello &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~* /.*/hello</span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>例三：访问/custom/hello，匹配到第一个。满足匹配算法第五点。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> /custom/hello &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> /custom &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>例四：访问/custom/hello，匹配到第一个。在前缀匹配长度上，他们一致，在解析正则表达式时，第一个首先被解析，符合要求，这样尽管第二个也符合要求，但此时正则表达式的解析已经停止了。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> <span class="regexp">~ /.*/hello</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~ /custom/.*</span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>继续上例，依旧访问/custom/hello，还是匹配到第一个，原因同上。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> <span class="regexp">~ /custom/.*</span> &#123;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~ /.*/hello</span> &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="location跳到其它location的情况"><a href="#location跳到其它location的情况" class="headerlink" title="location跳到其它location的情况"></a>location跳到其它location的情况</h2><p>一般来说，匹配到一个location后，之后的工作都会在该location下完成。但有几个特殊的场景将会重新触发location匹配。比如如下几个指令。</p>
+<ul>
+<li><p>index</p>
+<p>index如果用来处理请求，则始终会导致重定向。如果我们将一个精确匹配的location配置为一个目录，则可能将其重定向到其它位置。比如下面的配置。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 当方位 /exact，会被重定向到/index.html，从而重定向到第二个location</span></span><br><span class="line"><span class="attribute">index</span> index.html;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> = /exact &#123;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> / &#123;</span><br><span class="line">    . . .</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment"># 解决方案是关闭index并开启autuindex</span></span><br><span class="line"><span class="attribute">location</span> = /exact &#123;</span><br><span class="line">    <span class="attribute">index</span> nothing_will_match;</span><br><span class="line">    <span class="attribute">autoindex</span> <span class="literal">on</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>try_files</p>
+<p>该指令告诉Nginx检查是否存在一组命名的文件或目录。 最后一个参数可以是Nginx将对其进行内部重定向的URI。考虑下面的例子。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">root</span> /var/www/main;</span><br><span class="line"><span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="attribute">try_files</span> $uri $uri.html $uri/ /fallback/index.html;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> /fallback &#123;</span><br><span class="line">    <span class="attribute">root</span> /var/www/another;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>这里，如果来的请求是/balabala，则Nginx会尝试在/var/www/main下依次尝试寻找balabala、balabala.html、balabala/等文件或文件夹，如果都没有则内部重定向到/fallback/index.html。此时会匹配到第二个location块。</p>
+</li>
+<li><p>rewrite</p>
+<p>rewrite指定将匹配的uri重写成新的uri，并重新匹配新的location。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 如果uri为/rewriteme/fallback，则重写后的uri变成/fallback，会匹配到下面那个location</span></span><br><span class="line"><span class="attribute">root</span> /var/www/main;</span><br><span class="line"><span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="attribute">rewrite</span><span class="regexp"> ^/rewriteme/(.*)$</span> /<span class="variable">$1</span> <span class="literal">last</span>;</span><br><span class="line">    <span class="attribute">try_files</span> $uri $uri.html $uri/ /fallback/index.html;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> /fallback &#123;</span><br><span class="line">    <span class="attribute">root</span> /var/www/another;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>当然在使用return指令发送301、302重定向时，也会发生类似效果，但那是标准重定向，可以看做新的请求，所以他们还是不同的。</p>
+</li>
+<li><p>error_page</p>
+<p>error_page类似try_files形成的效果，执行的错误页面路径可能在另一个location中。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">root</span> /var/www/main;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> / &#123;</span><br><span class="line">    <span class="attribute">error_page</span> <span class="number">404</span> /another/whoops.html;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> /another &#123;</span><br><span class="line">    <span class="attribute">root</span> /var/www;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h1 id="kubernetes-ingress"><a href="#kubernetes-ingress" class="headerlink" title="kubernetes ingress"></a>kubernetes ingress</h1><p>ingress是K8S中的概念，用于将请求路由到指定的服务，本质上是对nginx的包装。所有配置的ingress都将被转换成nginx的location块。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Ingress</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-ingress</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">nginx.ingress.kubernetes.io/use-regex:</span> <span class="string">&quot;true&quot;</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">host:</span> <span class="string">test.com</span></span><br><span class="line">    <span class="attr">http:</span></span><br><span class="line">      <span class="attr">paths:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">path:</span> <span class="string">/foo/.*</span></span><br><span class="line">        <span class="attr">backend:</span></span><br><span class="line">          <span class="attr">serviceName:</span> <span class="string">test</span></span><br><span class="line">          <span class="attr">servicePort:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<p>上述配置将被翻译成如下配置</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> <span class="regexp">~* &quot;^/foo/.*&quot;</span> &#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>本文比较关心的是ingress中配置的路径优先级。</p>
+<p>在Nginx中，正则表达式遵循最先匹配原则，因此为了更加准确地进行匹配，在写入nginx配置前，ingress首先会根据路径的长度倒序排序，然后才写入nginx配置。</p>
+<p>注意哟，注意下面这种情况此时test.com/foo/bar/bar将会匹配第一个location，而不是第二个location，因为整个ingress开启了正则表达式。当然，如果需要匹配第二个，可以将正则表达式关闭，从而设置 <code>location = /foo/bar/bar</code></p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">networking.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Ingress</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">test-ingress-3</span></span><br><span class="line">  <span class="attr">annotations:</span></span><br><span class="line">    <span class="attr">nginx.ingress.kubernetes.io/use-regex:</span> <span class="string">&quot;true&quot;</span>  <span class="comment"># 注意这里</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">host:</span> <span class="string">test.com</span></span><br><span class="line">    <span class="attr">http:</span></span><br><span class="line">      <span class="attr">paths:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">path:</span> <span class="string">/foo/bar/bar</span></span><br><span class="line">        <span class="attr">backend:</span></span><br><span class="line">          <span class="attr">serviceName:</span> <span class="string">test</span></span><br><span class="line">          <span class="attr">servicePort:</span> <span class="number">80</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">path:</span> <span class="string">/foo/bar/[A-Z0-9]&#123;3&#125;</span></span><br><span class="line">        <span class="attr">backend:</span></span><br><span class="line">          <span class="attr">serviceName:</span> <span class="string">test</span></span><br><span class="line">          <span class="attr">servicePort:</span> <span class="number">80</span></span><br></pre></td></tr></table></figure>
+
+<p>将会被翻译成</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> <span class="regexp">~* &quot;^/foo/bar/[A-Z0-9]</span>&#123;3&#125;&quot; &#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> <span class="regexp">~* &quot;^/foo/bar/bar&quot;</span> &#123;</span><br><span class="line">  ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>详细了解nignx这些特性，在做网站或接口配置时非常有用。比如有如下需求。</p>
+<p>在我开发的项目中，大多数接口均以/admin打头，但只有一个接口以/swagger开头，现在出于需要，我要将项目配置到 <a target="_blank" rel="noopener" href="http://www.example.com/abc/admin%E4%B8%8B%E3%80%82">www.example.com/abc/admin下。</a></p>
+<ul>
+<li><p>在详细了解Nginx配置之前，我的解决方案如下</p>
+<p>将接口的admin前缀去除，然后将location为/abc/admin/下的请求转发给我的服务。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> /abc/admin/ &#123;</span><br><span class="line">    <span class="attribute">proxy_pass</span> http://127.0.0.1:19898/;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>熟悉后，我可以在不改动原来前缀的基础上进行修改。这样看来，上面的操作相当于把Nginx的开发转移到了业务代码中，非常的不好。</p>
+<figure class="highlight nginx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attribute">location</span> /abc/admin/ &#123;</span><br><span class="line">    <span class="attribute">proxy_pass</span> http://127.0.0.1:19898/admin/;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="attribute">location</span> /abc/admin/swagger/ &#123;</span><br><span class="line">    <span class="attribute">proxy_pass</span> http://127.0.0.1:19898/swagger/;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://www.digitalocean.com/community/tutorials/understanding-nginx-server-and-location-block-selection-algorithms">Understanding Nginx Server and Location Block Selection Algorithms</a></li>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.github.io/ingress-nginx/user-guide/ingress-path-matching/#path-priority">Kubernetes Ingress Path Matching</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.nginx.com/resources/wiki/start/">Nginx官方手册</a></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/12/07/pipenv%20-%20python%E5%8C%85%E7%AE%A1%E7%90%86%E5%92%8C%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83%E5%B7%A5%E5%85%B7-pipenv-python%E5%8C%85%E7%AE%A1%E7%90%86%E5%92%8C%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83%E5%B7%A5%E5%85%B7/" rel="prev" title="pipenv - python包管理和虚拟环境工具">
+                  <i class="fa fa-chevron-left"></i> pipenv - python包管理和虚拟环境工具
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2020/02/23/%E5%9F%BA%E4%BA%8Efrp%E6%9E%84%E5%BB%BA%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F-%E5%9F%BA%E4%BA%8Efrp%E6%9E%84%E5%BB%BA%E5%86%85%E7%BD%91%E7%A9%BF%E9%80%8F/" rel="next" title="基于frp构建内网穿透">
+                  基于frp构建内网穿透 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">John Doe</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>

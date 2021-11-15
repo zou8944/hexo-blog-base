@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+
+
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@5.15.4/css/all.min.css" integrity="sha256-mUZM63G8m73Mcidfrv5E+Y61y7a12O5mW4ezU3bxqW4=" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
+
+<script class="next-config" data-name="main" type="application/json">{"hostname":"example.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<meta name="description" content="DNS，全称Domain Namespace System，即域名系统。是互联网一项核心服务，将域名映射为IP地址（或其他类型记录），使得用户能够通过域名方便地访问特定的网站，而不必记住复杂而晦涩的IP地址。如此重要功能，各大云服务商一般都有提供域名申请和域名解析服务。域名申请服务提供获得全网唯一域名的方式，如zouguodong.top、baidu.com等；域名解析服务则能够提供域名到指定服务">
+<meta property="og:type" content="article">
+<meta property="og:title" content="域名系统介绍及原理">
+<meta property="og:url" content="http://example.com/2019/12/01/%E5%9F%9F%E5%90%8D%E7%B3%BB%E7%BB%9F%E4%BB%8B%E7%BB%8D%E5%8F%8A%E5%8E%9F%E7%90%86-%E5%9F%9F%E5%90%8D%E7%B3%BB%E7%BB%9F%E4%BB%8B%E7%BB%8D%E5%8F%8A%E5%8E%9F%E7%90%86/index.html">
+<meta property="og:site_name" content="Hexo">
+<meta property="og:description" content="DNS，全称Domain Namespace System，即域名系统。是互联网一项核心服务，将域名映射为IP地址（或其他类型记录），使得用户能够通过域名方便地访问特定的网站，而不必记住复杂而晦涩的IP地址。如此重要功能，各大云服务商一般都有提供域名申请和域名解析服务。域名申请服务提供获得全网唯一域名的方式，如zouguodong.top、baidu.com等；域名解析服务则能够提供域名到指定服务">
+<meta property="og:locale" content="en_US">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201165045751.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201154232500.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201155650946.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201155715623.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201161114768.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201162003135.png">
+<meta property="article:published_time" content="2019-12-01T04:04:35.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:24:00.972Z">
+<meta property="article:author" content="John Doe">
+<meta property="article:tag" content="DNS">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201165045751.png">
+
+
+<link rel="canonical" href="http://example.com/2019/12/01/%E5%9F%9F%E5%90%8D%E7%B3%BB%E7%BB%9F%E4%BB%8B%E7%BB%8D%E5%8F%8A%E5%8E%9F%E7%90%86-%E5%9F%9F%E5%90%8D%E7%B3%BB%E7%BB%9F%E4%BB%8B%E7%BB%8D%E5%8F%8A%E5%8E%9F%E7%90%86/">
+
+
+
+<script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"en","comments":true,"permalink":"http://example.com/2019/12/01/%E5%9F%9F%E5%90%8D%E7%B3%BB%E7%BB%9F%E4%BB%8B%E7%BB%8D%E5%8F%8A%E5%8E%9F%E7%90%86-%E5%9F%9F%E5%90%8D%E7%B3%BB%E7%BB%9F%E4%BB%8B%E7%BB%8D%E5%8F%8A%E5%8E%9F%E7%90%86/","path":"2019/12/01/域名系统介绍及原理-域名系统介绍及原理/","title":"域名系统介绍及原理"}</script>
+
+<script class="next-config" data-name="calendar" type="application/json">""</script>
+<title>域名系统介绍及原理 | Hexo</title>
+  
+
+
+
+
+  <noscript>
+    <link rel="stylesheet" href="/css/noscript.css">
+  </noscript>
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage" class="use-motion">
+  <div class="headband"></div>
+
+  <main class="main">
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="Toggle navigation bar" role="button">
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <i class="logo-line"></i>
+      <h1 class="site-title">Hexo</h1>
+      <i class="logo-line"></i>
+    </a>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+</div>
+        
+  
+  <div class="toggle sidebar-toggle" role="button">
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+    <span class="toggle-line"></span>
+  </div>
+
+  <aside class="sidebar">
+
+    <div class="sidebar-inner sidebar-nav-active sidebar-toc-active">
+      <ul class="sidebar-nav">
+        <li class="sidebar-nav-toc">
+          Table of Contents
+        </li>
+        <li class="sidebar-nav-overview">
+          Overview
+        </li>
+      </ul>
+
+      <div class="sidebar-panel-container">
+        <!--noindex-->
+        <div class="post-toc-wrap sidebar-panel">
+            <div class="post-toc animated"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%9F%E5%90%8D"><span class="nav-number">1.</span> <span class="nav-text">域名</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%9F%E5%90%8D%E7%9A%84%E7%BB%84%E6%88%90"><span class="nav-number">1.1.</span> <span class="nav-text">域名的组成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%9F%E5%90%8D%E6%B3%A8%E5%86%8C"><span class="nav-number">1.2.</span> <span class="nav-text">域名注册</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%9F%E5%90%8D%E5%A4%87%E6%A1%88"><span class="nav-number">1.3.</span> <span class="nav-text">域名备案</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90"><span class="nav-number">2.</span> <span class="nav-text">域名解析</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%9F%E5%90%8D%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-number">2.1.</span> <span class="nav-text">域名服务器</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B"><span class="nav-number">2.2.</span> <span class="nav-text">解析过程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%A3%E6%9E%90%E7%BB%93%E6%9E%9C-DNS%E8%AE%B0%E5%BD%95%E7%B1%BB%E5%9E%8B"><span class="nav-number">2.3.</span> <span class="nav-text">解析结果 - DNS记录类型</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%85%B6%E5%AE%83%E6%9C%AF%E8%AF%AD%E8%A7%A3%E9%87%8A"><span class="nav-number">3.</span> <span class="nav-text">其它术语解释</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">4.</span> <span class="nav-text">参考资料</span></a></li></ol></div>
+        </div>
+        <!--/noindex-->
+
+        <div class="site-overview-wrap sidebar-panel">
+          <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">John Doe</p>
+  <div class="site-description" itemprop="description"></div>
+</div>
+<div class="site-state-wrap site-overview-item animated">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+        <a href="/archives/">
+          <span class="site-state-item-count">79</span>
+          <span class="site-state-item-name">posts</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">categories</span>
+      </div>
+      <div class="site-state-item site-state-tags">
+        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-name">tags</span>
+      </div>
+  </nav>
+</div>
+
+
+
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div class="sidebar-dimmer"></div>
+
+
+    </header>
+
+    
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+<noscript>
+  <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
+</noscript>
+
+
+    <div class="main-inner post posts-expand">
+
+
+  
+
+
+<div class="post-block">
+  
+  
+
+  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="en">
+    <link itemprop="mainEntityOfPage" href="http://example.com/2019/12/01/%E5%9F%9F%E5%90%8D%E7%B3%BB%E7%BB%9F%E4%BB%8B%E7%BB%8D%E5%8F%8A%E5%8E%9F%E7%90%86-%E5%9F%9F%E5%90%8D%E7%B3%BB%E7%BB%9F%E4%BB%8B%E7%BB%8D%E5%8F%8A%E5%8E%9F%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="John Doe">
+      <meta itemprop="description" content="">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="Hexo">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          域名系统介绍及原理
+        </h1>
+
+        <div class="post-meta-container">
+          <div class="post-meta">
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar"></i>
+      </span>
+      <span class="post-meta-item-text">Posted on</span>
+
+      <time title="Created: 2019-12-01 12:04:35" itemprop="dateCreated datePublished" datetime="2019-12-01T12:04:35+08:00">2019-12-01</time>
+    </span>
+      <span class="post-meta-item">
+        <span class="post-meta-item-icon">
+          <i class="far fa-calendar-check"></i>
+        </span>
+        <span class="post-meta-item-text">Edited on</span>
+        <time title="Modified: 2021-02-16 23:24:00" itemprop="dateModified" datetime="2021-02-16T23:24:00+08:00">2021-02-16</time>
+      </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-folder"></i>
+      </span>
+      <span class="post-meta-item-text">In</span>
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">网络基础</span></a>
+        </span>
+    </span>
+
+  
+</div>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+        <p>DNS，全称Domain Namespace System，即域名系统。是互联网一项核心服务，将域名映射为IP地址（或其他类型记录），使得用户能够通过域名方便地访问特定的网站，而不必记住复杂而晦涩的IP地址。<br>如此重要功能，各大云服务商一般都有提供域名申请和域名解析服务。域名申请服务提供获得全网唯一域名的方式，如zouguodong.top、baidu.com等；域名解析服务则能够提供域名到指定服务的映射，最常见的就是映射到IP。</p>
+<span id="more"></span>
+
+<h1 id="域名"><a href="#域名" class="headerlink" title="域名"></a>域名</h1><h2 id="域名的组成"><a href="#域名的组成" class="headerlink" title="域名的组成"></a>域名的组成</h2><p>域名具有全网唯一性。而由于互联网用户数量众多，想要拥有自己域名的个人或企业数不胜数，因此域名采用状结构命名法。任何连接在因特网上的主机或路由器，都有一个唯一的层次结构的名字，即域名(domain name)。这里，“域”(domain)是名字空间中一个可被管理的划分。从语法上讲，每一个域名都是有标号(label)序列组成，而各标号之间用点(小数点)隔开。域名可以划分为各个子域，子域还可以继续划分为子域的子域，这样就形成了顶级域、主域名、子域名等。图示如下</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201165045751.png" alt="image-20191201165045751"></p>
+<p>各级域名举例如下</p>
+<ul>
+<li>顶级域名（一级域名）：.com</li>
+<li>主域名（二级域名）：google.com</li>
+<li>子域名（三级域名）：api.google.com</li>
+</ul>
+<blockquote>
+<p>一个完整的域名，本应该由子域名+主域名+顶级域名+根域名组成，如：api.google.com.，早先的域名解析系统就是这样，如果不输入最后一个点，是无法正确解析的。这当然是很傻的做法，因此在如今的DNS服务器已经能够自动补全根域的点了，现在反而是输入了最后的点会无法解析。</p>
+</blockquote>
+<p>我们通常是购买主域名，一个主域名下理论上可以创建无限多个子域名，例如内网穿透服务提供商NATAPP自身拥有一个主域名如nat100.top，但是可以提供用户购买子域名。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201154232500.png" alt="image-20191201154232500"></p>
+<h2 id="域名注册"><a href="#域名注册" class="headerlink" title="域名注册"></a>域名注册</h2><p>一个比较好的类比是买房子，购买域名相当于买一块地皮，创建子域名好比划分这块地，而服务搭建可类比建房子。</p>
+<p>域名注册的价格比较便宜，但由于其唯一性，你想要的域名在你之前很可能已经被人注册了，此时就要委托购买，价格就天差地别了，数万到数百万不等，上亿也有可能，据称VacationRentals.com收购价为3500万美元，国内最贵360.com收购价则为1700万美元。也正是如此高昂的价格，使得域名抢注称为一个热点。</p>
+<p>抛开热门域名，对于普通用户，想要注册一个冷门域名，价格还是比较亲和的，几十块就能搞定一年，没错，域名是有使用期限限制的，注册时可选年限，比如以我的名字命名的域名价格一年和十年比较如下。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201155650946.png" alt="image-20191201155650946"></p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201155715623.png" alt="image-20191201155715623"></p>
+<h2 id="域名备案"><a href="#域名备案" class="headerlink" title="域名备案"></a>域名备案</h2><p>根据 《互联网信息服务管理办法》 以及 《非经营性互联网信息服务备案管理办法》 ，国家对非经营性互联网信息服务实行备案制度，对经营性互联网信息服务实行许可制度。未取得许可或者未履行备案手续的，不得从事互联网信息服务。即所有对中国大陆提供服务的网站都必须先进行ICP备案，才可开通服务。</p>
+<p>若未备案，域名服务商将会拒绝解析，并提示你去备案啦。</p>
+<h1 id="域名解析"><a href="#域名解析" class="headerlink" title="域名解析"></a>域名解析</h1><p>上面介绍了域名相关知识，但域名最终还是要解析到具体的服务上才有价值。如下说明域名解析如何运作</p>
+<h2 id="域名服务器"><a href="#域名服务器" class="headerlink" title="域名服务器"></a>域名服务器</h2><p>域名呈树状结构，解析方式也是如此，针对不同层级上的域名，有不同的DNS服务器</p>
+<ul>
+<li><p>本地域名服务器：DNS Resolver或Local DNS。响应来自客户端的请求，并最终跟踪直到获取到解析结果的DNS服务器，是客户端直接访问的服务。如本机自动分配的DNS、运营商ISP分配的DNS、谷歌/114公共DNS等。例如我们手动设置电脑网络为手动配置时的DNS服务器，即为本地域名服务器的地址，可以手动设置114.114.114.114等公共DNS服务器地址。也可以选择自动DHCP的方式，自动分配DNS服务器地址。理解这点很重要，因为这是我们直接访问的DNS服务器，而下面三种则是我们不会直接访问的服务器。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201161114768.png" alt="image-20191201161114768"></p>
+</li>
+<li><p>根DNS服务器：Root nameserver。本地域名服务器在本地找不到解析结果时，会首先向它查询，它会返回顶级域名服务器的地址</p>
+</li>
+<li><p>顶级域名服务器：Tld nameserver。负责管理该顶级域名下的二级域名，返回二级域名所在的权威域名服务器地址</p>
+</li>
+<li><p>权威域名服务器：authoritative nameserver。负责维护该区域内的域名和IP地址的之间的对应关系，能够返回最终的解析结果。阿里云DNS解析服务、amazon的Route 53 name都属于该类服务器。</p>
+</li>
+</ul>
+<h2 id="解析过程"><a href="#解析过程" class="headerlink" title="解析过程"></a>解析过程</h2><p>用户使用域名访问某个资源的完整过程如下图</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90DNS/image-20191201162003135.png" alt="image-20191201162003135"></p>
+<ol>
+<li>用户在浏览器中输入域名，回车</li>
+<li>请求来到本地域名服务器</li>
+<li>本地域名服务器首先向根服务器请求得到顶级域名服务器地址</li>
+<li>本地域名服务器根据上一步地址向顶级域名该服务器请求得到权威域名服务器地址</li>
+<li>本地域名服务器根据上一步地址向权威域名服务器请求得到最终解析的结果，这是IP地址</li>
+<li>本地域名服务器将IP返回给浏览器</li>
+<li>浏览器根据IP访问到目标服务</li>
+<li>得到访问结果</li>
+</ol>
+<h2 id="解析结果-DNS记录类型"><a href="#解析结果-DNS记录类型" class="headerlink" title="解析结果 - DNS记录类型"></a>解析结果 - DNS记录类型</h2><p>上面的举例解析结果是IP地址，但这只是众多类型中的一种，RFC规范允许总共几十种记录类型，这里介绍几种常使用的</p>
+<ul>
+<li>A：IP4地址</li>
+<li>AAAA：IP6地址</li>
+<li>CNAME：一个主机名字的别名（域名），域名服务器会再次尝试解析该别名</li>
+<li>PTR：指标记录，引导一个规范名称。类似CNAME，不同的是DNS不会尝试解析该名称，而是直接返回。</li>
+<li>NS：返回一个域名服务器记录</li>
+<li>MX：邮件记录，引导域名到该域名的邮件传输代理列表</li>
+<li>SRV：服务定位器，即返回提供特定服务的服务器</li>
+<li>TXT：返回文字记录</li>
+<li>CAA：权威认证授权，DNS认证机构授权，限制主机可接受的CA</li>
+</ul>
+<h1 id="其它术语解释"><a href="#其它术语解释" class="headerlink" title="其它术语解释"></a>其它术语解释</h1><ul>
+<li><p>TTL</p>
+<p>Time To Live，即域名解析结果在本地域名服务器中保留的时间。超时会重新执行一遍完整的解析流程</p>
+</li>
+<li><p>ICANN</p>
+<p><strong>I</strong>nternet <strong>C</strong>orporation for <strong>A</strong>ssigned <strong>N</strong>ames and <strong>N</strong>umbers，网际网络名称与数字地址分配机构，位于美国加利福尼亚的非盈利社团，创建于1998年9月18日，存在目的是专门管理域名和IP地址的分配等网络相关任务。需要说明的是该机构受到美国政府及法律的管理。</p>
+</li>
+<li><p>WHOIS</p>
+<p>域名资料库查询。可以通过该资料库找到一个域名的注册信息。对于大多数根域名服务器，基本的WHOIS库由ICANN管理，而WHOIS的具体细节则由该域的授权机构管理。如中国互联网信息中心（China Internet Network Information Center）负责.cn的WHOIS资料维护。</p>
+</li>
+</ul>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li><a target="_blank" rel="noopener" href="https://aws.amazon.com/tw/route53/what-is-dns/">Amazon Route 53服务说明手册</a></li>
+<li><a target="_blank" rel="noopener" href="https://help.aliyun.com/document_detail/102237.html">阿里云云解析DNS服务说明手册</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.jianshu.com/p/1f3d930a8756">互联网史上最贵的域名排名榜（简书）</a></li>
+<li><a target="_blank" rel="noopener" href="https://zh.wikipedia.org/wiki/DNS%E8%AE%B0%E5%BD%95%E7%B1%BB%E5%9E%8B%E5%88%97%E8%A1%A8">DNS记录类型列表（中文维基百科）</a></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+    <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/DNS/" rel="tag"># DNS</a>
+          </div>
+
+        
+
+          <div class="post-nav">
+            <div class="post-nav-item">
+                <a href="/2019/10/27/Kubernetes%E5%88%9D%E6%8E%A2%20-%20StatefulSet-kubernetesc%E5%88%9D%E6%8E%A2-statefulset/" rel="prev" title="Kubernetes初探 - StatefulSet">
+                  <i class="fa fa-chevron-left"></i> Kubernetes初探 - StatefulSet
+                </a>
+            </div>
+            <div class="post-nav-item">
+                <a href="/2019/12/07/pipenv%20-%20python%E5%8C%85%E7%AE%A1%E7%90%86%E5%92%8C%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83%E5%B7%A5%E5%85%B7-pipenv-python%E5%8C%85%E7%AE%A1%E7%90%86%E5%92%8C%E8%99%9A%E6%8B%9F%E7%8E%AF%E5%A2%83%E5%B7%A5%E5%85%B7/" rel="next" title="pipenv - python包管理和虚拟环境工具">
+                  pipenv - python包管理和虚拟环境工具 <i class="fa fa-chevron-right"></i>
+                </a>
+            </div>
+          </div>
+    </footer>
+  </article>
+</div>
+
+
+
+
+
+
+</div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer-inner">
+
+
+<div class="copyright">
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">John Doe</span>
+</div>
+  <div class="powered-by">Powered by <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a>
+  </div>
+
+    </div>
+  </footer>
+
+  
+  <script src="https://cdn.jsdelivr.net/npm/animejs@3.2.1/lib/anime.min.js" integrity="sha256-XL2inqUJaslATFnHdJOi9GfQ60on8Wx1C2H8DYiN1xY=" crossorigin="anonymous"></script>
+<script src="/js/comments.js"></script><script src="/js/utils.js"></script><script src="/js/motion.js"></script><script src="/js/schemes/muse.js"></script><script src="/js/next-boot.js"></script>
+
+  
+
+
+
+
+
+  
+
+
+
+
+
+</body>
+</html>
