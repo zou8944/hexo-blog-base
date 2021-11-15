@@ -11,12 +11,6 @@ author: 果冻
 language: zh-CN
 timezone: Asia/Shanghai
 
-menu:
-  home: /
-  archives: /archives
-  categories: /categories
-  about: /about
-
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
 url: https://zou8944.com
@@ -112,3 +106,25 @@ deploy:
   type: git
   repo: git@github.com:zou8944/blog.git
   branch: pages
+
+
+##################### theme next 专属
+menu:
+  home: /
+  archives: /archives
+  categories: /categories
+  tags: /tags
+  about: /about
+
+social:
+  CSDN: https://blog.csdn.net/zou8944
+
+favicon: /favicon.ico
+
+avatar: /favicon.ico
+
+highlight_theme: normal
+
+fancybox: true
+
+since: 2018
