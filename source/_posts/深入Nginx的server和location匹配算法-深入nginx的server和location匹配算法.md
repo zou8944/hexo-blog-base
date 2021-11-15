@@ -7,8 +7,6 @@ categories:
 tags: 
 ---
 
-
-
 > 前两天使用K8S的ingress配置，遇到两个有包含关系的uri需要匹配到两个不同的容器中的情况，找了一下具体的匹配规则，主要来自[这篇文章](https://www.digitalocean.com/community/tutorials/understanding-Nginx-server-and-location-block-selection-algorithms)
 
 根据墨菲定律，可能会发生的事就一定会发生。如果对Nginx的路径配置一直存疑，迟早会出问题。因此，搞懂很重要。

@@ -11,6 +11,8 @@ tags:
 
 1. SQL标准的null判断用is null，而不是=null。PG可以设置transform_null_equals把=null翻译成is null
 
+<!-- more -->
+
 2. MySQL显示emojji时，需要将字符集设置为[utf8mb4](https://dev.mysql.com/doc/refman/8.0/en/charset-unicode.html)。而PG就不用
 
    在MySQL中，对Unicode的支持，主要又如下几种字符集

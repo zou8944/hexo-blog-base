@@ -15,6 +15,8 @@ html渲染是一个相对常见的需求，在web前端做起来比较容易。J
 - 去除所有标签
 - 除换行之外的所有格式全都去除
 
+<!-- more -->
+
 ## 实现
 
 目前市面上并没有一步实现该需求的方案，最为接近可行的方案是Jsoup:[https://github.com/jhy/jsoup](https://github.com/jhy/jsoup)；它能够将html文本转换为dom树，并能提取其中文本和元素。

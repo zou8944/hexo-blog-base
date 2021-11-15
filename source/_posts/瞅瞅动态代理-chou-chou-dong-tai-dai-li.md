@@ -15,6 +15,8 @@ tags: Java | 反射
 - 为什么JDK动态代理一定要实现接口，而Cglib就不用？
 - JDK和Cglib，本质上有什么区别？
 
+<!-- more -->
+
 ## JDK动态代理
 
 ### 使用

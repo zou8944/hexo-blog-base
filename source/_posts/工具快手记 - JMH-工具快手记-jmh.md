@@ -17,6 +17,8 @@ tags:
 
 作为补充，我添加了所有注解的说明，还有自己使用中遇到的问题
 
+<!-- more -->
+
 ## 注解解释
 
 - Benchmark：被该注解标记的方法将会编译生成benchmark代码，并添加到Benchmarklist中。

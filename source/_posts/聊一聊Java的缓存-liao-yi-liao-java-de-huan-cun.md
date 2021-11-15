@@ -13,6 +13,8 @@ tags: 缓存
 > - Spring对缓存的抽象——Spring Cache
 > - Redis如何集成到Spring中——作为Spring Cache的实现、直接使用RedisCache、使用RedisTemplate
 
+<!-- more -->
+
 ## 先说点啥
 
 缓存嘛，都知道是咋回事。常见的缓存如Memcached、Redis、Caffine等，各自也有对应的API。使用它们，直接操作API即可。当然，本文并非讨论各种缓存的API的用法，而是在Java中使用缓存的标准方法。无关具体实现，即，Java中的缓存抽象。
