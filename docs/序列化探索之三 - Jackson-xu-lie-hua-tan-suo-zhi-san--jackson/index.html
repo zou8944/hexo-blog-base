@@ -20,12 +20,12 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"zou8944.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="写这篇文章时，我一度陷入了纠结与不安，再次体会到了聚焦的重要性。Jackson看似简单，实则功能强大，这两天有些迷失，不知道要看些什么，要写些什么。但路得一步一步走，饭得一口一口吃，纵使它可供探索的点繁如星辰，我也得将焦点拉回，否则就叫失控。至于其它的点，以后再说。因此，本文将聚焦如下几点  Jackson的能力 基本原理 module工作原理  基本组成Jackson文档怎么看，是一个问题。如果">
+<meta name="description" content="写这篇文章时，我一度陷入了纠结与不安，再次体会到了聚焦的重要性。Jackson看似简单，实则功能强大，这两天有些迷失，不知道要看些什么，要写些什么。但路得一步一步走，饭得一口一口吃，纵使它可供探索的点繁如星辰，我也得将焦点拉回，否则就叫失控。至于其它的点，以后再说。因此，本文将聚焦如下几点  Jackson的能力 基本原理 module工作原理">
 <meta property="og:type" content="article">
 <meta property="og:title" content="序列化探索之三 - Jackson">
 <meta property="og:url" content="https://zou8944.com/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%B8%89%20-%20Jackson-xu-lie-hua-tan-suo-zhi-san--jackson/index.html">
 <meta property="og:site_name" content="果冻 | Jelly">
-<meta property="og:description" content="写这篇文章时，我一度陷入了纠结与不安，再次体会到了聚焦的重要性。Jackson看似简单，实则功能强大，这两天有些迷失，不知道要看些什么，要写些什么。但路得一步一步走，饭得一口一口吃，纵使它可供探索的点繁如星辰，我也得将焦点拉回，否则就叫失控。至于其它的点，以后再说。因此，本文将聚焦如下几点  Jackson的能力 基本原理 module工作原理  基本组成Jackson文档怎么看，是一个问题。如果">
+<meta property="og:description" content="写这篇文章时，我一度陷入了纠结与不安，再次体会到了聚焦的重要性。Jackson看似简单，实则功能强大，这两天有些迷失，不知道要看些什么，要写些什么。但路得一步一步走，饭得一口一口吃，纵使它可供探索的点繁如星辰，我也得将焦点拉回，否则就叫失控。至于其它的点，以后再说。因此，本文将聚焦如下几点  Jackson的能力 基本原理 module工作原理">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013173735959.png">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013193907907.png">
@@ -229,6 +229,8 @@
 <li>基本原理</li>
 <li>module工作原理</li>
 </ul>
+<span id="more"></span>
+
 <h2 id="基本组成"><a href="#基本组成" class="headerlink" title="基本组成"></a>基本组成</h2><p>Jackson文档怎么看，是一个问题。如果初次接触Jackson，看<a target="_blank" rel="noopener" href="https://github.com/FasterXML/jackson">主项目的介绍</a>半个小时，多半还是云里雾里，我认为这是Jackson文档做的很不好的一点，并没有一个Guide，而是需要自己一个一个项目看，而如果你恰巧点到了第三方module，就更不知道它在说什么了。</p>
 <p>总的说来，Jackson由三部分组成</p>
 <ul>

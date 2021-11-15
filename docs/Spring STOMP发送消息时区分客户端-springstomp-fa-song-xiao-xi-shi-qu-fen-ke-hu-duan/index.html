@@ -219,6 +219,8 @@
         <h2 id="背景"><a href="#背景" class="headerlink" title="背景"></a>背景</h2><p>现有使用Spring WebSocket库搭建的STOMP通知中心，使用Spring自带功能，能够区分到用户，向来自同一用户的多个连接（会话）广播数据。</p>
 <p>这正是我们的使用场景：当用户调用服务端指定接口时，服务端向该用户所在的所有用户发送通知。</p>
 <p>现有的配置，在WebSocket握手阶段验证TOKEN，解析成用户ID，存入WebSession；在接口访问时带上TOKEN，再通过SimpMessagingTemplate.convertAndSendToUser()向该用户进行广播。</p>
+<span id="more"></span>
+
 <h2 id="说明"><a href="#说明" class="headerlink" title="说明"></a>说明</h2><ul>
 <li><p>X-GD-UID：客户端提供设备识别码的请求头名</p>
 </li>

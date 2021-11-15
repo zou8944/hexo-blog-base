@@ -20,12 +20,12 @@
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/animate.css@3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
 <script class="next-config" data-name="main" type="application/json">{"hostname":"zou8944.com","root":"/","images":"/images","scheme":"Muse","darkmode":false,"version":"8.8.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":false,"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"prism":false,"i18n":{"placeholder":"搜索...","empty":"没有找到任何搜索结果：${query}","hits_time":"找到 ${hits} 个搜索结果（用时 ${time} 毫秒）","hits":"找到 ${hits} 个搜索结果"}}</script><script src="/js/config.js"></script>
-<meta name="description" content="Charles是Fiddler之外的另一个抓包工具。传说比Fiddler好用，但配置起来其实是有几点坑的。还是可以掰扯掰扯。 配置步骤概览我们配置的目的是利用Charles抓取同局域网下的IOS上应用软件的HTTPS包。环境为Mac OS  配置Charles  Proxy → Proxy Setting，设置端口为8888 Proxy → SSL Proxying Settings，开启SSL代">
+<meta name="description" content="Charles是Fiddler之外的另一个抓包工具。传说比Fiddler好用，但配置起来其实是有几点坑的。还是可以掰扯掰扯。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="Charles抓包配置">
 <meta property="og:url" content="https://zou8944.com/Charles%E6%8A%93%E5%8C%85%E9%85%8D%E7%BD%AE-charles%E6%8A%93%E5%8C%85%E9%85%8D%E7%BD%AE/index.html">
 <meta property="og:site_name" content="果冻 | Jelly">
-<meta property="og:description" content="Charles是Fiddler之外的另一个抓包工具。传说比Fiddler好用，但配置起来其实是有几点坑的。还是可以掰扯掰扯。 配置步骤概览我们配置的目的是利用Charles抓取同局域网下的IOS上应用软件的HTTPS包。环境为Mac OS  配置Charles  Proxy → Proxy Setting，设置端口为8888 Proxy → SSL Proxying Settings，开启SSL代">
+<meta property="og:description" content="Charles是Fiddler之外的另一个抓包工具。传说比Fiddler好用，但配置起来其实是有几点坑的。还是可以掰扯掰扯。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/mac-root-certificate_1629125032475.png">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/ios-root-certificate_1629125032475.png">
@@ -222,6 +222,8 @@
     
     <div class="post-body" itemprop="articleBody">
         <p>Charles是Fiddler之外的另一个抓包工具。传说比Fiddler好用，但配置起来其实是有几点坑的。还是可以掰扯掰扯。</p>
+<span id="more"></span>
+
 <h2 id="配置步骤概览"><a href="#配置步骤概览" class="headerlink" title="配置步骤概览"></a>配置步骤概览</h2><p>我们配置的目的是利用Charles抓取同局域网下的IOS上应用软件的HTTPS包。环境为Mac OS</p>
 <ol>
 <li><p>配置Charles</p>

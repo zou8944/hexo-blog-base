@@ -221,6 +221,8 @@
     <div class="post-body" itemprop="articleBody">
         <p>开局一吐槽，Fastjson的文档，比Jackson还差。Jackson只是位置不明确，如果安下心来看看，还是能够理清楚的。而Fastjson是位置不明确，如果安下心来看看，还会发现，它的文档零零散散，中英文混杂，找不准主线在哪儿。我记得知乎上有个问题，<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/44199956">fastjson这么快老外为啥还是热衷 jackson?</a>，就这文档，让老外用个啥。</p>
 <p>不过看还是要看的，毕竟它是目前主流序列化框架之一。老样子，我们还是从基本使用方法和原理分析两部分着手。</p>
+<span id="more"></span>
+
 <h2 id="能力"><a href="#能力" class="headerlink" title="能力"></a>能力</h2><p>Fastjson仅仅针对json，尚不支持其它任何格式，也没有看到谁为它进行格式扩展。因为这并不是它的目的，库如其名，它是为了更快地序列化Json而存在。因此，使用上来，会简单许多。具体分为几个部分</p>
 <ul>
 <li>常规使用</li>
