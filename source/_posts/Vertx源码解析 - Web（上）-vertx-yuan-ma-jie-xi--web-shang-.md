@@ -12,6 +12,8 @@ tags:
 - 上：分析Vert.x-Web核心类及其主要能力。
 - 下：分析HttpServer的线程调度以及Web OpenAPI的工作原理
 
+<!-- more -->
+
 一个基本的VertxWeb代码片段如下：
 
 ```kotlin

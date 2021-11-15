@@ -14,6 +14,8 @@ tags:
 > - 本地模式下消息是如何在EventBus上传输和响应的？
 > - EventBus和EventLoop是如何关联起来的？
 
+<!-- more -->
+
 ## 概述
 
 Vert.x是一个事件驱动，基于Netty库构建的高性能应用程序框架。实现了所谓的Multi-Reactor模型，能够充分利用多核CPU实现以事件循环为基础的基本编程模型。同时在此基础上构建了Verticle这样类似Actor的概念，以应对并发编程的需求。

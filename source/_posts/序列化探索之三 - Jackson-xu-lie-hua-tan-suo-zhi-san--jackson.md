@@ -13,6 +13,8 @@ tags: 序列化
 - 基本原理
 - module工作原理
 
+<!-- more -->
+
 ## 基本组成
 
 Jackson文档怎么看，是一个问题。如果初次接触Jackson，看[主项目的介绍](https://github.com/FasterXML/jackson)半个小时，多半还是云里雾里，我认为这是Jackson文档做的很不好的一点，并没有一个Guide，而是需要自己一个一个项目看，而如果你恰巧点到了第三方module，就更不知道它在说什么了。

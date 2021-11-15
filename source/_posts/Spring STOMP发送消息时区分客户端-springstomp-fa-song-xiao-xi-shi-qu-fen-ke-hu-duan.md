@@ -15,6 +15,8 @@ tags: Spring | WebSocket
 
 现有的配置，在WebSocket握手阶段验证TOKEN，解析成用户ID，存入WebSession；在接口访问时带上TOKEN，再通过SimpMessagingTemplate.convertAndSendToUser()向该用户进行广播。
 
+<!-- more -->
+
 ## 说明
 
 - X-GD-UID：客户端提供设备识别码的请求头名

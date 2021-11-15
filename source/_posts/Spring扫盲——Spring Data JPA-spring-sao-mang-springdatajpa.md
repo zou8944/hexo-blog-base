@@ -11,6 +11,8 @@ tags: Spring
 
 对于JPA，我们只需要掌握几点。
 
+<!-- more -->
+
 ### 使用步骤
 
 - 配置开启JPA，提供EntityBeanFactory，提供repositories的配置包路径
