@@ -3,8 +3,12 @@ title: Spring扫盲——Spring Data JPA
 date: 2021-09-28 16:36:39.81
 updated: 2021-09-28 16:36:39.81
 url: https://www.zou8944.com/archives/spring-sao-mang-springdatajpa
-categories: Spring | 后端
-tags: Spring
+categories: 
+- 后端
+- Spring
+tags: 
+- Spring
+- JPA
 ---
 
 震惊，查询SQL的创建居然是根据Repository的方法名来生成的。

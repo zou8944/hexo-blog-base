@@ -24,7 +24,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="PostgreSQL - 一文看懂explain">
 <meta property="og:url" content="https://zou8944.com/PostgreSQL%20-%20%E4%B8%80%E6%96%87%E7%9C%8B%E6%87%82explain-postgresql-yi-wen-kan-dong-explain/index.html">
-<meta property="og:site_name" content="果冻 | Jelly">
+<meta property="og:site_name" content="半中二中青年">
 <meta property="og:description" content="explain是SQL优化的前提。但explain的结果，无论是官方手册，还是别人写的博客，看完后点头如捣蒜，但往往看到自己SQL的执行计划时，并不很确定要优化的点在哪里。很大一部分原因是不知道各计划节点的具体含义，更确切地说，是不明白SQL执行的原理。比如，我们并不能很好地回答以下问题  index scan、index only scan、bitmap index scan 有啥区别？ 为什">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://img-blog.csdnimg.cn/20200801125412784.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70">
@@ -32,8 +32,8 @@
 <meta property="og:image" content="https://img-blog.csdnimg.cn/20200801125514710.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70">
 <meta property="article:published_time" content="2020-08-01T15:34:17.000Z">
 <meta property="article:modified_time" content="2021-02-16T15:36:37.360Z">
-<meta property="article:author" content="果冻 | Jelly">
-<meta property="article:tag" content="postgresql">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="PostgreSQL">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://img-blog.csdnimg.cn/20200801125412784.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70">
 
@@ -45,7 +45,7 @@
 <script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://zou8944.com/PostgreSQL%20-%20%E4%B8%80%E6%96%87%E7%9C%8B%E6%87%82explain-postgresql-yi-wen-kan-dong-explain/","path":"PostgreSQL - 一文看懂explain-postgresql-yi-wen-kan-dong-explain/","title":"PostgreSQL - 一文看懂explain"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>PostgreSQL - 一文看懂explain | 果冻 | Jelly</title>
+<title>PostgreSQL - 一文看懂explain | 半中二中青年</title>
   
 
 
@@ -71,7 +71,7 @@
 
     <a href="/" class="brand" rel="start">
       <i class="logo-line"></i>
-      <h1 class="site-title">果冻 | Jelly</h1>
+      <h1 class="site-title">半中二中青年</h1>
       <i class="logo-line"></i>
     </a>
       <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
@@ -119,8 +119,8 @@
 
         <div class="site-overview-wrap sidebar-panel">
           <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">果冻 | Jelly</p>
-  <div class="site-description" itemprop="description">Beat Jelly; Hit Jelly; Kill Jelly.</div>
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
 </div>
 <div class="site-state-wrap site-overview-item animated">
   <nav class="site-state">
@@ -131,11 +131,11 @@
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-count">25</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-count">55</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
@@ -178,12 +178,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="果冻 | Jelly">
-      <meta itemprop="description" content="Beat Jelly; Hit Jelly; Kill Jelly.">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="果冻 | Jelly">
+      <meta itemprop="name" content="半中二中青年">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -213,7 +213,7 @@
       </span>
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-          <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+          <a href="/categories/%E6%95%B0%E6%8D%AE%E5%BA%93/" itemprop="url" rel="index"><span itemprop="name">数据库</span></a>
         </span>
     </span>
 
@@ -436,7 +436,7 @@
 
     <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/postgresql/" rel="tag"># postgresql</a>
+              <a href="/tags/PostgreSQL/" rel="tag"># PostgreSQL</a>
           </div>
 
         
@@ -475,7 +475,7 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">果冻 | Jelly</span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
 </div>
   <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
   </div>

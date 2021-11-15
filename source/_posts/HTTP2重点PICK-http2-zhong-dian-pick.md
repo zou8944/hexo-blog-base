@@ -4,7 +4,7 @@ date: 2021-09-12 23:59:01.644
 updated: 2021-09-12 23:59:01.644
 url: https://www.zou8944.com/archives/http2-zhong-dian-pick
 categories: 网络基础
-tags: HTTP | 网络
+tags: HTTP2
 ---
 
 > 花了两天时间读完HTTP2的[RFC](https://www.rfc-editor.org/rfc/pdfrfc/rfc7540.txt.pdf)，揭开HTTP2的神秘面纱，驱散心中迷雾，它比HTTP1.1，到底改变了什么。

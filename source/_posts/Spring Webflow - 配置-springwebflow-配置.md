@@ -3,8 +3,10 @@ title: Spring Webflow - 配置
 date: 2018-09-05 22:33:00.0
 updated: 2021-02-16 23:27:46.205
 url: https://www.zou8944.com/archives/springwebflow-配置
-categories: Spring | Webflow
-tags: Spring | Webflow
+categories: 后端
+tags: 
+- Spring
+- Webflow
 ---
 
 

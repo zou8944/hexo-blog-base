@@ -3,8 +3,9 @@ title: 技术巡礼 - SockJS
 date: 2019-10-13 16:21:04.0
 updated: 2021-02-16 23:25:31.491
 url: https://www.zou8944.com/archives/技术巡礼-sockjs
-categories: 技术巡礼
-tags: Sock JS
+categories:
+- 工具
+tags: SockJS
 ---
 
 

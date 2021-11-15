@@ -4,7 +4,9 @@ date: 2020-06-06 10:29:54.0
 updated: 2021-02-16 23:21:09.189
 url: https://www.zou8944.com/archives/postgresql的listen-notify机制
 categories: 
+- 数据库
 tags: 
+- PostgreSQL
 ---
 
 

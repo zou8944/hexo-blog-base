@@ -24,13 +24,15 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Spring STOMP发送消息时区分客户端">
 <meta property="og:url" content="https://zou8944.com/Spring%20STOMP%E5%8F%91%E9%80%81%E6%B6%88%E6%81%AF%E6%97%B6%E5%8C%BA%E5%88%86%E5%AE%A2%E6%88%B7%E7%AB%AF-springstomp-fa-song-xiao-xi-shi-qu-fen-ke-hu-duan/index.html">
-<meta property="og:site_name" content="果冻 | Jelly">
+<meta property="og:site_name" content="半中二中青年">
 <meta property="og:description" content="背景现有使用Spring WebSocket库搭建的STOMP通知中心，使用Spring自带功能，能够区分到用户，向来自同一用户的多个连接（会话）广播数据。 这正是我们的使用场景：当用户调用服务端指定接口时，服务端向该用户所在的所有用户发送通知。 现有的配置，在WebSocket握手阶段验证TOKEN，解析成用户ID，存入WebSession；在接口访问时带上TOKEN，再通过SimpMessag">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-09-16T10:51:53.051Z">
 <meta property="article:modified_time" content="2021-09-16T10:51:53.051Z">
-<meta property="article:author" content="果冻 | Jelly">
-<meta property="article:tag" content="Spring | WebSocket">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="Spring">
+<meta property="article:tag" content="WebSocket">
+<meta property="article:tag" content="STOMP">
 <meta name="twitter:card" content="summary">
 
 
@@ -41,7 +43,7 @@
 <script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://zou8944.com/Spring%20STOMP%E5%8F%91%E9%80%81%E6%B6%88%E6%81%AF%E6%97%B6%E5%8C%BA%E5%88%86%E5%AE%A2%E6%88%B7%E7%AB%AF-springstomp-fa-song-xiao-xi-shi-qu-fen-ke-hu-duan/","path":"Spring STOMP发送消息时区分客户端-springstomp-fa-song-xiao-xi-shi-qu-fen-ke-hu-duan/","title":"Spring STOMP发送消息时区分客户端"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>Spring STOMP发送消息时区分客户端 | 果冻 | Jelly</title>
+<title>Spring STOMP发送消息时区分客户端 | 半中二中青年</title>
   
 
 
@@ -67,7 +69,7 @@
 
     <a href="/" class="brand" rel="start">
       <i class="logo-line"></i>
-      <h1 class="site-title">果冻 | Jelly</h1>
+      <h1 class="site-title">半中二中青年</h1>
       <i class="logo-line"></i>
     </a>
       <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
@@ -115,8 +117,8 @@
 
         <div class="site-overview-wrap sidebar-panel">
           <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">果冻 | Jelly</p>
-  <div class="site-description" itemprop="description">Beat Jelly; Hit Jelly; Kill Jelly.</div>
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
 </div>
 <div class="site-state-wrap site-overview-item animated">
   <nav class="site-state">
@@ -127,11 +129,11 @@
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-count">25</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-count">55</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
@@ -174,12 +176,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="果冻 | Jelly">
-      <meta itemprop="description" content="Beat Jelly; Hit Jelly; Kill Jelly.">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="果冻 | Jelly">
+      <meta itemprop="name" content="半中二中青年">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -288,7 +290,9 @@
 
     <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/Spring-WebSocket/" rel="tag"># Spring | WebSocket</a>
+              <a href="/tags/Spring/" rel="tag"># Spring</a>
+              <a href="/tags/WebSocket/" rel="tag"># WebSocket</a>
+              <a href="/tags/STOMP/" rel="tag"># STOMP</a>
           </div>
 
         
@@ -327,7 +331,7 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">果冻 | Jelly</span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
 </div>
   <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
   </div>

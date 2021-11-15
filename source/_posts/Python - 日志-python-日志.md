@@ -3,7 +3,7 @@ title: Python - 日志
 date: 2020-03-07 16:16:23.0
 updated: 2021-02-16 23:22:51.109
 url: https://www.zou8944.com/archives/python-日志
-categories: Python
+categories: 编程语言
 tags: 日志
 ---
 

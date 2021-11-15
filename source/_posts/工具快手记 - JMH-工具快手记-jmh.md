@@ -3,8 +3,10 @@ title: 工具快手记 - JMH
 date: 2021-10-20 12:04:53.258
 updated: 2021-10-20 12:07:20.299
 url: https://www.zou8944.com/archives/工具快手记-jmh
-categories: 工具
+categories: 
+- 工具
 tags: 
+- JMH
 ---
 
 站在巨人的肩膀上，JMH是一个工具，不打算深入研究它，只求能够正确使用，网上关于它的使用方法讲的还挺全面的，就直接看他们吧。

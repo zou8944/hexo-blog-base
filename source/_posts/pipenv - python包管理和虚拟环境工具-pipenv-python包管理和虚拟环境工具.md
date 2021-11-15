@@ -4,7 +4,10 @@ date: 2019-12-07 10:35:21.0
 updated: 2021-02-16 23:23:47.768
 url: https://www.zou8944.com/archives/pipenv-python包管理和虚拟环境工具
 categories: 
+- 编程语言
+- 工具
 tags: 
+- pipenv
 ---
 
 

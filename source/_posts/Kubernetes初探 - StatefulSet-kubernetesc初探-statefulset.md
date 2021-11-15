@@ -3,7 +3,7 @@ title: Kubernetes初探 - StatefulSet
 date: 2019-10-27 18:12:25.0
 updated: 2021-02-16 23:24:25.056
 url: https://www.zou8944.com/archives/kubernetesc初探-statefulset
-categories: 容器
+categories: 运维
 tags: kubernetes
 ---
 

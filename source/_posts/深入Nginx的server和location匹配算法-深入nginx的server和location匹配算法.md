@@ -4,7 +4,9 @@ date: 2020-02-22 21:05:35.0
 updated: 2021-02-16 23:23:37.898
 url: https://www.zou8944.com/archives/深入nginx的server和location匹配算法
 categories: 
+- 运维
 tags: 
+- Nginx
 ---
 
 > 前两天使用K8S的ingress配置，遇到两个有包含关系的uri需要匹配到两个不同的容器中的情况，找了一下具体的匹配规则，主要来自[这篇文章](https://www.digitalocean.com/community/tutorials/understanding-Nginx-server-and-location-block-selection-algorithms)

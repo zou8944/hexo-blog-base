@@ -24,7 +24,7 @@
 <meta property="og:type" content="article">
 <meta property="og:title" content="Kotlin协程-使用篇">
 <meta property="og:url" content="https://zou8944.com/Kotlin%E5%8D%8F%E7%A8%8B-%E4%BD%BF%E7%94%A8%E7%AF%87-kotlin%E5%8D%8F%E7%A8%8B-%E4%BD%BF%E7%94%A8%E7%AF%87md/index.html">
-<meta property="og:site_name" content="果冻 | Jelly">
+<meta property="og:site_name" content="半中二中青年">
 <meta property="og:description" content="使用协程已经有较长的时间了，但一直停留在launch、async启动协程，suspend方法挂起的阶段。这段时间系统梳理Kotlin知识时才发现，对协程（仅对Kotlin）还有很多概念不甚了解。例如CoroutineScope对协程生命周期的重要性、协程父子结构的作用、结构化并发、一些Kotlin协程中约定俗称的规定等。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/Kotlin%E5%8D%8F%E7%A8%8B-%E4%BD%BF%E7%94%A8%E7%AF%87/image-20200530154420916.png">
@@ -33,8 +33,9 @@
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/Kotlin%E5%8D%8F%E7%A8%8B-%E4%BD%BF%E7%94%A8%E7%AF%87/image-20200530165243662.png">
 <meta property="article:published_time" content="2020-05-25T14:57:26.000Z">
 <meta property="article:modified_time" content="2021-02-16T15:21:28.826Z">
-<meta property="article:author" content="果冻 | Jelly">
-<meta property="article:tag" content="kotlin | 协程">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="kotlin">
+<meta property="article:tag" content="协程">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/Kotlin%E5%8D%8F%E7%A8%8B-%E4%BD%BF%E7%94%A8%E7%AF%87/image-20200530154420916.png">
 
@@ -46,7 +47,7 @@
 <script class="next-config" data-name="page" type="application/json">{"sidebar":"","isHome":false,"isPost":true,"lang":"zh-CN","comments":true,"permalink":"https://zou8944.com/Kotlin%E5%8D%8F%E7%A8%8B-%E4%BD%BF%E7%94%A8%E7%AF%87-kotlin%E5%8D%8F%E7%A8%8B-%E4%BD%BF%E7%94%A8%E7%AF%87md/","path":"Kotlin协程-使用篇-kotlin协程-使用篇md/","title":"Kotlin协程-使用篇"}</script>
 
 <script class="next-config" data-name="calendar" type="application/json">""</script>
-<title>Kotlin协程-使用篇 | 果冻 | Jelly</title>
+<title>Kotlin协程-使用篇 | 半中二中青年</title>
   
 
 
@@ -72,7 +73,7 @@
 
     <a href="/" class="brand" rel="start">
       <i class="logo-line"></i>
-      <h1 class="site-title">果冻 | Jelly</h1>
+      <h1 class="site-title">半中二中青年</h1>
       <i class="logo-line"></i>
     </a>
       <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
@@ -120,8 +121,8 @@
 
         <div class="site-overview-wrap sidebar-panel">
           <div class="site-author site-overview-item animated" itemprop="author" itemscope itemtype="http://schema.org/Person">
-  <p class="site-author-name" itemprop="name">果冻 | Jelly</p>
-  <div class="site-description" itemprop="description">Beat Jelly; Hit Jelly; Kill Jelly.</div>
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
 </div>
 <div class="site-state-wrap site-overview-item animated">
   <nav class="site-state">
@@ -132,11 +133,11 @@
         </a>
       </div>
       <div class="site-state-item site-state-categories">
-        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-count">25</span>
         <span class="site-state-item-name">分类</span>
       </div>
       <div class="site-state-item site-state-tags">
-        <span class="site-state-item-count">42</span>
+        <span class="site-state-item-count">55</span>
         <span class="site-state-item-name">标签</span>
       </div>
   </nav>
@@ -179,12 +180,12 @@
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
       <meta itemprop="image" content="/images/avatar.gif">
-      <meta itemprop="name" content="果冻 | Jelly">
-      <meta itemprop="description" content="Beat Jelly; Hit Jelly; Kill Jelly.">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
     </span>
 
     <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="果冻 | Jelly">
+      <meta itemprop="name" content="半中二中青年">
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
@@ -215,6 +216,10 @@
       <span class="post-meta-item-text">分类于</span>
         <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
           <a href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" itemprop="url" rel="index"><span itemprop="name">编程语言</span></a>
+        </span>
+          ，
+        <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+          <a href="/categories/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/%E5%93%8D%E5%BA%94%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">响应式</span></a>
         </span>
     </span>
 
@@ -562,7 +567,8 @@
 
     <footer class="post-footer">
           <div class="post-tags">
-              <a href="/tags/kotlin-%E5%8D%8F%E7%A8%8B/" rel="tag"># kotlin | 协程</a>
+              <a href="/tags/kotlin/" rel="tag"># kotlin</a>
+              <a href="/tags/%E5%8D%8F%E7%A8%8B/" rel="tag"># 协程</a>
           </div>
 
         
@@ -601,7 +607,7 @@
   <span class="with-love">
     <i class="fa fa-heart"></i>
   </span>
-  <span class="author" itemprop="copyrightHolder">果冻 | Jelly</span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
 </div>
   <div class="powered-by">由 <a href="https://hexo.io/" rel="noopener" target="_blank">Hexo</a> & <a href="https://theme-next.js.org/muse/" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
   </div>

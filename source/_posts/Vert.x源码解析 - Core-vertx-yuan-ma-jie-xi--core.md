@@ -3,8 +3,10 @@ title: Vert.x源码解析 - Core
 date: 2020-10-03 23:43:22.0
 updated: 2021-02-16 23:43:48.611
 url: https://www.zou8944.com/archives/vertx-yuan-ma-jie-xi--core
-categories: Vert.x
+categories: 
+- 响应式
 tags: 
+- Vert.x
 ---
 
 > 希望通过本文的解析，让读者了解Vertx的关键部分的实现原理。对诸如如下问题有一个具象的认识。

@@ -3,8 +3,10 @@ title: Spring Webflow - 第一个Flow
 date: 2018-09-06 23:00:00.0
 updated: 2021-02-16 23:27:41.378
 url: https://www.zou8944.com/archives/springwebflow-第一个flow
-categories: Spring | Webflow
-tags: Spring | Webflow
+categories: 后端
+tags: 
+- Spring
+- Webflow
 ---
 
 

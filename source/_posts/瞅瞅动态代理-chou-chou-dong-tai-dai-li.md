@@ -3,8 +3,11 @@ title: 瞅瞅动态代理
 date: 2021-11-03 15:38:51.083
 updated: 2021-11-03 15:38:51.083
 url: https://www.zou8944.com/archives/chou-chou-dong-tai-dai-li
-categories: 编程语言
-tags: Java | 反射
+categories: 
+- 编程语言
+tags: 
+- Java
+- 反射
 ---
 
 动态代理说大不大，说小不小，可深可浅。往深了说还是对JVM的了解程度要足够深入，时间篇幅有限，本文专注于回答如下问题，不作更深入的探讨。

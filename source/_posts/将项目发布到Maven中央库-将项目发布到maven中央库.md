@@ -3,7 +3,7 @@ title: 将项目发布到Maven中央库
 date: 2020-02-29 16:04:13.0
 updated: 2021-02-16 23:23:03.22
 url: https://www.zou8944.com/archives/将项目发布到maven中央库
-categories: 打包编译
+categories: 工具
 tags: Maven
 ---
 

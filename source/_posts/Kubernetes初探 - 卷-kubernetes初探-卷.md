@@ -3,7 +3,7 @@ title: Kubernetes初探 - 卷
 date: 2019-10-22 20:12:21.0
 updated: 2021-02-16 23:25:03.283
 url: https://www.zou8944.com/archives/kubernetes初探-卷
-categories: 容器
+categories: 运维
 tags: kubernetes
 ---
 

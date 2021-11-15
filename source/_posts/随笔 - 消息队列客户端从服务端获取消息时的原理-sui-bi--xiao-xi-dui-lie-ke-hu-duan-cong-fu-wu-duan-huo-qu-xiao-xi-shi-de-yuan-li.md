@@ -4,7 +4,11 @@ date: 2020-08-15 23:39:42.0
 updated: 2021-02-16 23:40:19.295
 url: https://www.zou8944.com/archives/sui-bi--xiao-xi-dui-lie-ke-hu-duan-cong-fu-wu-duan-huo-qu-xiao-xi-shi-de-yuan-li
 categories: 
+- 随笔
+- 后端
+- 消息队列
 tags: 
+- 消息队列
 ---
 
 > 同事：阿里云MNS获取消息的API使用起来不够方便，需要不断手动长轮询，看起来有点原始。

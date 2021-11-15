@@ -3,8 +3,10 @@ title: Vert.x — 从缓存Future说起
 date: 2020-02-27 21:58:08.0
 updated: 2021-02-16 23:23:17.74
 url: https://www.zou8944.com/archives/vertx从缓存future说起
-categories: Vert.x
-tags: Vert.x
+categories: 
+- 响应式
+tags: 
+- Vert.x
 ---
 
 

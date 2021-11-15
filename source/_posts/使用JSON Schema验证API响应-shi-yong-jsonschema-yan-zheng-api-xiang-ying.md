@@ -4,7 +4,10 @@ date: 2020-10-03 23:40:52.0
 updated: 2021-11-08 16:25:55.614
 url: https://www.zou8944.com/archives/shi-yong-jsonschema-yan-zheng-api-xiang-ying
 categories: 
+- 后端
+- 协议
 tags: 
+- JsonSchema
 ---
 
 ## API的响应需要约束

@@ -3,8 +3,10 @@ title: Spring Webflow - EL表达式
 date: 2018-09-08 20:00:00.0
 updated: 2021-02-16 23:27:11.236
 url: https://www.zou8944.com/archives/springwebflow-el表达式
-categories: Spring | Webflow
-tags: Spring | Webflow
+categories: 后端
+tags: 
+- Spring
+- Webflow
 ---
 
 

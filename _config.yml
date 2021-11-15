@@ -3,11 +3,11 @@
 ## Source: https://github.com/hexojs/hexo/
 
 # Site
-title: 果冻 | Jelly
+title: 半中二中青年
 subtitle: 果冻的碎碎念
-description: Beat Jelly; Hit Jelly; Kill Jelly.
+description: 果冻的碎碎念
 keywords: 果冻 博客
-author: 果冻 | Jelly
+author: 果冻
 language: zh-CN
 timezone: Asia/Shanghai
 
@@ -15,6 +15,7 @@ menu:
   home: /
   archives: /archives
   categories: /categories
+  about: /about
 
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
@@ -108,4 +109,6 @@ theme: next
 # Deployment
 ## Docs: https://hexo.io/docs/one-command-deployment
 deploy:
-  type: ''
+  type: git
+  repo: git@github.com:zou8944/blog.git
+  branch: main

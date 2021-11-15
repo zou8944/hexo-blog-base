@@ -3,7 +3,7 @@ title: Sign in with Apple - IOS平台服务端的处理
 date: 2020-03-28 20:41:32.0
 updated: 2021-02-16 23:22:07.482
 url: https://www.zou8944.com/archives/signinwithapple-ios平台服务端的处理
-categories: 第三方登录
+categories: 后端
 tags: IOS
 ---
 

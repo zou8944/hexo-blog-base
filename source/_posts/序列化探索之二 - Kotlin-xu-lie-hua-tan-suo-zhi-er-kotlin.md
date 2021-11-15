@@ -3,8 +3,11 @@ title: 序列化探索之二 - Kotlin
 date: 2021-10-09 17:59:43.418
 updated: 2021-10-09 18:00:49.384
 url: https://www.zou8944.com/archives/xu-lie-hua-tan-suo-zhi-er-kotlin
-categories: 后端 | 编程语言
-tags: kotlin | 序列化
+categories: 
+- 后端
+tags: 
+- kotlin
+- 序列化
 ---
 
 

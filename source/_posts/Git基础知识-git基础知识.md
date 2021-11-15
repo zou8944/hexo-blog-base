@@ -3,7 +3,7 @@ title: Git基础知识
 date: 2018-02-15 22:31:33.0
 updated: 2021-02-16 23:27:57.129
 url: https://www.zou8944.com/archives/git基础知识
-categories: 版本控制
+categories: 工具
 tags: Git
 ---
 

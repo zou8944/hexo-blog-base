@@ -3,8 +3,11 @@ title: 《超越感觉》——没有预期的那样好
 date: 2021-09-11 23:41:18.875
 updated: 2021-09-11 23:41:18.875
 url: https://www.zou8944.com/archives/-chao-yue-gan-jue--mei-you-yu-qi-de-na-yang-hao
-categories: 随想 | 读书笔记
-tags: 读书
+categories: 
+- 随笔
+- 读书笔记
+tags: 
+- 超越感觉
 ---
 
 > 阅读时间：6.5小时

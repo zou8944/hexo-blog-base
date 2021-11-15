@@ -3,8 +3,11 @@ title: 用Prometheus和Grafana监控你的服务器
 date: 2020-03-21 20:38:53.0
 updated: 2021-02-16 23:22:16.599
 url: https://www.zou8944.com/archives/用prometheus和grafana监控你的服务器
-categories: 运维
-tags: Prometheus | Grafana
+categories: 
+- 运维
+tags: 
+- Prometheus
+- Grafana
 ---
 
 

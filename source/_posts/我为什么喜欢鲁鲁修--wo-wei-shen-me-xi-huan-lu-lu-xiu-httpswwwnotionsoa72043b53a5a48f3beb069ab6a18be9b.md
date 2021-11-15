@@ -3,8 +3,10 @@ title: 我为什么喜欢鲁鲁修
 date: 2021-09-06 21:49:34.548
 updated: 2021-09-06 21:59:23.952
 url: https://www.zou8944.com/archives/-wo-wei-shen-me-xi-huan-lu-lu-xiu-httpswwwnotionsoa72043b53a5a48f3beb069ab6a18be9b
-categories: 随想
-tags: 动漫
+categories: 
+- 随笔
+tags: 
+- 反叛的鲁鲁修
 ---
 
 《反叛的鲁鲁修》好看吗？毫无疑问我认为是好看的，但细想，为啥我会觉得好看呢？不能凭感觉，好看总有个理由，必须是客观上的。

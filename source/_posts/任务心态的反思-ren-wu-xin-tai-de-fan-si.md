@@ -3,7 +3,9 @@ title: 任务心态的反思
 date: 2021-08-29 11:25:27.144
 updated: 2021-08-29 11:25:27.144
 url: https://www.zou8944.com/archives/ren-wu-xin-tai-de-fan-si
-categories: 生活 | 随想
+categories: 
+- 生活
+- 随想
 tags: 日志
 ---
 

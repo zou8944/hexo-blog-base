@@ -3,7 +3,8 @@ title: 读书不应该过于理性
 date: 2021-08-28 16:31:01.753
 updated: 2021-08-28 16:31:01.753
 url: https://www.zou8944.com/archives/du-shu-bu-ying-gai-guo-yu-li-xing
-categories: 随想
+categories: 
+- 随笔
 tags: 读书
 ---
 

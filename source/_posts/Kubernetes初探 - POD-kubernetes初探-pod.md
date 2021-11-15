@@ -3,7 +3,7 @@ title: Kubernetes初探 - POD
 date: 2019-10-21 20:42:18.0
 updated: 2021-02-16 23:25:16.498
 url: https://www.zou8944.com/archives/kubernetes初探-pod
-categories: 容器
+categories: 运维
 tags: kubernetes
 ---
 

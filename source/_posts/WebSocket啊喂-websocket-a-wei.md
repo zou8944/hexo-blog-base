@@ -3,8 +3,8 @@ title: WebSocket啊喂
 date: 2021-09-03 18:39:28.815
 updated: 2021-09-03 18:39:28.815
 url: https://www.zou8944.com/archives/websocket-a-wei
-categories: 后端 | 网络基础
-tags: Sock JS | WebSocket
+categories: 网络基础
+tags: WebSocket
 ---
 
 > 本文主要包含三部分

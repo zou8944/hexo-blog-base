@@ -3,7 +3,7 @@ title: Kubernetes初探 - 访问pod元数据及其它资源
 date: 2019-10-26 11:49:30.0
 updated: 2021-02-16 23:24:42.019
 url: https://www.zou8944.com/archives/kubernetes初探-访问pod元数据及其它资源
-categories: 容器
+categories: 运维
 tags: kubernetes
 ---
 

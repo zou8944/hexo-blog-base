@@ -3,8 +3,10 @@ title: PostgreSQL - 一文看懂explain
 date: 2020-08-01 23:34:17.0
 updated: 2021-02-16 23:36:37.36
 url: https://www.zou8944.com/archives/postgresql-yi-wen-kan-dong-explain
-categories: 后端
-tags: postgresql
+categories: 
+- 数据库
+tags: 
+- PostgreSQL
 ---
 
 > explain是SQL优化的前提。但explain的结果，无论是官方手册，还是别人写的博客，看完后点头如捣蒜，但往往看到自己SQL的执行计划时，并不很确定要优化的点在哪里。很大一部分原因是不知道各计划节点的具体含义，更确切地说，是不明白SQL执行的原理。比如，我们并不能很好地回答以下问题

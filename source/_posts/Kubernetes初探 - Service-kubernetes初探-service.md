@@ -3,7 +3,7 @@ title: Kubernetes初探 - Service
 date: 2019-10-22 20:11:44.0
 updated: 2021-02-16 23:25:10.499
 url: https://www.zou8944.com/archives/kubernetes初探-service
-categories: 容器
+categories: 运维
 tags: kubernetes
 ---
 

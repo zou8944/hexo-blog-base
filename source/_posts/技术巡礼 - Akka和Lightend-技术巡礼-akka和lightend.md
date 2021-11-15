@@ -3,8 +3,11 @@ title: 技术巡礼 - Akka和Lightend
 date: 2019-09-25 22:33:16.0
 updated: 2021-02-16 23:25:55.071
 url: https://www.zou8944.com/archives/技术巡礼-akka和lightend
-categories: 技术巡礼
-tags: akka
+categories: 
+- 工具
+tags: 
+- Akka
+- Lightend
 ---
 
 

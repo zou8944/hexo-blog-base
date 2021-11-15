@@ -3,8 +3,10 @@ title: Charles抓包配置
 date: 2021-08-16 22:41:54.931
 updated: 2021-08-16 22:48:23.816
 url: https://www.zou8944.com/archives/charles抓包配置
-categories: 工具
+categories: 
+- 工具
 tags: 
+- Charles
 ---
 
 Charles是Fiddler之外的另一个抓包工具。传说比Fiddler好用，但配置起来其实是有几点坑的。还是可以掰扯掰扯。

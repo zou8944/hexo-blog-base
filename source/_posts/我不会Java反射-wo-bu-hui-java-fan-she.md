@@ -3,8 +3,12 @@ title: 我不会Java反射
 date: 2021-10-21 18:09:05.37
 updated: 2021-10-21 18:09:05.37
 url: https://www.zou8944.com/archives/wo-bu-hui-java-fan-she
-categories: 后端 | 编程语言
-tags: Java | 反射
+categories: 
+- 后端
+- 编程语言
+tags: 
+- Java
+- 反射
 ---
 
 

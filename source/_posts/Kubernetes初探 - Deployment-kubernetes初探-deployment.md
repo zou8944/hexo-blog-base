@@ -3,7 +3,7 @@ title: Kubernetes初探 - Deployment
 date: 2019-10-27 12:28:48.0
 updated: 2021-02-16 23:24:32.677
 url: https://www.zou8944.com/archives/kubernetes初探-deployment
-categories: 容器
+categories: 运维
 tags: kubernetes
 ---
 

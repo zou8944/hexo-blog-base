@@ -3,8 +3,12 @@ title: Spring STOMP发送消息时区分客户端
 date: 2021-09-16 18:51:53.051
 updated: 2021-09-16 18:51:53.051
 url: https://www.zou8944.com/archives/springstomp-fa-song-xiao-xi-shi-qu-fen-ke-hu-duan
-categories: 后端
-tags: Spring | WebSocket
+categories: 
+- 后端
+tags: 
+- Spring
+- WebSocket
+- STOMP
 ---
 
 ## 背景

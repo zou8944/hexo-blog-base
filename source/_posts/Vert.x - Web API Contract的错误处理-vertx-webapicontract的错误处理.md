@@ -3,8 +3,10 @@ title: Vert.x - Web API Contract的错误处理
 date: 2020-03-14 18:43:43.0
 updated: 2021-02-16 23:22:42.149
 url: https://www.zou8944.com/archives/vertx-webapicontract的错误处理
-categories: Vert.x
-tags: 问题记录
+categories: 
+- 响应式
+tags: 
+- Vert.x
 ---
 
 

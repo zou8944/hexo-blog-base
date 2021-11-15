@@ -3,7 +3,7 @@ title: Kubernetes初探 - ConfigMap和Secret
 date: 2019-10-24 21:12:48.0
 updated: 2021-02-16 23:24:57.593
 url: https://www.zou8944.com/archives/kubernetes初探-configmap和secret
-categories: 容器
+categories: 运维
 tags: kubernetes
 ---
 

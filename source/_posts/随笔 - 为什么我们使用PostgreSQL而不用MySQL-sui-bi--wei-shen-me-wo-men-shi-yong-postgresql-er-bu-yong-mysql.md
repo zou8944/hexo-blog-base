@@ -4,7 +4,12 @@ date: 2020-07-07 23:45:29.0
 updated: 2021-02-16 23:45:53.959
 url: https://www.zou8944.com/archives/sui-bi--wei-shen-me-wo-men-shi-yong-postgresql-er-bu-yong-mysql
 categories: 
+- 后端
+- 数据库
+- 随笔
 tags: 
+- PostgreSQL
+- MySQL
 ---
 
 ## 与MySQL相比，有何优势

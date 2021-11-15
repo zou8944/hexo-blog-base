@@ -3,7 +3,8 @@ title: 编写一个Maven插件
 date: 2020-02-29 16:03:23.0
 updated: 2021-02-16 23:23:09.804
 url: https://www.zou8944.com/archives/编写一个maven插件
-categories: 打包编译
+categories: 
+- 工具
 tags: Maven
 ---
 

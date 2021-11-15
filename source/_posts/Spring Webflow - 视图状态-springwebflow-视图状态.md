@@ -3,8 +3,10 @@ title: Spring Webflow - 视图状态
 date: 2018-09-09 14:00:00.0
 updated: 2021-02-16 23:27:30.411
 url: https://www.zou8944.com/archives/springwebflow-视图状态
-categories: Spring | Webflow
-tags: Spring | Webflow
+categories: 后端
+tags: 
+- Spring
+- Webflow
 ---
 
 

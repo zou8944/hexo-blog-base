@@ -4,7 +4,9 @@ date: 2020-11-03 23:44:18.0
 updated: 2021-02-16 23:44:32.966
 url: https://www.zou8944.com/archives/vertx-yuan-ma-jie-xi--web-shang-
 categories: 
+- 响应式
 tags: 
+- Vert.x
 ---
 
 我们在前面的文章分析了Vertx核心单机部分的源码。今天轮到[Vert.x-Web](https://vertx-web-site.github.io/docs/vertx-web/java/)，由于Web的内容比较多，因此分为上下两部分。
