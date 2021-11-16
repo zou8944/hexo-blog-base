@@ -14,8 +14,7 @@ timezone: Asia/Shanghai
 # URL
 ## Set your site url here. For example, if you use GitHub Page, set url as 'https://username.github.io/project'
 url: https://zou8944.com
-# permalink: :year/:month/:day/:title/
-permalink: :title/
+permalink: :year/:month/:day/:title/
 permalink_defaults:
 pretty_urls:
   trailing_index: true # Set to false to remove trailing 'index.html' from permalinks
@@ -106,25 +105,3 @@ deploy:
   type: git
   repo: git@github.com:zou8944/blog.git
   branch: pages
-
-
-##################### theme next 专属
-menu:
-  home: /
-  archives: /archives
-  categories: /categories
-  tags: /tags
-  about: /about
-
-social:
-  CSDN: https://blog.csdn.net/zou8944
-
-favicon: /favicon.ico
-
-avatar: /favicon.ico
-
-highlight_theme: normal
-
-fancybox: true
-
-since: 2018

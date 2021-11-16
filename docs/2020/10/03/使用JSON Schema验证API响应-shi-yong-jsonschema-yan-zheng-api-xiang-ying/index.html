@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="API的响应需要约束目前我们开发Web API的方式是通过定义Open API描述文件来定义请求约束。约束能够保证所有请求参数按照正确的格式和必要性传输，从而规范化输入。这保护了服务端内部的安全——输入约束不变的情况下，输入的值总是合法可期的。 尽管Open API也提供了对Response Body的定义，允许用户描述响应的消息格式，但由于其不具有强制性——语法上可以不写，写了也不与实际返回内容">
+<meta property="og:type" content="article">
+<meta property="og:title" content="使用JSON Schema验证API响应">
+<meta property="og:url" content="https://zou8944.com/2020/10/03/%E4%BD%BF%E7%94%A8JSON%20Schema%E9%AA%8C%E8%AF%81API%E5%93%8D%E5%BA%94-shi-yong-jsonschema-yan-zheng-api-xiang-ying/index.html">
+<meta property="og:site_name" content="半中二中青年">
+<meta property="og:description" content="API的响应需要约束目前我们开发Web API的方式是通过定义Open API描述文件来定义请求约束。约束能够保证所有请求参数按照正确的格式和必要性传输，从而规范化输入。这保护了服务端内部的安全——输入约束不变的情况下，输入的值总是合法可期的。 尽管Open API也提供了对Response Body的定义，允许用户描述响应的消息格式，但由于其不具有强制性——语法上可以不写，写了也不与实际返回内容">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2020-10-03T15:40:52.000Z">
+<meta property="article:modified_time" content="2021-11-08T08:25:55.614Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="JsonSchema">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://zou8944.com/2020/10/03/%E4%BD%BF%E7%94%A8JSON%20Schema%E9%AA%8C%E8%AF%81API%E5%93%8D%E5%BA%94-shi-yong-jsonschema-yan-zheng-api-xiang-ying/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>使用JSON Schema验证API响应 | 半中二中青年</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二中青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2020/10/03/%E4%BD%BF%E7%94%A8JSON%20Schema%E9%AA%8C%E8%AF%81API%E5%93%8D%E5%BA%94-shi-yong-jsonschema-yan-zheng-api-xiang-ying/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二中青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          使用JSON Schema验证API响应
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-10-03 23:40:52" itemprop="dateCreated datePublished" datetime="2020-10-03T23:40:52+08:00">2020-10-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-11-08 16:25:55" itemprop="dateModified" datetime="2021-11-08T16:25:55+08:00">2021-11-08</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/%E5%8D%8F%E8%AE%AE/" itemprop="url" rel="index"><span itemprop="name">协议</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="API的响应需要约束"><a href="#API的响应需要约束" class="headerlink" title="API的响应需要约束"></a>API的响应需要约束</h2><p>目前我们开发Web API的方式是通过定义Open API描述文件来定义请求约束。约束能够保证所有请求参数按照正确的格式和必要性传输，从而规范化输入。这保护了服务端内部的安全——输入约束不变的情况下，输入的值总是合法可期的。</p>
+<p>尽管Open API也提供了对Response Body的定义，允许用户描述响应的消息格式，但由于其不具有强制性——语法上可以不写，写了也不与实际返回内容有深入结合，因此无法验证真实API的响应是否符合预期，这也是从一开始不愿写响应体的原因。</p>
+<p>而关于验证API响应的重要性，是不言而喻的，截止目前，至少有两个时刻让我有了“如果能够在单元测试就验证响应体格式就好了”的想法。</p>
+<p>其一：今年上半年的一次down time，彼时是上线真米视频，其video id要做到可控（手动编写，数位字符串），而原逻辑使用了阿里云生成的video id——32位字符串。使用的方案是将手动生成的video id替换了阿里云video id，结果由于测试上的不周全导致所有视频的video id都被替换，对于那些没有分配手动id的音视频，其video id自然变成了null。而该问题因为机缘巧合对视频无影响，仅对音频产生影响。导致较长时间才发现。回首该问题，出在video id字段的格式上，如果有对响应体做约束——要求video id必须有值，且长度为32位，则该问题能够在单元测试就发现。</p>
+<span id="more"></span>
+
+<p>其二：呼啦亲子项目已进行了多次迭代，大致如下</p>
+<ul>
+<li>初版</li>
+<li>增加了呼啦圈，其内容与文章接近，封面图需要记录宽高和媒体类型；为了保持格式一致，原本文章的封面格式也改为如此</li>
+<li>首页文章的封面的显示增加多图效果，其它页面保持原有格式不变，且多图效果要求类随机——即要对封面字段格式化输出</li>
+<li>创作者中心用于编辑上面多图的选项，因此获取的封面字段要原样输出</li>
+<li>每一次升级都要兼容之前的版本</li>
+</ul>
+<p>光看文章这一项的元数据，就有下面四种格式</p>
+<p>首页文章格式（其中coverSrc用于兼容最初版本、cover用于兼容次初版本API、covers+style是最新版的API需要的字段）</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;meta&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;各国孩子吃什么零食之法国篇&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;covers&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg?x-oss-process=image/auto-orient,1/interlace,1/resize,m_lfit,w_828/quality,q_90/format,jpg&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;width&quot;</span>: <span class="number">800</span>,</span><br><span class="line">            <span class="attr">&quot;height&quot;</span>: <span class="number">600</span>,</span><br><span class="line">            <span class="attr">&quot;mediaType&quot;</span>: <span class="string">&quot;image&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;coverSrc&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cover&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg?x-oss-process=image/auto-orient,1/interlace,1/resize,m_lfit,w_828/quality,q_90/format,jpg&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;width&quot;</span>: <span class="number">800</span>,</span><br><span class="line">        <span class="attr">&quot;height&quot;</span>: <span class="number">600</span>,</span><br><span class="line">        <span class="attr">&quot;mediaType&quot;</span>: <span class="string">&quot;image&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;style&quot;</span>: <span class="string">&quot;singleMinImage&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>普通文章列表页格式（多图显示仅对首页生效，普通列表页保持次初版本格式）</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;meta&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;各国孩子吃什么零食之法国篇&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;coverSrc&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cover&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg?x-oss-process=image/auto-orient,1/interlace,1/resize,m_lfit,w_828/quality,q_90/format,jpg&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;width&quot;</span>: <span class="number">800</span>,</span><br><span class="line">        <span class="attr">&quot;height&quot;</span>: <span class="number">600</span>,</span><br><span class="line">        <span class="attr">&quot;mediaType&quot;</span>: <span class="string">&quot;image&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>文章详情页格式（多出来了jsVersion和cssVersion）</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;meta&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;各国孩子吃什么零食之法国篇&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;coverSrc&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cover&quot;</span>: &#123;</span><br><span class="line">        <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg?x-oss-process=image/auto-orient,1/interlace,1/resize,m_lfit,w_828/quality,q_90/format,jpg&quot;</span>,</span><br><span class="line">        <span class="attr">&quot;width&quot;</span>: <span class="number">800</span>,</span><br><span class="line">        <span class="attr">&quot;height&quot;</span>: <span class="number">600</span>,</span><br><span class="line">        <span class="attr">&quot;mediaType&quot;</span>: <span class="string">&quot;image&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;jsVersion&quot;</span>: <span class="string">&quot;awbegiwaubegwug&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cssVersion&quot;</span>: <span class="string">&quot;weignwoegowibhg&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>创作者中心文章格式（多出来了jsVersion, cssVersion, coverDisplayCount(用于用户选择该文章显示几张图)）</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">&quot;meta&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;各国孩子吃什么零食之法国篇&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;covers&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">            <span class="attr">&quot;url&quot;</span>: <span class="string">&quot;https://qinzi.static.hulaplanet.com/ttp/editor/94d53aa2e67acaf5bdac445eb1ed2144.jpg?x-oss-process=image/auto-orient,1/interlace,1/resize,m_lfit,w_828/quality,q_90/format,jpg&quot;</span>,</span><br><span class="line">            <span class="attr">&quot;width&quot;</span>: <span class="number">800</span>,</span><br><span class="line">            <span class="attr">&quot;height&quot;</span>: <span class="number">600</span>,</span><br><span class="line">            <span class="attr">&quot;mediaType&quot;</span>: <span class="string">&quot;image&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">    ],,</span><br><span class="line">    <span class="attr">&quot;jsVersion&quot;</span>: <span class="string">&quot;awbegiwaubegwug&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;cssVersion&quot;</span>: <span class="string">&quot;weignwoegowibhg&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;coverDisplayCount&quot;</span>: <span class="number">1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>一个文章的mata就有四种格式，再加上呼啦圈的meta格式，如果需要同时对他们进行修改，一定会令人相当头大。此时如果能够在单元测试约束meta的格式，要求哪些字段是必须的，不需要哪些字段，则可大大减轻心智负担，对API质量也是一个保证。</p>
+<h2 id="可能的约束方法"><a href="#可能的约束方法" class="headerlink" title="可能的约束方法"></a>可能的约束方法</h2><p>那么有什么好的方法来做这件事呢？一般我们有几种方法</p>
+<p><strong>编程测试</strong></p>
+<p>最原始也是最直接的方法，直接编程验证每个字段的格式。这种方式砖量太大，如果要对拥有数十个字段的响应，针对每个字段验证类型、长度、多余字段等。如果多几个这样的接口，会头晕的。</p>
+<p>有针对此做一些优化的，即使用一些json validator进行验证，但这些工具的局限性太大，不能完全满足需求。</p>
+<p>使用编程测试最终的归宿很可能会变成只测试几个重要的字段的格式，但<strong>往往出问题的都是没有关注的字段，而重视的字段一般没那么容易出问题</strong>。</p>
+<p><strong>使用JSON Schema</strong></p>
+<p>铺垫那么多，就是想说JSON Schema。一个真正满足需求的东西。JSON Schema是一个规范，用于全方位描述json的格式，包括一个json中必须包含哪些字段、只能包含哪些字段、字段的类型、是否可为空、字段最大最小值、字段的长度等。如同我们使用Open API描述文件来描述我们接口的输入参数；使用JSON Schema描述API响应消息体并在单元测试进行验证。这样把控API输入和输出，在安全性上会有比较大的提升。</p>
+<h2 id="Json-Schema"><a href="#Json-Schema" class="headerlink" title="Json Schema"></a>Json Schema</h2><p>JSON Schema官网<a target="_blank" rel="noopener" href="https://json-schema.org/%EF%BC%8C%E7%9B%AE%E5%89%8D%E6%9C%80%E6%96%B0%E7%89%88%E6%98%AF2019-09">https://json-schema.org/，目前最新版是2019-09</a>.</p>
+<p>按照官网的话说，JSON Schema是一个用于描述和验证JSON文档的规范。</p>
+<p>使用JSON Schema时最大的问题是会把描述文件写得太大，尤其是使用JSON Schema生成工具(<a target="_blank" rel="noopener" href="https://jsonschema.net/home)%E6%97%B6%E3%80%82%E5%88%9A%E5%BC%80%E5%A7%8B%E5%B0%86/feeds%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%93%8D%E5%BA%94%E8%87%AA%E5%8A%A8%E7%94%9F%E6%88%90%E4%BA%86%E6%95%B0%E7%99%BE%E8%A1%8C%E6%8F%8F%E8%BF%B0%E6%96%87%E4%BB%B6%EF%BC%8C%E8%BF%99%E6%97%A0%E7%96%91%E6%98%AF%E4%B8%8D%E5%8F%AF%E6%8E%A5%E5%8F%97%E7%9A%84%E3%80%82">https://jsonschema.net/home)时。刚开始将/feeds接口的响应自动生成了数百行描述文件，这无疑是不可接受的。</a></p>
+<p>解决此问题的最好办法，以目前我的认知来看，是全部手写+定义复用的方式——仅增加自己需要的特性，再将公共结构抽取出来，在合适的地方使用$ref引用。具体可参考<a target="_blank" rel="noopener" href="https://json-schema.org/understanding-json-schema/structuring.html">如何定义一个复杂的schema</a>（该文章对应的书籍<a target="_blank" rel="noopener" href="https://json-schema.org/understanding-json-schema/index.html">Understanding Json Schema</a>也是学习JSON Schema的不错的资料）。</p>
+<p>同时，官网也列出了<a target="_blank" rel="noopener" href="https://json-schema.org/implementations.html">各语言下验证JSON Schema的库</a>，在Java下，我推荐<a target="_blank" rel="noopener" href="https://github.com/networknt/json-schema-validator">这个</a></p>
+<h2 id="使用JSON-Schema"><a href="#使用JSON-Schema" class="headerlink" title="使用JSON Schema"></a>使用JSON Schema</h2><p>我们举例如何使用JSON SChema验证/feeds接口文章类型的数据</p>
+<h3 id="定义Schema"><a href="#定义Schema" class="headerlink" title="定义Schema"></a>定义Schema</h3><h4 id="公共属性"><a href="#公共属性" class="headerlink" title="公共属性"></a>公共属性</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;definitions&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;nullableString&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;oneOf&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;null&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">      ]</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;encodedId&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;minLength&quot;</span>: <span class="number">20</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;mediaType&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;enum&quot;</span>: [</span><br><span class="line">        <span class="string">&quot;image&quot;</span>,</span><br><span class="line">        <span class="string">&quot;video&quot;</span></span><br><span class="line">      ]</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;stateEnum&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;enum&quot;</span>: [</span><br><span class="line">        <span class="string">&quot;normal&quot;</span>,</span><br><span class="line">        <span class="string">&quot;draft&quot;</span></span><br><span class="line">      ]</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;postFeedStyle&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;enum&quot;</span>: [</span><br><span class="line">        <span class="string">&quot;textOnly&quot;</span>,</span><br><span class="line">        <span class="string">&quot;singleMinImage&quot;</span>,</span><br><span class="line">        <span class="string">&quot;singleMaxImage&quot;</span>,</span><br><span class="line">        <span class="string">&quot;twoImages&quot;</span>,</span><br><span class="line">        <span class="string">&quot;threeImages&quot;</span></span><br><span class="line">      ]</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="作者"><a href="#作者" class="headerlink" title="作者"></a>作者</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;id&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/encodedId&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;nickname&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/nullableString&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;avatar&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/nullableString&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;id&quot;</span>,</span><br><span class="line">    <span class="string">&quot;nickname&quot;</span>,</span><br><span class="line">    <span class="string">&quot;avatar&quot;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;additionalProperties&quot;</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="媒体类型"><a href="#媒体类型" class="headerlink" title="媒体类型"></a>媒体类型</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;url&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/nullableString&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;width&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;integer&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;height&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;integer&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;mediaType&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/mediaType&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;url&quot;</span>,</span><br><span class="line">    <span class="string">&quot;width&quot;</span>,</span><br><span class="line">    <span class="string">&quot;height&quot;</span>,</span><br><span class="line">    <span class="string">&quot;mediaType&quot;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;additionalProperties&quot;</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="标签类型"><a href="#标签类型" class="headerlink" title="标签类型"></a>标签类型</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;id&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../public-definitions.json#/definitions/encodedId&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;name&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;hotted&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;boolean&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;id&quot;</span>,</span><br><span class="line">    <span class="string">&quot;name&quot;</span>,</span><br><span class="line">    <span class="string">&quot;hotted&quot;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;additionalProperties&quot;</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="元数据"><a href="#元数据" class="headerlink" title="元数据"></a>元数据</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;title&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;coverSrc&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;string&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="string">&quot;为了兼容最初的API而留存的字段&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;cover&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../base/media.json&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="string">&quot;为了兼容V2.0前期而存在的字段&quot;</span></span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;covers&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;array&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="string">&quot;目前线上版本在用的字段&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;items&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../base/media.json&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">      ]</span><br><span class="line">    &#125;,</span><br><span class="line">    <span class="attr">&quot;style&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../../../public-definitions.json#/definitions/postFeedStyle&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;title&quot;</span>,</span><br><span class="line">    <span class="string">&quot;cover&quot;</span>,</span><br><span class="line">    <span class="string">&quot;covers&quot;</span>,</span><br><span class="line">    <span class="string">&quot;coverSrc&quot;</span>,</span><br><span class="line">    <span class="string">&quot;style&quot;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;additionalProperties&quot;</span>: <span class="literal">false</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="汇总成-feeds接口返回的数据"><a href="#汇总成-feeds接口返回的数据" class="headerlink" title="汇总成/feeds接口返回的数据"></a>汇总成/feeds接口返回的数据</h4><figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;$schema&quot;</span>: <span class="string">&quot;http://json-schema.org/draft-07/schema#&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;object&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;definitions&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;item&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;allOf&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;base/public-properties.json&quot;</span></span><br><span class="line">        &#125;,</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">            <span class="attr">&quot;meta&quot;</span>: &#123;</span><br><span class="line">              <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;base/meta-feed.json&quot;</span></span><br><span class="line">            &#125;,</span><br><span class="line">            <span class="attr">&quot;author&quot;</span>: &#123;</span><br><span class="line">              <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;../base/author.json&quot;</span></span><br><span class="line">            &#125;</span><br><span class="line">          &#125;,</span><br><span class="line">          <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">            <span class="string">&quot;meta&quot;</span>,</span><br><span class="line">            <span class="string">&quot;author&quot;</span></span><br><span class="line">          ]</span><br><span class="line">        &#125;</span><br><span class="line">      ]</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;properties&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;list&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;type&quot;</span>: <span class="string">&quot;array&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;items&quot;</span>: [</span><br><span class="line">        &#123;</span><br><span class="line">          <span class="attr">&quot;$ref&quot;</span>: <span class="string">&quot;#/definitions/item&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">      ]</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;required&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;list&quot;</span></span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，最终定义的文章schema也没有很长，而前面的公共属性、作者等提取出来的结构由于会被众多其它定义使用，因此总体长度是可以接受的。</p>
+<h3 id="使用schema验证响应体"><a href="#使用schema验证响应体" class="headerlink" title="使用schema验证响应体"></a>使用schema验证响应体</h3><p>我们使用json-schema-validator库加载定义好的schema来验证接口响应。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">suspend</span> <span class="function"><span class="keyword">fun</span> WebClient.<span class="title">validateAPIResponseSchema</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">  path: <span class="type">String</span>, params: <span class="type">Map</span>&lt;<span class="type">String</span>, String&gt; = mapOf()</span></span>, schemaPath: String</span><br><span class="line">) &#123;</span><br><span class="line">  <span class="keyword">val</span> request = <span class="keyword">this</span></span><br><span class="line">    .<span class="keyword">get</span>(path)</span><br><span class="line">    .host(serverHost)</span><br><span class="line">    .port(serverPort)</span><br><span class="line">    .putHeader(<span class="string">&quot;token&quot;</span>, testToken)</span><br><span class="line"></span><br><span class="line">  params.forEach &#123; (k, v) -&gt; request.addQueryParam(k, v) &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">val</span> response = request.<span class="keyword">expect</span>(ResponsePredicate.JSON)</span><br><span class="line">    .<span class="keyword">expect</span>(ResponsePredicate.SC_OK)</span><br><span class="line">    .sendAwait().bodyAsJsonObject()</span><br><span class="line"></span><br><span class="line">  <span class="keyword">val</span> schemaURI = File(schemaPath).toURI()</span><br><span class="line">  <span class="keyword">val</span> schema = JsonSchemaFactory.getInstance(SpecVersion.VersionFlag.V7).getSchema(schemaURI)</span><br><span class="line">  <span class="keyword">val</span> node = withContext(Dispatchers.IO) &#123; ObjectMapper().readTree(response.encode()) &#125;</span><br><span class="line">  schema.assertLegal(node)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">testGetPostFeeds</span><span class="params">(vertx: <span class="type">Vertx</span>, tc: <span class="type">VertxTestContext</span>)</span></span> &#123;</span><br><span class="line">    launch5e(tc) &#123;</span><br><span class="line">      webClient.validateAPIResponseSchema(</span><br><span class="line">        path = <span class="string">&quot;/feeds&quot;</span>,</span><br><span class="line">        params = mapOf(<span class="string">&quot;content_type&quot;</span> to <span class="string">&quot;post&quot;</span>, <span class="string">&quot;limit&quot;</span> to <span class="string">&quot;20&quot;</span>),</span><br><span class="line">        schemaPath = <span class="string">&quot;src/main/resources/jsonschema/content/post/profile-feed.json&quot;</span></span><br><span class="line">      )</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行测试函数testGetPostFeeds，如果验证失败，可得到具体错误原因，方便排查。</p>
+<p>至此，使用JSON Schema进行API响应的验证就完成了。只要描述文件不动，就能及时发现响应格式上的错误，保证了接口的正确性。</p>
+<h2 id="Open-API与Json-Schema"><a href="#Open-API与Json-Schema" class="headerlink" title="Open API与Json Schema"></a>Open API与Json Schema</h2><p>不止一次前端或客户端的同志直接或间接要求我们写Response格式描述，但由于写起来耗时且该描述与实际响应没有强耦合关系，改动很可能不及时，带来很多问题。如果能够将上面定义的JSON Schema描述文件应用到Open API描述文件中，岂不美哉。</p>
+<p>然而现实是残酷的，Swagger确实<a target="_blank" rel="noopener" href="https://swagger.io/docs/specification/data-models/keywords/">支持JSON Schema</a>，但支持的是个子集，因此无法直接使用上面定义的描述文件。美梦落空。。。淡淡的忧桑。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/JsonSchema/" rel="tag"># JsonSchema</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/08/15/%E9%9A%8F%E7%AC%94%20-%20%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%BB%8E%E6%9C%8D%E5%8A%A1%E7%AB%AF%E8%8E%B7%E5%8F%96%E6%B6%88%E6%81%AF%E6%97%B6%E7%9A%84%E5%8E%9F%E7%90%86-sui-bi--xiao-xi-dui-lie-ke-hu-duan-cong-fu-wu-duan-huo-qu-xiao-xi-shi-de-yuan-li/" rel="prev" title="随笔 - 消息队列客户端从服务端获取消息时的原理">
+      <i class="fa fa-chevron-left"></i> 随笔 - 消息队列客户端从服务端获取消息时的原理
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/10/03/Vert.x%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%20-%20Core-vertx-yuan-ma-jie-xi--core/" rel="next" title="Vert.x源码解析 - Core">
+      Vert.x源码解析 - Core <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#API%E7%9A%84%E5%93%8D%E5%BA%94%E9%9C%80%E8%A6%81%E7%BA%A6%E6%9D%9F"><span class="nav-number">1.</span> <span class="nav-text">API的响应需要约束</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E8%83%BD%E7%9A%84%E7%BA%A6%E6%9D%9F%E6%96%B9%E6%B3%95"><span class="nav-number">2.</span> <span class="nav-text">可能的约束方法</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Json-Schema"><span class="nav-number">3.</span> <span class="nav-text">Json Schema</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8JSON-Schema"><span class="nav-number">4.</span> <span class="nav-text">使用JSON Schema</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%9A%E4%B9%89Schema"><span class="nav-number">4.1.</span> <span class="nav-text">定义Schema</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%AC%E5%85%B1%E5%B1%9E%E6%80%A7"><span class="nav-number">4.1.1.</span> <span class="nav-text">公共属性</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E4%BD%9C%E8%80%85"><span class="nav-number">4.1.2.</span> <span class="nav-text">作者</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AA%92%E4%BD%93%E7%B1%BB%E5%9E%8B"><span class="nav-number">4.1.3.</span> <span class="nav-text">媒体类型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%A0%87%E7%AD%BE%E7%B1%BB%E5%9E%8B"><span class="nav-number">4.1.4.</span> <span class="nav-text">标签类型</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%85%83%E6%95%B0%E6%8D%AE"><span class="nav-number">4.1.5.</span> <span class="nav-text">元数据</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%B1%87%E6%80%BB%E6%88%90-feeds%E6%8E%A5%E5%8F%A3%E8%BF%94%E5%9B%9E%E7%9A%84%E6%95%B0%E6%8D%AE"><span class="nav-number">4.1.6.</span> <span class="nav-text">汇总成&#x2F;feeds接口返回的数据</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8schema%E9%AA%8C%E8%AF%81%E5%93%8D%E5%BA%94%E4%BD%93"><span class="nav-number">4.2.</span> <span class="nav-text">使用schema验证响应体</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Open-API%E4%B8%8EJson-Schema"><span class="nav-number">5.</span> <span class="nav-text">Open API与Json Schema</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">77</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">25</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

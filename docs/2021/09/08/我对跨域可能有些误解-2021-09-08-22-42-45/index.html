@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="已知不得不说，我(们)对跨域可能有些误解。确切地讲，是对跨域的使用有些误解。 我的跨域知识从哪里来？从这里——跨源资源共享（CORS） - HTTP | MDN">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我对跨域可能有些误解">
+<meta property="og:url" content="https://zou8944.com/2021/09/08/%E6%88%91%E5%AF%B9%E8%B7%A8%E5%9F%9F%E5%8F%AF%E8%83%BD%E6%9C%89%E4%BA%9B%E8%AF%AF%E8%A7%A3-2021-09-08-22-42-45/index.html">
+<meta property="og:site_name" content="半中二中青年">
+<meta property="og:description" content="已知不得不说，我(们)对跨域可能有些误解。确切地讲，是对跨域的使用有些误解。 我的跨域知识从哪里来？从这里——跨源资源共享（CORS） - HTTP | MDN">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-09-08T14:42:45.383Z">
+<meta property="article:modified_time" content="2021-09-24T09:10:10.681Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="CORS">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://zou8944.com/2021/09/08/%E6%88%91%E5%AF%B9%E8%B7%A8%E5%9F%9F%E5%8F%AF%E8%83%BD%E6%9C%89%E4%BA%9B%E8%AF%AF%E8%A7%A3-2021-09-08-22-42-45/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>我对跨域可能有些误解 | 半中二中青年</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二中青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/09/08/%E6%88%91%E5%AF%B9%E8%B7%A8%E5%9F%9F%E5%8F%AF%E8%83%BD%E6%9C%89%E4%BA%9B%E8%AF%AF%E8%A7%A3-2021-09-08-22-42-45/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二中青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我对跨域可能有些误解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-09-08 22:42:45" itemprop="dateCreated datePublished" datetime="2021-09-08T22:42:45+08:00">2021-09-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-09-24 17:10:10" itemprop="dateModified" datetime="2021-09-24T17:10:10+08:00">2021-09-24</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">网络基础</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="已知"><a href="#已知" class="headerlink" title="已知"></a>已知</h2><p>不得不说，我(们)对跨域可能有些误解。确切地讲，是对跨域的使用有些误解。</p>
+<p>我的跨域知识从哪里来？从这里——<a target="_blank" rel="noopener" href="https://developer.mozilla.org/zh-CN/docs/Web/HTTP/CORS">跨源资源共享（CORS） - HTTP | MDN</a></p>
+<span id="more"></span>
+
+<p>能总结出几点</p>
+<ul>
+<li>跨域是一种允许服务端对来自浏览器的访问进行控制的机制</li>
+<li>它涉及到一系列专用的请求头<ul>
+<li>浏览器端<ul>
+<li>Origin：声明源站</li>
+<li>Access-Control-Request-Method：声明自己将要使用什么方法</li>
+<li>Access-Control-Request-Headers：声明自己将要携带哪些自定义头部</li>
+</ul>
+</li>
+<li>服务端<ul>
+<li>Access-Control-Allow-Origin：声明本站允许的源站</li>
+<li>Access-Control-Allow-Methods：声明本站允许的方法</li>
+<li>Access-Control-Allow-Headers：声明本真允许的自定义头部</li>
+<li>Access-Control-Max-Age：声明一个预检请求的有效期，有效期内同一个请求无须再次预检</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>请求被划分为简单请求和复杂请求<ul>
+<li>复杂请求在请求实际发出之前，会发出OPTIONS预检请求进行跨域询问</li>
+<li>简单请求不需要预检</li>
+</ul>
+</li>
+</ul>
+<p>在实际使用中，我们为了方便，尝尝会将服务端的所有响应配置为“*”，即允许所有源站、方法、自定义首部的请求进行访问。</p>
+<p>然而，这招在需要传输Cookie的请求中，行不通，浏览器会报如下错误。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">xxx from origin <span class="string">&#x27;xxxx&#x27;</span> has been blocked by CORS policy: The value of the <span class="string">&#x27;Access-Control-Allow-Origin&#x27;</span> header <span class="keyword">in</span> the response must not be the wildcard <span class="string">&#x27;*&#x27;</span> when the request<span class="string">&#x27;s credentials mode is &#x27;</span>include<span class="string">&#x27;. The credentials mode of requests initiated by the XMLHttpRequest is controlled by the withCredentials attribute.</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="盲区"><a href="#盲区" class="headerlink" title="盲区"></a>盲区</h2><p>出现这个问题，是因为漏掉了关键的一点：附带身份凭证的请求。其明确规定一点</p>
+<ul>
+<li><p>对于附带身份凭证的请求，服务器不得设置 Access-Control-Allow-Origin 的值为“*”</p>
+<p>  相应的，它必须是确切地和请求中的Origin进行匹配，即，如果请求的Origin是<a target="_blank" rel="noopener" href="http://xyc.com,则响应的access-control-allow-origin也必须为http//xyc.com">http://xyc.com，则响应的Access-Control-Allow-Origin也必须为http://xyc.com</a></p>
+</li>
+</ul>
+<p>这一点可以验证，并且牵出一个新的响应请求头</p>
+<ul>
+<li>Access-Control-Allow-Credentials: 是否允许跨域携带凭证。为true时，代表允许，相应地Access-Control-Allow-Origin 就一定不会为“*”</li>
+</ul>
+<p>出现上面的错误只有一种情况，即响应只有Access-Control-Allow-Origin: *，而没有Access-Control-Allow-Credentials，或者其值为false。</p>
+<p>解决办法，加上Access-Control-Allow-Credentials: true，并修改Access-Control-Allow-Origin。</p>
+<h2 id="Spring对跨域的支持"><a href="#Spring对跨域的支持" class="headerlink" title="Spring对跨域的支持"></a>Spring对跨域的支持</h2><p>所有Spring Web模块，都支持直接配置跨域。下面是正确且唯一正确的配置</p>
+<p>web服务的代码中配置</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Bean</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">corsFilter</span><span class="params">()</span></span>: CorsFilter &#123;</span><br><span class="line">    <span class="keyword">val</span> config = CorsConfiguration()</span><br><span class="line">    <span class="comment">// 预检请求有效期</span></span><br><span class="line">    config.maxAge = <span class="number">3600</span></span><br><span class="line">    <span class="comment">// 允许跨域发送身份凭证</span></span><br><span class="line">    config.allowCredentials = <span class="literal">true</span></span><br><span class="line">    <span class="comment">// 允许跨域的源为所有，注意与origin:*进行区分</span></span><br><span class="line">    config.addAllowedOriginPattern(<span class="string">&quot;*&quot;</span>)</span><br><span class="line">    <span class="comment">// 允许所有请求头</span></span><br><span class="line">    config.addAllowedHeader(<span class="string">&quot;*&quot;</span>)</span><br><span class="line">    <span class="comment">// 允许所有请求方法</span></span><br><span class="line">    config.addAllowedMethod(<span class="string">&quot;*&quot;</span>)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> source = UrlBasedCorsConfigurationSource().apply &#123;</span><br><span class="line">        <span class="comment">// 上述配置针对所有请求路径生效</span></span><br><span class="line">        registerCorsConfiguration(<span class="string">&quot;/**&quot;</span>, config)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> CorsFilter(source)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Spring Gateway中配置文件的配置</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># /**表示配置针对所有路径</span></span><br><span class="line"><span class="comment"># 允许</span></span><br><span class="line"><span class="string">spring.cloud.gateway.globalcors.cors-configurations.[/**].allowed-headers=*</span></span><br><span class="line"><span class="string">spring.cloud.gateway.globalcors.cors-configurations.[/**].allowed-methods=*</span></span><br><span class="line"><span class="string">spring.cloud.gateway.globalcors.cors-configurations.[/**].allowed-origin-patterns=*</span></span><br><span class="line"><span class="string">spring.cloud.gateway.globalcors.cors-configurations.[/**].allow-credentials=true</span></span><br></pre></td></tr></table></figure>
+
+<p>这里尤其注意区分</p>
+<p><code>addAllowedOriginPattern(&quot;*&quot;)</code>和<code>addOrigins(&quot;*&quot;)</code>的区别</p>
+<ul>
+<li><p>前者的*表示通配符，用来匹配请求的Origin，如果匹配成功，响应的Access-Control-Allow-Origin就直接被设置为请求的Origin</p>
+</li>
+<li><p>后者表示直接将所有的Access-Control-Allow-Origin值都设置为”*“。这个在和allowCredentials=true一起使用的情况下要注意</p>
+</li>
+<li><p>如果两个都设置，将会是<code>addOrigins(&quot;*&quot;)</code>生效。这一点可以去翻源码</p>
+<p>  位置：org.springframework.web.cors.CorsConfiguration#checkOrigin</p>
+</li>
+</ul>
+<h2 id="请求头冲突的问题"><a href="#请求头冲突的问题" class="headerlink" title="请求头冲突的问题"></a>请求头冲突的问题</h2><p>如果使用Spring Gateway作为网关，后面再挂着Spring Web作为服务，并且它们都正确配置了跨域。那么正常情况下，响应的请求头就会出现两份完全一样的跨域头部，像下面这样</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">vary:</span> <span class="string">Origin</span></span><br><span class="line"><span class="attr">access-control-allow-credentials:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">access-control-allow-origin:</span> <span class="string">xxxx</span></span><br><span class="line"><span class="attr">vary:</span> <span class="string">Origin</span></span><br><span class="line"><span class="attr">access-control-allow-credentials:</span> <span class="literal">true</span></span><br><span class="line"><span class="attr">access-control-allow-origin:</span> <span class="string">xxxx</span></span><br></pre></td></tr></table></figure>
+
+<p>这似乎不违反HTTP关于请求头重复的规定，但在跨域的机制中，却是不可接收的，可能出现这种错误</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Access to XMLHttpRequest at <span class="string">&#x27;xxxxx&#x27;</span> from origin <span class="string">&#x27;http://localhost:3200&#x27;</span> has been blocked by CORS policy: </span><br><span class="line">The <span class="string">&#x27;Access-Control-Allow-Origin&#x27;</span> header contains multiple values <span class="string">&#x27;*, http://localhost:3200&#x27;</span>, but only one is allowed.</span><br></pre></td></tr></table></figure>
+
+<p>解决办法就是在网关对重复的头部进行处理，我们可以用过滤器：DedupeResponseHeader</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">spring.cloud.gateway.default-filters[0]=DedupeResponseHeader=Vary</span> <span class="string">Access-Control-Allow-Origin</span> <span class="string">Access-Control-Allow-Credentials</span></span><br></pre></td></tr></table></figure>
+
+<p>它默认保留重复头中的第一个，具体参见<a href="%5Bhttps://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#the-deduperesponseheader-gatewayfilter-factory%5D(https://docs.spring.io/spring-cloud-gateway/docs/current/reference/html/#the-deduperesponseheader-gatewayfilter-factory)">手册</a></p>
+<h2 id="Vary怎么说"><a href="#Vary怎么说" class="headerlink" title="Vary怎么说"></a>Vary怎么说</h2><p>我们总是能看到响应中有Vary头部，它有什么用？服务端是如何生成的？</p>
+<p>根据<a href="%5Bhttps://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Vary%5D(https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Headers/Vary)">标准</a>，它是被服务器用来声明一个请求的响应的变化依据，浏览器可用它来控制缓存。比如对<code>Vary: Origin</code>，它表示，对同一个请求，服务器针对不同的源站有不同的响应。</p>
+<p>服务端是如何生成的呢？确切地讲，不同场景下有不同的生成方式，比如Spring Web中如果开启了跨域，默认会在响应上添加Vary请求头，写死的，其值包含</p>
+<ul>
+<li>Origin</li>
+<li>Access-Control-Request-Method</li>
+<li>Access-Control-Request-Headers</li>
+</ul>
+<p>源码参见：org.springframework.web.cors.reactive.DefaultCorsProcessor#VARY_HEADERS</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">final</span> List&lt;String&gt; VARY_HEADERS = Arrays.asList(</span><br><span class="line">			HttpHeaders.ORIGIN, HttpHeaders.ACCESS_CONTROL_REQUEST_METHOD, HttpHeaders.ACCESS_CONTROL_REQUEST_HEADERS);</span><br><span class="line"></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">boolean</span> <span class="title">process</span><span class="params">(<span class="meta">@Nullable</span> CorsConfiguration config, ServerWebExchange exchange)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	ServerHttpRequest request = exchange.getRequest();</span><br><span class="line">	ServerHttpResponse response = exchange.getResponse();</span><br><span class="line">	HttpHeaders responseHeaders = response.getHeaders();</span><br><span class="line"></span><br><span class="line">	List&lt;String&gt; varyHeaders = responseHeaders.get(HttpHeaders.VARY);</span><br><span class="line">        <span class="comment">// 如果当前响应没有包含Vary，则加上</span></span><br><span class="line">	<span class="keyword">if</span> (varyHeaders == <span class="keyword">null</span>) &#123;</span><br><span class="line">		responseHeaders.addAll(HttpHeaders.VARY, VARY_HEADERS);</span><br><span class="line">	&#125;</span><br><span class="line">	... ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="Spring-Cloud同时使用DedupeResponseHeader和WebSocket"><a href="#Spring-Cloud同时使用DedupeResponseHeader和WebSocket" class="headerlink" title="Spring Cloud同时使用DedupeResponseHeader和WebSocket"></a>Spring Cloud同时使用DedupeResponseHeader和WebSocket</h2><p>Spring Cloud中同时使用DedupeResponseHeader和WebSocket会报错。如下，这是握手成功后抛出的异常。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">java.lang.UnsupportedOperationException</span><br><span class="line">	at org.springframework.http.ReadOnlyHttpHeaders.set(ReadOnlyHttpHeaders.java:106)</span><br></pre></td></tr></table></figure>
+
+<p><strong>原因</strong></p>
+<p>Spring Cloud对WebSocket有特殊处理，位于过滤器WebsocketRoutingFilter中，与这部分相关的逻辑位于：org.springframework.web.reactive.socket.server.upgrade.ReactorNettyRequestUpgradeStrategy#upgrade</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> Mono&lt;<span class="built_in">Void</span>&gt; upgrade(ServerWebExchange exchange, WebSocketHandler handler,</span><br><span class="line">		<span class="meta">@Nullable</span> String subProtocol, Supplier&lt;HandshakeInfo&gt; handshakeInfoFactory) &#123;</span><br><span class="line"></span><br><span class="line">	ServerHttpResponse response = exchange.getResponse();</span><br><span class="line">	HttpServerResponse reactorResponse = ServerHttpResponseDecorator.getNativeResponse(response);</span><br><span class="line">	HandshakeInfo handshakeInfo = handshakeInfoFactory.<span class="keyword">get</span>();</span><br><span class="line">	NettyDataBufferFactory bufferFactory = (NettyDataBufferFactory) response.bufferFactory();</span><br><span class="line">	URI uri = exchange.getRequest().getURI();</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Trigger WebFlux preCommit actions and upgrade</span></span><br><span class="line">	<span class="keyword">return</span> response.setComplete()</span><br><span class="line">			.then(Mono.defer(() -&gt; &#123;</span><br><span class="line">				WebsocketServerSpec spec = buildSpec(subProtocol);</span><br><span class="line">				<span class="keyword">return</span> reactorResponse.sendWebsocket((<span class="keyword">in</span>, <span class="keyword">out</span>) -&gt; &#123;</span><br><span class="line">					ReactorNettyWebSocketSession session =</span><br><span class="line">							new ReactorNettyWebSocketSession(</span><br><span class="line">									<span class="keyword">in</span>, <span class="keyword">out</span>, handshakeInfo, bufferFactory, spec.maxFramePayloadLength());</span><br><span class="line">					<span class="keyword">return</span> handler.handle(session).checkpoint(uri + <span class="string">&quot; [ReactorNettyRequestUpgradeStrategy]&quot;</span>);</span><br><span class="line">				&#125;, spec);</span><br><span class="line">			&#125;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中的关键点是，response.setComplete()，这里已经将response设置为完成状态，后续过滤器就无法再操作其内容，而我们设置的DedupeResponseHeader过滤器就在它的后面，因此报错。</p>
+<p><strong>解决</strong></p>
+<p>这里，要明白两个点</p>
+<ul>
+<li>WebSocket握手成功后的响应头，不会存在重复的情况，这一点由WebSocket相关的Filter自己去保证</li>
+<li>DedupeResponseHeader，不会去判断response是否已经完成</li>
+</ul>
+<p>为此，可以自定义DedupeResponseHeader，加上对response的完成状态进行判断的逻辑。如下，整个逻辑完全照抄DedupeResponseHeaderGatewayFilterFactory，连Config和Strategy都沿用，这样能够使得对它的使用上完全和DedupeResponseHeader一致。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">CustomDedupeResponseHeaderGatewayFilterFactory</span> : <span class="type">AbstractGatewayFilterFactory</span>&lt;<span class="type">Config</span>&gt;</span>(Config::<span class="keyword">class</span>.java) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span> &#123;</span><br><span class="line">        log.info(<span class="string">&quot;Loaded GatewayFilterFactory [CustomDedupeResponseHeader]&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">shortcutFieldOrder</span><span class="params">()</span></span>: List&lt;String&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> listOf(NAME_KEY, <span class="string">&quot;strategy&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">apply</span><span class="params">(config: <span class="type">Config</span>)</span></span> = GatewayFilter &#123; exchange, chain -&gt;</span><br><span class="line">        chain.filter(exchange).then(Mono.fromRunnable &#123;</span><br><span class="line">            <span class="keyword">if</span> (!exchange.response.isCommitted) &#123;</span><br><span class="line">                dedupe(exchange.response.headers, config)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">dedupe</span><span class="params">(headers: <span class="type">HttpHeaders</span>?, config: <span class="type">Config</span>)</span></span> &#123;</span><br><span class="line">        <span class="keyword">val</span> names = config.name</span><br><span class="line">        <span class="keyword">val</span> strategy = config.strategy</span><br><span class="line">        <span class="keyword">if</span> (headers == <span class="literal">null</span> || names == <span class="literal">null</span> || strategy == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">for</span> (name <span class="keyword">in</span> names.split(<span class="string">&quot; &quot;</span>.toRegex()).toTypedArray()) &#123;</span><br><span class="line">            dedupe(headers, name.trim &#123; it &lt;= <span class="string">&#x27; &#x27;</span> &#125;, strategy)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">dedupe</span><span class="params">(headers: <span class="type">HttpHeaders</span>, name: <span class="type">String</span>, strategy: <span class="type">Strategy</span>)</span></span> &#123;</span><br><span class="line">        <span class="keyword">val</span> values = headers[name]</span><br><span class="line">        <span class="keyword">if</span> (values == <span class="literal">null</span> || values.size &lt;= <span class="number">1</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">when</span> (strategy) &#123;</span><br><span class="line">            Strategy.RETAIN_FIRST -&gt; headers[name] = values[<span class="number">0</span>]</span><br><span class="line">            Strategy.RETAIN_LAST -&gt; headers[name] = values[values.size - <span class="number">1</span>]</span><br><span class="line">            Strategy.RETAIN_UNIQUE -&gt; headers[name] = values.stream().distinct().collect(Collectors.toList())</span><br><span class="line">            <span class="keyword">else</span> -&gt; <span class="built_in">Unit</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>配置</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">spring.cloud.gateway.default-filters[<span class="number">0</span>]=CustomDedupeResponseHeader=Vary Access-Control-Allow-Origin Access-Control-Allow-Credentials</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/CORS/" rel="tag"># CORS</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/09/06/%E6%88%91%E4%B8%BA%E4%BB%80%E4%B9%88%E5%96%9C%E6%AC%A2%E9%B2%81%E9%B2%81%E4%BF%AE--wo-wei-shen-me-xi-huan-lu-lu-xiu-httpswwwnotionsoa72043b53a5a48f3beb069ab6a18be9b/" rel="prev" title="我为什么喜欢鲁鲁修">
+      <i class="fa fa-chevron-left"></i> 我为什么喜欢鲁鲁修
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/09/11/%E3%80%8A%E8%B6%85%E8%B6%8A%E6%84%9F%E8%A7%89%E3%80%8B%E2%80%94%E2%80%94%E6%B2%A1%E6%9C%89%E9%A2%84%E6%9C%9F%E7%9A%84%E9%82%A3%E6%A0%B7%E5%A5%BD--chao-yue-gan-jue--mei-you-yu-qi-de-na-yang-hao/" rel="next" title="《超越感觉》——没有预期的那样好">
+      《超越感觉》——没有预期的那样好 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%B2%E7%9F%A5"><span class="nav-number">1.</span> <span class="nav-text">已知</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%9B%B2%E5%8C%BA"><span class="nav-number">2.</span> <span class="nav-text">盲区</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Spring%E5%AF%B9%E8%B7%A8%E5%9F%9F%E7%9A%84%E6%94%AF%E6%8C%81"><span class="nav-number">3.</span> <span class="nav-text">Spring对跨域的支持</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AF%B7%E6%B1%82%E5%A4%B4%E5%86%B2%E7%AA%81%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">4.</span> <span class="nav-text">请求头冲突的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Vary%E6%80%8E%E4%B9%88%E8%AF%B4"><span class="nav-number">5.</span> <span class="nav-text">Vary怎么说</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Spring-Cloud%E5%90%8C%E6%97%B6%E4%BD%BF%E7%94%A8DedupeResponseHeader%E5%92%8CWebSocket"><span class="nav-number">6.</span> <span class="nav-text">Spring Cloud同时使用DedupeResponseHeader和WebSocket</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">77</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">25</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>

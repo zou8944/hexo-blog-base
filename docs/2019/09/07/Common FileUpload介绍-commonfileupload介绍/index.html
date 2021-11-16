@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="/images/apple-touch-icon-next.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="/images/favicon-32x32-next.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="/images/favicon-16x16-next.png">
+  <link rel="mask-icon" href="/images/logo.svg" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Muse","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":false,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="这是一篇半翻译半笔记式的文章，如果你之前对Common FileUpload了解不多，本文可以快速了解如何使用方法，如果你有时间，推荐你看官方文档">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Common FileUpload介绍">
+<meta property="og:url" content="https://zou8944.com/2019/09/07/Common%20FileUpload%E4%BB%8B%E7%BB%8D-commonfileupload%E4%BB%8B%E7%BB%8D/index.html">
+<meta property="og:site_name" content="半中二中青年">
+<meta property="og:description" content="这是一篇半翻译半笔记式的文章，如果你之前对Common FileUpload了解不多，本文可以快速了解如何使用方法，如果你有时间，推荐你看官方文档">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2019-09-07T14:31:33.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:26:39.301Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="文件上传">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://zou8944.com/2019/09/07/Common%20FileUpload%E4%BB%8B%E7%BB%8D-commonfileupload%E4%BB%8B%E7%BB%8D/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Common FileUpload介绍 | 半中二中青年</title>
+  
+
+
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二中青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档</a>
+
+  </li>
+  </ul>
+</nav>
+
+
+
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2019/09/07/Common%20FileUpload%E4%BB%8B%E7%BB%8D-commonfileupload%E4%BB%8B%E7%BB%8D/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="/images/avatar.gif">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二中青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Common FileUpload介绍
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-09-07 22:31:33" itemprop="dateCreated datePublished" datetime="2019-09-07T22:31:33+08:00">2019-09-07</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-02-16 23:26:39" itemprop="dateModified" datetime="2021-02-16T23:26:39+08:00">2021-02-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%B7%A5%E5%85%B7/" itemprop="url" rel="index"><span itemprop="name">工具</span></a>
+                </span>
+            </span>
+
+          
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>这是一篇半翻译半笔记式的文章，如果你之前对Common FileUpload了解不多，本文可以快速了解如何使用方法，如果你有时间，推荐你看<a target="_blank" rel="noopener" href="http://commons.apache.org/proper/commons-fileupload/using.html">官方文档</a></p>
+</blockquote>
+<span id="more"></span>
+<h1 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h1><p>FileUpload能够以多种不同的方式使用，具体取决于应用程序的要求。在最简单的情况下，您将调用单个方法来解析servlet请求，然后处理解析出来的Item集合。此外也可以自定义FileUpload以完全控制各个Item的存储方式，比如设置缓存目录、直接将接收到的Item以流的形式写入数据库等。</p>
+<blockquote>
+<p>FileUpload依赖于Commons IO，因此类路径下要有Commons IO的jar包。当然采用Maven依赖的方式不用担心，maven会自动为我们下载Commons IO包</p>
+</blockquote>
+<h1 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h1><p>FileUpload依据规范<a target="_blank" rel="noopener" href="http://www.ietf.org/rfc/rfc1867.txt">RFC1867</a>中”基于表单的HTML文件上载”对上传的文件数据进行解析，解析出来的每个项目对应一个FileItem对象。<br>每个FileItem都有许多我们可能感兴趣的属性：获取contentType，获取原本的文件名，获取文件大小，获取FiledName(如果是表单域上传)，判断是否在内存中，判断是否属于表单域等。<br>FileUpload使用<strong>FileItemFactory</strong>创建新的FileItem。该工厂可以控制每个项目的创建方式。目前提供的工厂实现可以将项目的数据存储临时存储在内存或磁盘上，具体取决于项目的大小（即数据字节，在指定的大小内时，存在内存中，超出范围，存在磁盘上）。</p>
+<h1 id="开始之前的判断"><a href="#开始之前的判断" class="headerlink" title="开始之前的判断"></a>开始之前的判断</h1><p>在处理上传项目前，最好是先解析一下当前请求是否属于文件上传请求，采用如下方式：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">//检查我们是否有文件上传请求</span><br><span class="line">boolean isMultipart = ServletFileUpload.isMultipartContent(request);</span><br></pre></td></tr></table></figure>
+<p>该方法的原理也很简单，就是获取request的contentType以判断是否是multipart，源码如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">public static final boolean isMultipartContent(</span><br><span class="line">            HttpServletRequest request) &#123;</span><br><span class="line">    if (!POST_METHOD.equalsIgnoreCase(request.getMethod())) &#123;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    return FileUploadBase.isMultipartContent(new ServletRequestContext(request));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public static final String MULTIPART = &quot;multipart/&quot;;</span><br><span class="line">... ...</span><br><span class="line">... ...</span><br><span class="line">public static final boolean isMultipartContent(RequestContext ctx) &#123;</span><br><span class="line">    String contentType = ctx.getContentType();</span><br><span class="line">    if (contentType == null) &#123;</span><br><span class="line">        return false;</span><br><span class="line">    &#125;</span><br><span class="line">    if (contentType.toLowerCase(Locale.ENGLISH).startsWith(MULTIPART)) &#123;</span><br><span class="line">        return true;</span><br><span class="line">    &#125;</span><br><span class="line">    return false;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="可用的最简配置"><a href="#可用的最简配置" class="headerlink" title="可用的最简配置"></a>可用的最简配置</h1><p>有两种方式能够接收上传文件</p>
+<ul>
+<li>传统方式：首先创建FileItemFactory，创建ServletFileUpload时传入factory，再从upload对象获取FileItem，然后调用write(File)直接写入文件。这种方式将接收到的文件临时存储到内存或磁盘中，后续用户再进行处理，比较方便，但是占用时间和空间</li>
+<li>流方式：直接ServletFileUpload中获取FileItem，再从FileItem中获取输入流，从流中直接接收数据，没有临时缓存这一步。使用没那么方便，但是比较节省时间和空间</li>
+</ul>
+<p>如下演示两种方式</p>
+<h2 id="使用传统API"><a href="#使用传统API" class="headerlink" title="使用传统API"></a>使用传统API</h2><figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line">// Create a factory for disk-based file items</span><br><span class="line">DiskFileItemFactory factory = new DiskFileItemFactory();</span><br><span class="line"></span><br><span class="line">// Configure a repository (to ensure a secure temp location is used)</span><br><span class="line">ServletContext servletContext = this.getServletConfig().getServletContext();</span><br><span class="line">File repository = (File) servletContext.getAttribute(&quot;javax.servlet.context.tempdir&quot;);</span><br><span class="line">factory.setRepository(repository);</span><br><span class="line"></span><br><span class="line">// Create a new file upload handler</span><br><span class="line">ServletFileUpload upload = new ServletFileUpload(factory);</span><br><span class="line"></span><br><span class="line">// Parse the request</span><br><span class="line">List&lt;FileItem&gt; items = upload.parseRequest(request);</span><br><span class="line">Iterator&lt;FileItem&gt; iter = items.iterator();</span><br><span class="line">while (iter.hasNext()) &#123;</span><br><span class="line">    FileItem item = iter.next();</span><br><span class="line">    </span><br><span class="line">    // upload 是这里假定的上传文件的field name</span><br><span class="line">    if(&quot;upload&quot;.equals(item.getFieldName))&#123;</span><br><span class="line">	    File uploadFile = new File(&quot;...&quot;);</span><br><span class="line">	    item.write(uploadFile);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>FileItemFctory可以设置的内容如下</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">factory.setRepository(File dir); // 设置临时文件存储位置</span><br><span class="line">factory.setSizeThreshold(long bytes); // 设置请求大小阈值，当请求大于该值时，接收到的数据是缓存在磁盘中的，否则直接缓存在内存中。</span><br><span class="line">factory.setFileCleaningTracker(FileCleaningTracker pTracker); // 设置临时文件清理跟踪器，后面会讲到</span><br></pre></td></tr></table></figure>
+<p>ServletFileUpload可以设置的内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">upload.setMaxSize(long bytes); //设置整个请求的最大值，大于该值时，是不允许传送的</span><br><span class="line">upload.setFileMaxSize(long bytes); //设置单个文件的最大值，大于该值时，大于该值时，是不允许传送的</span><br><span class="line">upload.setHeaderEncoding(String charset); // 设置读取每个FileItem的头数据的字符编码，不设置时采用request的编码，也没有时采用系统默认编码</span><br><span class="line">upload.setProgressListener(ProgressListener pListener); // 设置上传进度监听器，后面会讲</span><br></pre></td></tr></table></figure>
+<p>FileItem能够获取的内容如下：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">item.getContentType(); // 获取单个Item的ContentType</span><br><span class="line">item.getName(); // 获取item本来的文件名，如果不是文件则为null</span><br><span class="line">item.getFieldName(); // 获取item的field名</span><br><span class="line">item.getSize(); // 获取item的大小</span><br><span class="line">item.get(); // 将item转换成字节数组返回</span><br><span class="line">item.isInMemory(); // item目前是否存在内存中</span><br><span class="line">item.isFormField(); // 是否是表单域</span><br><span class="line">item.getInputStream(); // 获取输入流，用于读取item</span><br></pre></td></tr></table></figure>
+
+<h2 id="使用流API"><a href="#使用流API" class="headerlink" title="使用流API"></a>使用流API</h2><p>这种方式其实说来应该是最好的选择，因为他也并不麻烦，而且节省了缓存的空间和时间，在性能上是最好的选择。只需要按照如下方式使用即可</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">// Create a new file upload handler</span><br><span class="line">ServletFileUpload upload = new ServletFileUpload();</span><br><span class="line"></span><br><span class="line">// Parse the request</span><br><span class="line">FileItemIterator iter = upload.getItemIterator(request);</span><br><span class="line">while (iter.hasNext()) &#123;</span><br><span class="line">    FileItemStream item = iter.next();</span><br><span class="line">    String fileName = item.getName();</span><br><span class="line">    InputStream stream = item.getInputStream();</span><br><span class="line">    FileOutputStream os = new FileOutputStream(new File(fileName));</span><br><span class="line">    /*</span><br><span class="line">	 *	在这里将输入流的内容写入输出流即可</span><br><span class="line">	 */</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="文件上传进度监听器"><a href="#文件上传进度监听器" class="headerlink" title="文件上传进度监听器"></a>文件上传进度监听器</h1><p>当上传文件非常大时，进度监听器就能够排上用场了，使用方式也非常简单，创建监听器对象，设置到ServletFileUpload即可。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">ProgressListener listener = new ProgressListener() &#123;</span><br><span class="line">    /*</span><br><span class="line">     * pBytesRead: 到目前为止总共读了多少个Byte</span><br><span class="line">     * pContentLength: 整个content的长度，按Byte计算，也有可能是未知的：-1</span><br><span class="line">     * pItems: 正在读取的item编号，0代表尚未开始读取，1代表第一个，以此类推</span><br><span class="line">     */</span><br><span class="line">    public void update(long pBytesRead, long pContentLength, int pItems) &#123;</span><br><span class="line">        // 获取进度百分比，并放在session中</span><br><span class="line">        request.getSession().setAttribute(&quot;progress&quot;, 1.0*pBytesRead/pContentLength);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;;</span><br><span class="line">upload.setProgressListener(progressListener);</span><br><span class="line"></span><br></pre></td></tr></table></figure>
+<p>此处有一个问题：监听器会被频繁调用，当其内部实现的逻辑较为简单时，可能无伤大雅，但当逻辑较为复杂或占用资源时，监听器就可能影响到程序的性能。<br>解决方案：以某种方式减少监听器内部逻辑执行的次数，比如下面这种方式</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">ProgressListener progressListener = new ProgressListener()&#123;</span><br><span class="line">   private long megaBytes = -1;</span><br><span class="line">   public void update(long pBytesRead, long pContentLength, int pItems) &#123;</span><br><span class="line">	   // 每接收1M数据才执行一次后面的动作</span><br><span class="line">       long mBytes = pBytesRead / 1000000;</span><br><span class="line">       if (megaBytes == mBytes) &#123;</span><br><span class="line">           return;</span><br><span class="line">       &#125;</span><br><span class="line">       megaBytes = mBytes;</span><br><span class="line">       request.getSession().setAttribute(&quot;progress&quot;, 1.0*pBytesRead/pContentLength);</span><br><span class="line">   &#125;</span><br><span class="line">&#125;;</span><br></pre></td></tr></table></figure>
+
+<h1 id="临时文件清理跟踪器"><a href="#临时文件清理跟踪器" class="headerlink" title="临时文件清理跟踪器"></a>临时文件清理跟踪器</h1><p>文件清理跟踪器仅适用于传统方式: 传统方式在处理文件之前将文件写入临时文件，这样的临时文件在我们上传任务完成时就成了垃圾，需要进行自动回收。Cmmons FileUpload当然也提供了这个功能，其运行原理：org.apache.commons.io.FileCleanerTracker开启一个收割线程，在DiskFileItem被垃圾回收器回收时，自动清理掉对应的临时文件。<br>要想开启文件自动清理功能，需要按照如下配置：</p>
+<ul>
+<li>在Servlet中我们应该在web.xml中配置一个Servlet监听器<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;listener&gt;</span><br><span class="line">  &lt;listener-class&gt;</span><br><span class="line">    org.apache.commons.fileupload.servlet.FileCleanerCleanup</span><br><span class="line">  &lt;/listener-class&gt;</span><br><span class="line">&lt;/listener&gt;</span><br></pre></td></tr></table></figure></li>
+<li>创建org.apache.commons.io.FileCleaningTracker对象，设置给DiskFileItemFactory。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">FileCleaningTracker fileCleaningTracker = FileCleanerCleanup.getFileCleaningTracker(context);</span><br><span class="line">DiskFileItemFactory factory = new DiskFileItemFactory();</span><br><span class="line">factory.setFileCleaningTracker(fileCleaningTracker);</span><br></pre></td></tr></table></figure>
+<ul>
+<li>然后就是按照我们之前学习的步骤正常操作即可</li>
+</ul>
+<p>要想禁用临时文件自动删除功能，可将FileCleaningTracker设置为null(其实默认就为null)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">factory.setFileCleaningTracker(null);</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0/" rel="tag"># 文件上传</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/09/06/%E6%88%91%E6%9C%89%E7%82%B9%E6%83%B3%E8%A6%81%E5%86%99%E5%8D%9A%E5%AE%A2%E4%BA%86-%E6%88%91%E6%9C%89%E7%82%B9%E6%83%B3%E8%A6%81%E5%86%99%E5%8D%9A%E5%AE%A2%E4%BA%86/" rel="prev" title="我有点想要写博客了">
+      <i class="fa fa-chevron-left"></i> 我有点想要写博客了
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/09/08/RxJava%E5%88%9D%E6%8E%A2-rxjava%E5%88%9D%E6%8E%A2/" rel="next" title="RxJava初探">
+      RxJava初探 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">工作原理</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BC%80%E5%A7%8B%E4%B9%8B%E5%89%8D%E7%9A%84%E5%88%A4%E6%96%AD"><span class="nav-number">3.</span> <span class="nav-text">开始之前的判断</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%AF%E7%94%A8%E7%9A%84%E6%9C%80%E7%AE%80%E9%85%8D%E7%BD%AE"><span class="nav-number">4.</span> <span class="nav-text">可用的最简配置</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E4%BC%A0%E7%BB%9FAPI"><span class="nav-number">4.1.</span> <span class="nav-text">使用传统API</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E6%B5%81API"><span class="nav-number">4.2.</span> <span class="nav-text">使用流API</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%87%E4%BB%B6%E4%B8%8A%E4%BC%A0%E8%BF%9B%E5%BA%A6%E7%9B%91%E5%90%AC%E5%99%A8"><span class="nav-number">5.</span> <span class="nav-text">文件上传进度监听器</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%B4%E6%97%B6%E6%96%87%E4%BB%B6%E6%B8%85%E7%90%86%E8%B7%9F%E8%B8%AA%E5%99%A8"><span class="nav-number">6.</span> <span class="nav-text">临时文件清理跟踪器</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">77</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+        <span class="site-state-item-count">25</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://muse.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Muse</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/muse.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+</body>
+</html>
