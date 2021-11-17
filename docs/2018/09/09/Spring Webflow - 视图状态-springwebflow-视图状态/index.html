@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="基础指定view-state的view属性的几种方式 按照默认名称在相对路径下查找view  12&lt;!-- 在flow配置文件同目录下查找名为enterBookingDetails的视图 --&gt;&lt;view-state id&#x3D;&quot;enterBookingDetails&quot;&gt;   指明view名称，在相对路径下查找view  12&lt;!-- 在flow配置文">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Spring Webflow - 视图状态">
+<meta property="og:url" content="https://zou8944.com/2018/09/09/Spring%20Webflow%20-%20%E8%A7%86%E5%9B%BE%E7%8A%B6%E6%80%81-springwebflow-%E8%A7%86%E5%9B%BE%E7%8A%B6%E6%80%81/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="基础指定view-state的view属性的几种方式 按照默认名称在相对路径下查找view  12&lt;!-- 在flow配置文件同目录下查找名为enterBookingDetails的视图 --&gt;&lt;view-state id&#x3D;&quot;enterBookingDetails&quot;&gt;   指明view名称，在相对路径下查找view  12&lt;!-- 在flow配置文">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdn.net/20180909184901856?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70">
+<meta property="article:published_time" content="2018-09-09T06:00:00.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:27:30.411Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="Spring">
+<meta property="article:tag" content="Webflow">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdn.net/20180909184901856?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70">
+
+<link rel="canonical" href="https://zou8944.com/2018/09/09/Spring%20Webflow%20-%20%E8%A7%86%E5%9B%BE%E7%8A%B6%E6%80%81-springwebflow-%E8%A7%86%E5%9B%BE%E7%8A%B6%E6%80%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Spring Webflow - 视图状态 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">78</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2018/09/09/Spring%20Webflow%20-%20%E8%A7%86%E5%9B%BE%E7%8A%B6%E6%80%81-springwebflow-%E8%A7%86%E5%9B%BE%E7%8A%B6%E6%80%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Spring Webflow - 视图状态
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-09 14:00:00" itemprop="dateCreated datePublished" datetime="2018-09-09T14:00:00+08:00">2018-09-09</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-02-16 23:27:30" itemprop="dateModified" datetime="2021-02-16T23:27:30+08:00">2021-02-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2018/09/09/Spring%20Webflow%20-%20%E8%A7%86%E5%9B%BE%E7%8A%B6%E6%80%81-springwebflow-%E8%A7%86%E5%9B%BE%E7%8A%B6%E6%80%81/" class="post-meta-item leancloud_visitors" data-flag-title="Spring Webflow - 视图状态" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h1 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h1><h2 id="指定view-state的view属性的几种方式"><a href="#指定view-state的view属性的几种方式" class="headerlink" title="指定view-state的view属性的几种方式"></a>指定view-state的view属性的几种方式</h2><ul>
+<li>按照默认名称在相对路径下查找view</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 在flow配置文件同目录下查找名为enterBookingDetails的视图 --&gt;</span><br><span class="line">&lt;view-state id=&quot;enterBookingDetails&quot;&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>指明view名称，在相对路径下查找view</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 在flow配置文件同目录下查找名为bookingDetails.xhtml的视图 --&gt;</span><br><span class="line">&lt;view-state id=&quot;enterBookingDetails&quot; view=&quot;bookingDetails.xhtml&quot;&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>绝对路径查找view</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 直接查找/WEB-INF/hotels/booking/bookingDetails.xhtml的视图 --&gt;</span><br><span class="line">&lt;view-state id=&quot;enterBookingDetails&quot; view=&quot;/WEB-INF/hotels/booking/bookingDetails.xhtml&quot;&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>按照逻辑ID定位view<br>这是结合Spring提供的其它viewResolver来定位到其他组件中的view，如Tiles等。在前面 <a target="_blank" rel="noopener" href="https://blog.csdn.net/zou8944/article/details/82391712">配置</a> 一章中有讲</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 结合viewResolver共同确定视图位 --&gt;</span><br><span class="line">&lt;view-state id=&quot;enterBookingDetails&quot; view=&quot;bookingDetails&quot;&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="在viewScope中分配变量"><a href="#在viewScope中分配变量" class="headerlink" title="在viewScope中分配变量"></a>在viewScope中分配变量</h2><ul>
+<li>直接分配</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;var name=&quot;searchCriteria&quot; class=&quot;com.mycompany.myapp.hotels.SearchCriteria&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>依靠运算结果分配</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;on-render&gt;</span><br><span class="line">  	 &lt;evaluate expression=&quot;bookingService.findHotels(searchCriteria)&quot; result=&quot;viewScope.hotels&quot; /&gt;</span><br><span class="line">&lt;/on-render&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="在viewScope中操作对象"><a href="#在viewScope中操作对象" class="headerlink" title="在viewScope中操作对象"></a>在viewScope中操作对象</h2><p>如下例子展示了如何在同一个view state的不同时机操作一系列对象</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">&lt;view-state id=&quot;searchResults&quot;&gt;</span><br><span class="line">   	&lt;on-render&gt;</span><br><span class="line">		&lt;evaluate expression=&quot;bookingService.findHotels(searchCriteria)&quot;</span><br><span class="line">                 result=&quot;viewScope.hotels&quot; /&gt;</span><br><span class="line">	&lt;/on-render&gt;</span><br><span class="line">	&lt;transition on=&quot;next&quot;&gt;</span><br><span class="line">		&lt;evaluate expression=&quot;searchCriteria.nextPage()&quot; /&gt;</span><br><span class="line">		&lt;render fragments=&quot;searchResultsFragment&quot; /&gt;</span><br><span class="line">	&lt;/transition&gt;</span><br><span class="line">	&lt;transition on=&quot;previous&quot;&gt;</span><br><span class="line">		&lt;evaluate expression=&quot;searchCriteria.previousPage()&quot; /&gt;</span><br><span class="line">		&lt;render fragments=&quot;searchResultsFragment&quot; /&gt;</span><br><span class="line">	&lt;/transition&gt;</span><br><span class="line">&lt;/view-state&gt;</span><br><span class="line">&lt;!-- 渲染view之前，首先执行findHotels方法，将结果放到viewScope的hotels中 --&gt;</span><br><span class="line">&lt;!-- 当返回next事件时，执行nextPage()方法， 然后渲染查找结果部分 --&gt;</span><br><span class="line">&lt;!-- 当返回previous事件时，执行前一页操作，然后渲染查找结果部分 --&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="lt-on-render-gt"><a href="#lt-on-render-gt" class="headerlink" title="&lt;on-render&gt;"></a><code>&lt;on-render&gt;</code></h2><p>在view渲染前可以执行一个或多个action，<strong>这些action将会在视图最开始渲染以及后续的任何刷新，甚至视图局部的重新渲染执行</strong>。以上面的代码为例，在重新渲染结果之前，还会先执行一次findHotels方法。<br>##数据绑定</p>
+<h2 id="在view-state上绑定model"><a href="#在view-state上绑定model" class="headerlink" title="在view-state上绑定model"></a>在view-state上绑定model</h2><p>使用model属性，可以将一个对象绑定到view中的表单中。web flow可以帮助完成对象属性和表单域的绑定和验证。</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;view-state id=&quot;enterBookingDetails&quot; model=&quot;booking&quot;&gt;</span><br></pre></td></tr></table></figure>
+<p>绑定时机是当view的event发生时</p>
+<ul>
+<li><p><code>view-to-model</code>绑定：在view完成并回发时，用户的输入域会被绑定到指定对象的属性上</p>
+</li>
+<li><p><code>model</code>验证：绑定后，如果需要验证，验证逻辑会被调用。</p>
+</li>
+<li><p>需要指出的是：只有当验证成功后才能transition到别的state，验证失败时会重新渲染该view，要求用户重新输入。<br>##绑定model时的类型转换<br>####基础<br>由于客户端上传的表单数据都是字符串类型的， 因此需要进行类型转换</p>
+</li>
+<li><p>Web Flow类型转换和Spring MVC的类型转换的关系<br>在web-flow 2.1以前，Sprign MVC和web-flow使用不同的类型转换机制，但是2.1以后，二者使用相同的类型转换</p>
+</li>
+</ul>
+<p><strong>以前</strong>，Web Flow使用<code>spring-binding-2.4.6.RELEASE.jar</code>包提供的API进行类型转换，相关的类有<code>org.springframework.binding.convert.service.DefaultConversionService</code>， <code>org.springframework.binding.convert.converters.Converter</code>等，通过实现<code>Converter</code>接口完成自定义转换器，再通过<code>DefaultConversionService</code>进行注册，就像如下所示的方式1那样；而且这样还能够注册带命名ID的转换器，可以结合<code>&lt;bingding&gt;</code>的<code>converter</code>属性进行使用，但这种方式已经非常不建议了。<br><strong>目前</strong>， Web Flow在执行conversionService时依然使用<code>org.springframework.binding.convert.service.DefaultConversionService</code>，但该服务已经不会去注册任何默认的转换器和格式化器了，而是将转换和格式任务全部委托给来自<code>spring-core-4.3.7.RELEASE.jar</code>包的<code>org.springframework.core.convert.ConversionService</code>完成。<code>DefaultConversionService</code>内部维护一个<code>ConversionService</code>对象，对<code>DefaultConversionService</code>中进行的大多数操作都被转变成对<code>ConversionService</code>的操作(对带命名ID转换器的管理除外)。值得一提的是，命名ID的转换器非常没有必要，因为在检测到相应类型后，系统会自动调用合适的转换器。</p>
+<ul>
+<li>方式一 传统方式添加Converter(不建议使用)</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line">import org.springframework.binding.convert.converters.Converter;</span><br><span class="line">// 定义自己的转换器</span><br><span class="line">public class DateConverter implements Converter &#123;</span><br><span class="line"></span><br><span class="line">    public Class&lt;?&gt; getSourceClass() &#123;</span><br><span class="line">        return String.class;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public Class&lt;?&gt; getTargetClass() &#123;</span><br><span class="line">        return java.util.Date.class;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    public Object convertSourceToTargetClass(Object source, Class&lt;?&gt; targetClass) throws Exception &#123;</span><br><span class="line">        SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span><br><span class="line">        </span><br><span class="line">        return sdf.parse(source.toString());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">// 注册自己的转换器</span><br><span class="line">public class ApplicationConversionService extends DefaultConversionService &#123;</span><br><span class="line">	public ApplicationConversionService() &#123;</span><br><span class="line">   		addConverter(new DateConverter());</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 使用转换器，什么都不用指定，当检测到model中的checkinDate属性为Date类型时，DateConverter会自动被调用 --&gt;</span><br><span class="line">&lt;view-state id=&quot;enterBookingDetails&quot; model=&quot;booking&quot;&gt;</span><br><span class="line">   	&lt;binder&gt;</span><br><span class="line">       	&lt;binding property=&quot;checkinDate&quot;/&gt;</span><br><span class="line">   	&lt;/binder&gt;</span><br><span class="line">&lt;/view-state&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>方式二 添加带ID的Converter(已过时，不推荐使用)</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">DateConverter的定义不变</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">// 注册时指定id</span><br><span class="line">public class ApplicationConversionService extends DefaultConversionService &#123;</span><br><span class="line">	public ApplicationConversionService() &#123;</span><br><span class="line">		// 该方法已被标为deprecated</span><br><span class="line">   		addConverter(&quot;dateConverter&quot;, new DateConverter());</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 使用时指定id --&gt;</span><br><span class="line">&lt;view-state id=&quot;enterBookingDetails&quot; model=&quot;booking&quot;&gt;</span><br><span class="line">   	&lt;binder&gt;</span><br><span class="line">       	&lt;binding property=&quot;checkinDate&quot; converter=&quot;dateConverter&quot;/&gt;</span><br><span class="line">   	&lt;/binder&gt;</span><br><span class="line">&lt;/view-state&gt;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>方式三 - 配置通用的Converter和Formatter(推荐使用，当前版本鼓励的方式)</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line">// 首先实现FormattingConversionServiceFactoryBean，添加自定义格式化器和转换器</span><br><span class="line">public class ApplicationConversionServiceFactoryBean extends FormattingConversionServiceFactoryBean &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void setConverters(Set&lt;?&gt; converters) &#123;</span><br><span class="line">        Converter&lt;String, Date&gt; converter = new Converter&lt;String, Date&gt;() &#123;</span><br><span class="line">            public Date convert(String source) &#123;</span><br><span class="line">                SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span><br><span class="line">                return sdf.parse(source);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">        </span><br><span class="line">        Set&lt;Converter&lt;String, Date&gt;&gt; set = new HashSet&lt;Converter&lt;String,Date&gt;&gt;();</span><br><span class="line">        set.add(converter);</span><br><span class="line">        super.setConverters(set);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    public void setFormatters(Set&lt;?&gt; formatters) &#123;</span><br><span class="line">        Set&lt;Formatter&lt;Date&gt;&gt; set= new HashSet&lt;Formatter&lt;Date&gt;&gt;();</span><br><span class="line">        set.add(new Formatter&lt;Date&gt;() &#123;</span><br><span class="line"></span><br><span class="line">            public String print(Date object, Locale locale) &#123;</span><br><span class="line">                SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span><br><span class="line">                return sdf.format(object);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            public Date parse(String text, Locale locale) throws ParseException &#123;</span><br><span class="line">                SimpleDateFormat sdf = new SimpleDateFormat(&quot;yyyy-MM-dd&quot;);</span><br><span class="line">                return sdf.parse(text);</span><br><span class="line">            &#125;</span><br><span class="line">            </span><br><span class="line">        &#125;);</span><br><span class="line">        </span><br><span class="line">        super.setFormatters(set);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">// 创建由ApplicationConversionServiceFactoryBean产生的ConversionService</span><br><span class="line">// 该ConversionService是Spring MVC中类型转换的核心，可以同时配置给Spring MVC和Web Flow</span><br><span class="line">@Bean(&quot;applicationConversionService&quot;)</span><br><span class="line">public ConversionService applicationConversionService() &#123;</span><br><span class="line">    FormattingConversionServiceFactoryBean factory = new ApplicationConversionServiceFactoryBean();</span><br><span class="line">    // 添加自定义格式化器</span><br><span class="line">    factory.setFormatters(null);</span><br><span class="line">    // 添加自定义格式转换器</span><br><span class="line">    factory.setConverters(null);</span><br><span class="line">    // 生成ConversionService </span><br><span class="line">    factory.afterPropertiesSet();</span><br><span class="line">    // 返回ConversionService </span><br><span class="line">    return factory.getObject();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">// 下面三个步骤用于配置给Web Flow</span><br><span class="line"></span><br><span class="line">@Bean(&quot;defaultConversionService&quot;)</span><br><span class="line">public DefaultConversionService conversionService(@Autowired ConversionService applicationConversionService) &#123;</span><br><span class="line">    return new DefaultConversionService(applicationConversionService);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">@Bean</span><br><span class="line">public FlowBuilderServices flowBuilderServices(@Autowired MvcViewFactoryCreator mvcViewFactoryCreator, @Autowired DefaultConversionService defaultConversionService) &#123;</span><br><span class="line">    return getFlowBuilderServicesBuilder()</span><br><span class="line">            .setConversionService(defaultConversionService)</span><br><span class="line">            .build();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">// 注册flow</span><br><span class="line">@Bean(&quot;flowRegistry&quot;)</span><br><span class="line">public FlowDefinitionRegistry flowRegistry(@Autowired FlowBuilderServices flowBuilderServices) &#123;</span><br><span class="line">    </span><br><span class="line">    return getFlowDefinitionRegistryBuilder()</span><br><span class="line">            .setBasePath(&quot;/WEB-INF/jsp/flow&quot;)</span><br><span class="line">            .addFlowLocation(&quot;/config/search-flow.xml&quot;)</span><br><span class="line">            .setFlowBuilderServices(flowBuilderServices)</span><br><span class="line">            .build();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&lt;!-- 下面的步骤用于注册给Spring MVC --&gt;</span><br><span class="line">&lt;mvc:annotation-driven conversion-service=&quot;applicationConversionService&quot; /&gt;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>针对上述三种方式的说明</li>
+<li>方式一表面上使用的是旧的转换器添加方式，但内部实现还是按照新的方式进行，在添加Converter时，会通过一个适配器类转换将<code>org.springframework.binding.convert.converters.Converter</code>转换为<code>org.springframework.core.convert.converter.GenericConverter</code></li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">// 源码片段</span><br><span class="line">public void addConverter(Converter converter) &#123;</span><br><span class="line">	((ConverterRegistry) delegate).addConverter(new SpringBindingConverterAdapter(converter));</span><br><span class="line">	if (converter instanceof TwoWayConverter) &#123;</span><br><span class="line">		TwoWayConverter twoWayConverter = (TwoWayConverter) converter;</span><br><span class="line">		((ConverterRegistry) delegate).addConverter(new SpringBindingConverterAdapter(new ReverseConverter(</span><br><span class="line">				twoWayConverter)));</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>方式二已过时，这里仅展示</li>
+<li>方式三推荐使用，但这里仅展示了我自己实验成功的java config配置方式，xml配置方式可以参见<a target="_blank" rel="noopener" href="https://docs.spring.io/spring-webflow/docs/2.4.5.RELEASE/reference/html/views.html#converter-configuration">官网</a>。</li>
+<li>实际使用时，会发现方式一从视图提交到model时类型转换能够正常进行，但是从model回填到视图时并非自己最开始输入的数值，那是因为我们只设置了Converter，没有设置Formatter。</li>
+<li>关于转换器的配置，只要认识到ConversionService是类型转换的核心，就会省事很多</li>
+</ul>
+<h2 id="Converter和Formatter的区别"><a href="#Converter和Formatter的区别" class="headerlink" title="Converter和Formatter的区别"></a>Converter和Formatter的区别</h2><ul>
+<li><code>Converter</code>: 是<code>spring-core-4.3.7.RELEASE.jar</code>包提供的，用于<code>Object to Object</code>的转换</li>
+<li><code>Formatter</code>: 是<code>spring-context-4.3.7.RELEASE.jar</code>包提供的，用于<code>Object to String</code>的转换。</li>
+</ul>
+<h2 id="格式化注解"><a href="#格式化注解" class="headerlink" title="格式化注解"></a>格式化注解</h2><p>新的类型转换提供两个有用的注解，可以放在model类的属性上，和被@Controller类的方法参数中。</p>
+<ul>
+<li><code>NumberFormat</code></li>
+<li><code>DateTimeFormat</code>： 该注解默认使用<a target="_blank" rel="noopener" href="http://www.joda.org/joda-time/"><code>Joda Time</code></a>，需要在类路径中包含Joda Time的包。默认情况下Spring MVC和web flow都没有其他的日期相关的转换器和格式化器。因此定义我们自己的日期相关转换器和格式化器非常重要。</li>
+<li>此外，我们还可以参照上述两个注解定义自己的注解.</li>
+</ul>
+<h2 id="关于绑定的另外两点"><a href="#关于绑定的另外两点" class="headerlink" title="关于绑定的另外两点"></a>关于绑定的另外两点</h2><ul>
+<li>取消绑定<br>可以使用bind属性在特定情况下取消绑定。如下当触发cancel事件时不会执行绑定操作</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;view-state id=&quot;enterBookingDetails&quot; model=&quot;booking&quot;&gt;</span><br><span class="line">    &lt;transition on=&quot;proceed&quot; to=&quot;reviewBooking&quot;&gt;</span><br><span class="line">    &lt;transition on=&quot;cancel&quot; to=&quot;bookingCancelled&quot; bind=&quot;false&quot; /&gt;</span><br><span class="line">&lt;/view-state&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>显式地指明绑定的字段<br>使用<binder>标签可以显式指明需要绑定的字段，同时可以指明需要使用到的转换器，和是否允许为空。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">&lt;view-state id=&quot;enterBookingDetails&quot; model=&quot;booking&quot;&gt;</span><br><span class="line">    &lt;binder&gt;</span><br><span class="line">        &lt;binding property=&quot;checkinDate&quot; converter=&quot;shortDate&quot; required=&quot;true&quot; /&gt;</span><br><span class="line">        &lt;binding property=&quot;checkoutDate&quot; converter=&quot;shortDate&quot; required=&quot;true&quot; /&gt;</span><br><span class="line">        &lt;binding property=&quot;creditCard&quot; required=&quot;true&quot; /&gt;</span><br><span class="line">        &lt;binding property=&quot;creditCardName&quot; required=&quot;true&quot; /&gt;</span><br><span class="line">        &lt;binding property=&quot;creditCardExpiryMonth&quot; required=&quot;true&quot; /&gt;</span><br><span class="line">        &lt;binding property=&quot;creditCardExpiryYear&quot; required=&quot;true&quot; /&gt;</span><br><span class="line">    &lt;/binder&gt;</span><br><span class="line">    &lt;transition on=&quot;proceed&quot; to=&quot;reviewBooking&quot;&gt;</span><br><span class="line">    &lt;transition on=&quot;cancel&quot; to=&quot;bookingCancelled&quot; bind=&quot;false&quot; /&gt;</span><br><span class="line">&lt;/view-state&gt;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>注意事项</p>
+<ol>
+<li>没有显式指定绑定字段时，所有model对象的公共属性都会被绑定；指定绑定字段时，则只有显式指定的字段会被绑定</li>
+<li>没有显式声明转换器时，会使用自动检测的转换器</li>
+<li>声明不允许为空时，若出现空，则会产生验证错误，并会重新绘制视图并报错。<br>##绑定数据的验证<br>Web Flow支持自定义验证条件和JSR-303 Bean验证框架<br>####JSR-303 Bean Validation</li>
+</ol>
+<ul>
+<li> 基础配置<br>首先类路径中需要有一个validator的jar包，然后按照如下配置后，validator会应用到所有的添加了条件注解的model属性中</li>
+</ul>
+</blockquote>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;webflow:flow-registry flow-builder-services=&quot;flowBuilderServices&quot; /&gt;</span><br><span class="line">&lt;webflow:flow-builder-services id=&quot;flowBuilderServices&quot; validator=&quot;validator&quot; /&gt;</span><br><span class="line">&lt;bean id=&quot;validator&quot; class=&quot;org.springframework.validation.beanvalidation.LocalValidatorFactoryBean&quot; /&gt;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;form中按如下方式配置</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">@NotNull</span><br><span class="line">@Size(min = 2, max = 30, message=&quot;at least 3 chars&quot; )</span><br><span class="line">private String name;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;前端按如下配置，使用<code>&lt;sf:errors&gt;</code>可将name属性的错误信息显示出来</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;sf:form action=&quot;$&#123;flowExecutionUrl&#125;&amp;_eventId=submit&quot; commandName=&quot;searchForm&quot; method=&quot;post&quot;&gt;</span><br><span class="line">    Name: &lt;sf:input path=&quot;name&quot;/&gt; &lt;sf:errors path=&quot;name&quot;&gt;&lt;/sf:errors&gt;&lt;br/&gt;</span><br><span class="line">       &lt;input type=&quot;submit&quot; value=&quot;Submit&quot;&gt;</span><br><span class="line">&lt;/sf:form&gt;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;效果如下<br><img src="https://img-blog.csdn.net/20180909184901856?watermark/2/text/aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=/font/5a6L5L2T/fontsize/400/fill/I0JBQkFCMA==/dissolve/70" alt="这里写图片描述"></p>
+<ul>
+<li>部分验证<br>JSR-303支持部分验证，通过验证组的方式，使用如下(我在验证该方式时是不行的，提示viwe-state标签不允许出现validation-hints属性)</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">@NotNull</span><br><span class="line">@Size(min = 2, max = 30, groups = State1.class)</span><br><span class="line">private String name;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;view-state id=&quot;state1&quot; model=&quot;myModel&quot; validation-hints=&quot;&#x27;group1,group2&#x27;&quot;&gt;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;对该方法不做详细解释，最好还是参考一下JSR-303再来看</p>
+<h2 id="自定义验证"><a href="#自定义验证" class="headerlink" title="自定义验证"></a>自定义验证</h2><p>JSR-303仅支持对Bean的验证，如非空，字符串长度等。我们经常需要自定义验证逻辑，有如下两种方式进行自定义</p>
+<ul>
+<li>一是在model类内部定义一个以<code>validate$&#123;stateId&#125;(ValidationContext)</code>为签名的方法，在view提交时会自动调用该验证方法。stateId是view-state的id</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line">// 官方示例</span><br><span class="line">public class Booking &#123;</span><br><span class="line">    private Date checkinDate;</span><br><span class="line">    private Date checkoutDate;</span><br><span class="line">    ...</span><br><span class="line"></span><br><span class="line">    public void validateEnterBookingDetails(ValidationContext context) &#123;</span><br><span class="line">        MessageContext messages = context.getMessageContext();</span><br><span class="line">        if (checkinDate.before(today())) &#123;</span><br><span class="line">            messages.addMessage(new MessageBuilder().error().source(&quot;checkinDate&quot;).</span><br><span class="line">                defaultText(&quot;Check in date must be a future date&quot;).build());</span><br><span class="line">        &#125; else if (!checkinDate.before(checkoutDate)) &#123;</span><br><span class="line">            messages.addMessage(new MessageBuilder().error().source(&quot;checkoutDate&quot;).</span><br><span class="line">                defaultText(&quot;Check out date must be later than check in date&quot;).build());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>二是单独定义一个类，类名为<code>$&#123;model&#125;Validator</code>，在其内部定义一个以<code>validate$&#123;stateId&#125;($&#123;model&#125;, ValidationContext)</code>为签名的方法，然后将该类装载到Spring中。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">// 官方示例</span><br><span class="line">@Component</span><br><span class="line">public class BookingValidator &#123;</span><br><span class="line">    public void validateEnterBookingDetails(Booking booking, ValidationContext context) &#123;</span><br><span class="line">        MessageContext messages = context.getMessageContext();</span><br><span class="line">        if (booking.getCheckinDate().before(today())) &#123;</span><br><span class="line">            messages.addMessage(new MessageBuilder().error().source(&quot;checkinDate&quot;).</span><br><span class="line">                defaultText(&quot;Check in date must be a future date&quot;).build());</span><br><span class="line">        &#125; else if (!booking.getCheckinDate().before(booking.getCheckoutDate())) &#123;</span><br><span class="line">            messages.addMessage(new MessageBuilder().error().source(&quot;checkoutDate&quot;).</span><br><span class="line">                defaultText(&quot;Check out date must be later than check in date&quot;).build());</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;针对第二种情况也可以定义一个<code>validate($&#123;model&#125;, ValidationContext)</code>方法，这样无论在哪个view-state的view返回时，只要绑定了该moel，都会调用该验证方法。<br>&emsp;&emsp;当<code>validate($&#123;model&#125;, ValidationContext)</code>和validate<code>$&#123;stateId&#125;($&#123;model&#125;, ValidationContext)</code>都存在时，会先调用后者，再调用前者。</p>
+<h2 id="多说两点"><a href="#多说两点" class="headerlink" title="多说两点"></a>多说两点</h2><ul>
+<li>失能验证<br>通过如下方式可以在局部使得验证失效</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;view-state id=&quot;chooseAmenities&quot; model=&quot;booking&quot;&gt;</span><br><span class="line">    &lt;transition on=&quot;proceed&quot; to=&quot;reviewBooking&quot;&gt;</span><br><span class="line">    &lt;transition on=&quot;back&quot; to=&quot;enterBookingDetails&quot; validate=&quot;false&quot; /&gt;</span><br><span class="line">&lt;/view-state&gt;</span><br></pre></td></tr></table></figure>
+<h1 id="转移"><a href="#转移" class="headerlink" title="转移"></a>转移</h1><p>在一个view-state中，可能发生各种转移</p>
+<ul>
+<li> 转移之前执行操作<br>可以在转移之前执行特定的操作，如一个方法， 当方法返回false或者发生错误时，转移不会继续进行下去。而是重新渲染相应的部分</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;transition on=&quot;submit&quot; to=&quot;bookingConfirmed&quot;&gt;</span><br><span class="line">    &lt;evaluate expression=&quot;bookingAction.makeBooking(booking, messageContext)&quot; /&gt;</span><br><span class="line">&lt;/transition&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>全局转移<br>定义全局有效的转移操作</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;global-transitions&gt;</span><br><span class="line">    &lt;transition on=&quot;login&quot; to=&quot;login&quot; /&gt;</span><br><span class="line">    &lt;transition on=&quot;logout&quot; to=&quot;logout&quot; /&gt;</span><br><span class="line">&lt;/global-transitions&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>事件处理器<br>可以利用transition标签只响应事件，而不做任何跳转操作，从而作为事件处理器</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;transition on=&quot;event&quot;&gt;</span><br><span class="line">    &lt;!-- Handle event --&gt;</span><br><span class="line">&lt;/transition&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>局部渲染<br>利用<code>&lt;render&gt;</code>标签可以进行局部渲染，一般用于Ajax的局部刷新操作</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">&lt;transition on=&quot;next&quot;&gt;</span><br><span class="line">    &lt;evaluate expression=&quot;searchCriteria.nextPage()&quot; /&gt;</span><br><span class="line">    &lt;render fragments=&quot;searchResultsFragment&quot; /&gt;</span><br><span class="line">&lt;/transition&gt;</span><br></pre></td></tr></table></figure>
+<p>&emsp;&emsp;如上，当发生next事件时，首先执行翻页操作，然后重新刷新查询结果区域。fragment属性应该引用想要刷新的view的id,当刷新多个区域时，使用逗号隔开。</p>
+<h1 id="view的回退控制"><a href="#view的回退控制" class="headerlink" title="view的回退控制"></a>view的回退控制</h1><p>当我们从一个view跳转到另一个view时，通过浏览器的回退按钮，可以返回上一个view，我们可以对这个功能进行配置</p>
+<ul>
+<li>失能一个回退view，即当前view不能再下一个view上回退，回退到的是前一个view</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;transition on=&quot;cancel&quot; to=&quot;bookingCancelled&quot; history=&quot;discard&quot;&gt;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>失能所有回退view，即当前及之前所有view都是不能够被回退的。</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;transition on=&quot;confirm&quot; to=&quot;bookingConfirmed&quot; history=&quot;invalidate&quot;&gt;</span><br></pre></td></tr></table></figure>
+<p>##MessageContext<br>Spring web flow的MessageContext是用来记录在flow执行期间的信息的。而其中包含的信息都由MessageBuilder产生，可以手动添加，也可以由系统自动产生。</p>
+<h2 id="手动添加信息"><a href="#手动添加信息" class="headerlink" title="手动添加信息"></a>手动添加信息</h2><ul>
+<li>手动添加普通文本</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">MessageContext context = ...（这里一般是从上一级获取到context对象）</span><br><span class="line">MessageBuilder builder = new MessageBuilder();</span><br><span class="line">context.addMessage(builder.error().source(&quot;checkinDate&quot;)</span><br><span class="line">    .defaultText(&quot;Check in date must be a future date&quot;).build());</span><br><span class="line">context.addMessage(builder.warn().source(&quot;smoking&quot;)</span><br><span class="line">    .defaultText(&quot;Smoking is bad for your health&quot;).build());</span><br><span class="line">context.addMessage(builder.info()</span><br><span class="line">    .defaultText(&quot;We have processed your reservation - thank you and enjoy your stay&quot;).build());</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>添加Spring MessageSource得到的信息</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">MessageContext context = ...</span><br><span class="line">MessageBuilder builder = new MessageBuilder();</span><br><span class="line">context.addMessage(builder.error().source(&quot;checkinDate&quot;).code(&quot;checkinDate.notFuture&quot;).build());</span><br><span class="line">context.addMessage(builder.warn().source(&quot;smoking&quot;).code(&quot;notHealthy&quot;)</span><br><span class="line">    .resolvableArg(&quot;smoking&quot;).build());</span><br><span class="line">context.addMessage(builder.info().code(&quot;reservationConfirmation&quot;).build());</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>添加message bundle获取的信息<br>可以直接在view或flow中使用<code>resourceBundle</code>这个EL变量来获取资源文件中的内容。(这个需要在web-flow同目录下放置一个<code>message.properties</code>文件)</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;input value=&quot;#&#123;resourceBundle.reservationConfirmation&#125;&quot; /&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="系统自动产生信息"><a href="#系统自动产生信息" class="headerlink" title="系统自动产生信息"></a>系统自动产生信息</h2><p>&emsp;&emsp;有多重情况下web-flow会自动生成message,其中一种重要的情况是当view-to-model验证失败时，生成规则是，首先到资源文件中查找key为<code>$&#123;model&#125;l.$&#123;property&#125;.$&#123;errCode&#125;</code>的资源，如果找不到，则直接查找key为<code>$&#123;errCode&#125;</code>的资源。<br>&emsp;&emsp; 举例：有model名为booking，验证其中的checkDate属性，当出现类型不匹配时，系统给出的错误代码为<code>typeMismatch</code>，则会在资源文件中查找如下key的资源<br> <code>booking.checkDate.typeMismatch</code>  或 <code>typeMismatch</code></p>
+<h1 id="附"><a href="#附" class="headerlink" title="附"></a>附</h1><p>下面大致列举一下Spring MVC会自动注册的转换器和格式化器(调用<code>ConversionService</code>的<code>toString()</code>方法)</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br></pre></td><td class="code"><pre><span class="line">@org.springframework.format.annotation.DateTimeFormat java.lang.Long -&gt; java.lang.String: org.springframework.format.datetime.DateTimeFormatAnnotationFormatterFactory@3de4aaed,@org.springframework.format.annotation.NumberFormat java.lang.Long -&gt; java.lang.String: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">@org.springframework.format.annotation.DateTimeFormat java.time.LocalDate -&gt; java.lang.String: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.time.LocalDate -&gt; java.lang.String : org.springframework.format.datetime.standard.TemporalAccessorPrinter@1cb91eff</span><br><span class="line">@org.springframework.format.annotation.DateTimeFormat java.time.LocalDateTime -&gt; java.lang.String: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.time.LocalDateTime -&gt; java.lang.String : org.springframework.format.datetime.standard.TemporalAccessorPrinter@2918eadb</span><br><span class="line">@org.springframework.format.annotation.DateTimeFormat java.time.LocalTime -&gt; java.lang.String: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.time.LocalTime -&gt; java.lang.String : org.springframework.format.datetime.standard.TemporalAccessorPrinter@6d563cf9</span><br><span class="line">@org.springframework.format.annotation.DateTimeFormat java.time.OffsetDateTime -&gt; java.lang.String: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.time.OffsetDateTime -&gt; java.lang.String : org.springframework.format.datetime.standard.TemporalAccessorPrinter@2f20d514</span><br><span class="line">@org.springframework.format.annotation.DateTimeFormat java.time.OffsetTime -&gt; java.lang.String: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.time.OffsetTime -&gt; java.lang.String : org.springframework.format.datetime.standard.TemporalAccessorPrinter@19212c1c</span><br><span class="line">@org.springframework.format.annotation.DateTimeFormat java.time.ZonedDateTime -&gt; java.lang.String: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.time.ZonedDateTime -&gt; java.lang.String : org.springframework.format.datetime.standard.TemporalAccessorPrinter@2e061032</span><br><span class="line">@org.springframework.format.annotation.DateTimeFormat java.util.Calendar -&gt; java.lang.String: org.springframework.format.datetime.DateTimeFormatAnnotationFormatterFactory@3de4aaed</span><br><span class="line">@org.springframework.format.annotation.NumberFormat java.lang.Byte -&gt; java.lang.String: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">@org.springframework.format.annotation.NumberFormat java.lang.Double -&gt; java.lang.String: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">@org.springframework.format.annotation.NumberFormat java.lang.Float -&gt; java.lang.String: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">@org.springframework.format.annotation.NumberFormat java.lang.Integer -&gt; java.lang.String: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">@org.springframework.format.annotation.NumberFormat java.lang.Short -&gt; java.lang.String: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">@org.springframework.format.annotation.NumberFormat java.math.BigDecimal -&gt; java.lang.String: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">@org.springframework.format.annotation.NumberFormat java.math.BigInteger -&gt; java.lang.String: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">java.lang.Boolean -&gt; java.lang.String : org.springframework.core.convert.support.ObjectToStringConverter@839fe61</span><br><span class="line">java.lang.Character -&gt; java.lang.Number : org.springframework.core.convert.support.CharacterToNumberFactory@30f9d9cf</span><br><span class="line">java.lang.Character -&gt; java.lang.String : org.springframework.core.convert.support.ObjectToStringConverter@2062b73e</span><br><span class="line">java.lang.Enum -&gt; java.lang.Integer : org.springframework.core.convert.support.EnumToIntegerConverter@65bd69cd</span><br><span class="line">java.lang.Enum -&gt; java.lang.String : org.springframework.core.convert.support.EnumToStringConverter@24ccca42</span><br><span class="line">java.lang.Integer -&gt; java.lang.Enum : org.springframework.core.convert.support.IntegerToEnumConverterFactory@22b0410c</span><br><span class="line">java.lang.Long -&gt; java.time.Instant : org.springframework.format.datetime.standard.DateTimeConverters$LongToInstantConverter@36c61628</span><br><span class="line">java.lang.Long -&gt; java.util.Calendar : org.springframework.format.datetime.DateFormatterRegistrar$LongToCalendarConverter@7a56bca3,java.lang.Long -&gt; java.util.Calendar : org.springframework.format.datetime.DateFormatterRegistrar$LongToCalendarConverter@32680fd1</span><br><span class="line">java.lang.Long -&gt; java.util.Date : org.springframework.format.datetime.DateFormatterRegistrar$LongToDateConverter@21f63842,java.lang.Long -&gt; java.util.Date : org.springframework.format.datetime.DateFormatterRegistrar$LongToDateConverter@3ae27639</span><br><span class="line">java.lang.Number -&gt; java.lang.Character : org.springframework.core.convert.support.NumberToCharacterConverter@37dca65c</span><br><span class="line">java.lang.Number -&gt; java.lang.Number : org.springframework.core.convert.support.NumberToNumberConverterFactory@5ad62efe</span><br><span class="line">java.lang.Number -&gt; java.lang.String : org.springframework.core.convert.support.ObjectToStringConverter@5dbb5323</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.DateTimeFormat java.lang.Long: org.springframework.format.datetime.DateTimeFormatAnnotationFormatterFactory@3de4aaed,java.lang.String -&gt; @org.springframework.format.annotation.NumberFormat java.lang.Long: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.DateTimeFormat java.time.LocalDate: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.lang.String -&gt; java.time.LocalDate: org.springframework.format.datetime.standard.TemporalAccessorParser@1a482c16</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.DateTimeFormat java.time.LocalDateTime: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.lang.String -&gt; java.time.LocalDateTime: org.springframework.format.datetime.standard.TemporalAccessorParser@726b4b72</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.DateTimeFormat java.time.LocalTime: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.lang.String -&gt; java.time.LocalTime: org.springframework.format.datetime.standard.TemporalAccessorParser@7d025d62</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.DateTimeFormat java.time.OffsetDateTime: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.lang.String -&gt; java.time.OffsetDateTime: org.springframework.format.datetime.standard.TemporalAccessorParser@7b82b59</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.DateTimeFormat java.time.OffsetTime: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.lang.String -&gt; java.time.OffsetTime: org.springframework.format.datetime.standard.TemporalAccessorParser@5d6bf8bc</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.DateTimeFormat java.time.ZonedDateTime: org.springframework.format.datetime.standard.Jsr310DateTimeFormatAnnotationFormatterFactory@13c06099,java.lang.String -&gt; java.time.ZonedDateTime: org.springframework.format.datetime.standard.TemporalAccessorParser@4100b1dd</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.DateTimeFormat java.util.Calendar: org.springframework.format.datetime.DateTimeFormatAnnotationFormatterFactory@3de4aaed</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.NumberFormat java.lang.Byte: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.NumberFormat java.lang.Double: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.NumberFormat java.lang.Float: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.NumberFormat java.lang.Integer: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.NumberFormat java.lang.Short: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.NumberFormat java.math.BigDecimal: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">java.lang.String -&gt; @org.springframework.format.annotation.NumberFormat java.math.BigInteger: org.springframework.format.number.NumberFormatAnnotationFormatterFactory@806d8b</span><br><span class="line">java.lang.String -&gt; java.lang.Boolean : org.springframework.core.convert.support.StringToBooleanConverter@3dd765a2</span><br><span class="line">java.lang.String -&gt; java.lang.Character : org.springframework.core.convert.support.StringToCharacterConverter@4b28d17b</span><br><span class="line">java.lang.String -&gt; java.lang.Enum : org.springframework.core.convert.support.StringToEnumConverterFactory@5a85577c</span><br><span class="line">java.lang.String -&gt; java.lang.Number : org.springframework.core.convert.support.StringToNumberConverterFactory@4a4bac52</span><br><span class="line">java.lang.String -&gt; java.nio.charset.Charset : org.springframework.core.convert.support.StringToCharsetConverter@77b7395f</span><br><span class="line">java.lang.String -&gt; java.time.Duration: org.springframework.format.datetime.standard.DurationFormatter@223f8ade</span><br><span class="line">java.lang.String -&gt; java.time.Instant: org.springframework.format.datetime.standard.InstantFormatter@744a1e70</span><br><span class="line">java.lang.String -&gt; java.time.MonthDay: org.springframework.format.datetime.standard.MonthDayFormatter@48e0bd1</span><br><span class="line">java.lang.String -&gt; java.time.Period: org.springframework.format.datetime.standard.PeriodFormatter@326e1143</span><br><span class="line">java.lang.String -&gt; java.time.YearMonth: org.springframework.format.datetime.standard.YearMonthFormatter@2013283d</span><br><span class="line">java.lang.String -&gt; java.util.Currency : org.springframework.core.convert.support.StringToCurrencyConverter@73d62889</span><br><span class="line">java.lang.String -&gt; java.util.Date: cn.floyd.pw.flow.converter.ApplicationConversionServiceFactoryBean$2@c01b01e,java.lang.String -&gt; java.util.Date : cn.floyd.pw.flow.converter.ApplicationConversionServiceFactoryBean$1@bda7edf,java.lang.String -&gt; @org.springframework.format.annotation.DateTimeFormat java.util.Date: org.springframework.format.datetime.DateTimeFormatAnnotationFormatterFactory@3de4aaed</span><br><span class="line">java.lang.String -&gt; java.util.Locale : org.springframework.core.convert.support.StringToLocaleConverter@15f3ecb1</span><br><span class="line">java.lang.String -&gt; java.util.Properties : org.springframework.core.convert.support.StringToPropertiesConverter@1734f8d8</span><br><span class="line">java.lang.String -&gt; java.util.TimeZone : org.springframework.core.convert.support.StringToTimeZoneConverter@219e655b</span><br><span class="line">java.lang.String -&gt; java.util.UUID : org.springframework.core.convert.support.StringToUUIDConverter@7a2a1350</span><br><span class="line">java.nio.charset.Charset -&gt; java.lang.String : org.springframework.core.convert.support.ObjectToStringConverter@79cac565</span><br><span class="line">java.time.Duration -&gt; java.lang.String : org.springframework.format.datetime.standard.DurationFormatter@223f8ade</span><br><span class="line">java.time.Instant -&gt; java.lang.Long : org.springframework.format.datetime.standard.DateTimeConverters$InstantToLongConverter@bbf9adc</span><br><span class="line">java.time.Instant -&gt; java.lang.String : org.springframework.format.datetime.standard.InstantFormatter@744a1e70</span><br><span class="line">java.time.LocalDateTime -&gt; java.time.LocalDate : org.springframework.format.datetime.standard.DateTimeConverters$LocalDateTimeToLocalDateConverter@224c05f6</span><br><span class="line">java.time.LocalDateTime -&gt; java.time.LocalTime : org.springframework.format.datetime.standard.DateTimeConverters$LocalDateTimeToLocalTimeConverter@bb6fc38</span><br><span class="line">java.time.MonthDay -&gt; java.lang.String : org.springframework.format.datetime.standard.MonthDayFormatter@48e0bd1</span><br><span class="line">java.time.OffsetDateTime -&gt; java.time.Instant : org.springframework.format.datetime.standard.DateTimeConverters$OffsetDateTimeToInstantConverter@7e4083f</span><br><span class="line">java.time.OffsetDateTime -&gt; java.time.LocalDate : org.springframework.format.datetime.standard.DateTimeConverters$OffsetDateTimeToLocalDateConverter@1e188fca</span><br><span class="line">java.time.OffsetDateTime -&gt; java.time.LocalDateTime : org.springframework.format.datetime.standard.DateTimeConverters$OffsetDateTimeToLocalDateTimeConverter@79b804b1</span><br><span class="line">java.time.OffsetDateTime -&gt; java.time.LocalTime : org.springframework.format.datetime.standard.DateTimeConverters$OffsetDateTimeToLocalTimeConverter@178638ba</span><br><span class="line">java.time.OffsetDateTime -&gt; java.time.ZonedDateTime : org.springframework.format.datetime.standard.DateTimeConverters$OffsetDateTimeToZonedDateTimeConverter@5dd8aa91</span><br><span class="line">java.time.Period -&gt; java.lang.String : org.springframework.format.datetime.standard.PeriodFormatter@326e1143</span><br><span class="line">java.time.YearMonth -&gt; java.lang.String : org.springframework.format.datetime.standard.YearMonthFormatter@2013283d</span><br><span class="line">java.time.ZoneId -&gt; java.util.TimeZone : org.springframework.core.convert.support.ZoneIdToTimeZoneConverter@375fe360</span><br><span class="line">java.time.ZonedDateTime -&gt; java.time.Instant : org.springframework.format.datetime.standard.DateTimeConverters$ZonedDateTimeToInstantConverter@5b6ff572</span><br><span class="line">java.time.ZonedDateTime -&gt; java.time.LocalDate : org.springframework.format.datetime.standard.DateTimeConverters$ZonedDateTimeToLocalDateConverter@44caea49</span><br><span class="line">java.time.ZonedDateTime -&gt; java.time.LocalDateTime : org.springframework.format.datetime.standard.DateTimeConverters$ZonedDateTimeToLocalDateTimeConverter@748fb300</span><br><span class="line">java.time.ZonedDateTime -&gt; java.time.LocalTime : org.springframework.format.datetime.standard.DateTimeConverters$ZonedDateTimeToLocalTimeConverter@362e6386</span><br><span class="line">java.time.ZonedDateTime -&gt; java.time.OffsetDateTime : org.springframework.format.datetime.standard.DateTimeConverters$ZonedDateTimeToOffsetDateTimeConverter@4864c695</span><br><span class="line">java.time.ZonedDateTime -&gt; java.util.Calendar : org.springframework.core.convert.support.ZonedDateTimeToCalendarConverter@53757723</span><br><span class="line">java.util.Calendar -&gt; java.lang.Long : org.springframework.format.datetime.DateFormatterRegistrar$CalendarToLongConverter@3effd16f,java.util.Calendar -&gt; java.lang.Long : org.springframework.format.datetime.DateFormatterRegistrar$CalendarToLongConverter@6625da72</span><br><span class="line">java.util.Calendar -&gt; java.time.Instant : org.springframework.format.datetime.standard.DateTimeConverters$CalendarToInstantConverter@3ea63a04</span><br><span class="line">java.util.Calendar -&gt; java.time.LocalDate : org.springframework.format.datetime.standard.DateTimeConverters$CalendarToLocalDateConverter@311b3b</span><br><span class="line">java.util.Calendar -&gt; java.time.LocalDateTime : org.springframework.format.datetime.standard.DateTimeConverters$CalendarToLocalDateTimeConverter@b827cbe</span><br><span class="line">java.util.Calendar -&gt; java.time.LocalTime : org.springframework.format.datetime.standard.DateTimeConverters$CalendarToLocalTimeConverter@27334ef2</span><br><span class="line">java.util.Calendar -&gt; java.time.OffsetDateTime : org.springframework.format.datetime.standard.DateTimeConverters$CalendarToOffsetDateTimeConverter@18a5b69c</span><br><span class="line">java.util.Calendar -&gt; java.time.ZonedDateTime : org.springframework.format.datetime.standard.DateTimeConverters$CalendarToZonedDateTimeConverter@2181b391</span><br><span class="line">java.util.Calendar -&gt; java.util.Date : org.springframework.format.datetime.DateFormatterRegistrar$CalendarToDateConverter@43409a9e,java.util.Calendar -&gt; java.util.Date : org.springframework.format.datetime.DateFormatterRegistrar$CalendarToDateConverter@25a7d510</span><br><span class="line">java.util.Currency -&gt; java.lang.String : org.springframework.core.convert.support.ObjectToStringConverter@59874f76</span><br><span class="line">java.util.Date -&gt; java.lang.Long : org.springframework.format.datetime.DateFormatterRegistrar$DateToLongConverter@2d72afcb,java.util.Date -&gt; java.lang.Long : org.springframework.format.datetime.DateFormatterRegistrar$DateToLongConverter@60b0c620</span><br><span class="line">java.util.Date -&gt; java.lang.String : cn.floyd.pw.flow.converter.ApplicationConversionServiceFactoryBean$2@c01b01e,@org.springframework.format.annotation.DateTimeFormat java.util.Date -&gt; java.lang.String: org.springframework.format.datetime.DateTimeFormatAnnotationFormatterFactory@3de4aaed</span><br><span class="line">java.util.Date -&gt; java.util.Calendar : org.springframework.format.datetime.DateFormatterRegistrar$DateToCalendarConverter@635f0388,java.util.Date -&gt; java.util.Calendar : org.springframework.format.datetime.DateFormatterRegistrar$DateToCalendarConverter@7b746ecc</span><br><span class="line">java.util.Locale -&gt; java.lang.String : org.springframework.core.convert.support.ObjectToStringConverter@572faa97</span><br><span class="line">java.util.Properties -&gt; java.lang.String : org.springframework.core.convert.support.PropertiesToStringConverter@387ae6b6</span><br><span class="line">java.util.UUID -&gt; java.lang.String : org.springframework.core.convert.support.ObjectToStringConverter@19b50f9c</span><br></pre></td></tr></table></figure>
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Spring/" rel="tag"># Spring</a>
+              <a href="/tags/Webflow/" rel="tag"># Webflow</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2018/09/08/Spring%20Webflow%20-%20EL%E8%A1%A8%E8%BE%BE%E5%BC%8F-springwebflow-el%E8%A1%A8%E8%BE%BE%E5%BC%8F/" rel="prev" title="Spring Webflow - EL表达式">
+      <i class="fa fa-chevron-left"></i> Spring Webflow - EL表达式
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2018/10/15/%E9%80%9A%E8%BF%87%E5%87%A0%E4%B8%AA%E9%97%AE%E9%A2%98%E4%BA%86%E8%A7%A3HTTP%E5%8D%8F%E8%AE%AE-%E9%80%9A%E8%BF%87%E5%87%A0%E4%B8%AA%E9%97%AE%E9%A2%98%E4%BA%86%E8%A7%A3http%E5%8D%8F%E8%AE%AE/" rel="next" title="通过几个问题了解HTTP协议">
+      通过几个问题了解HTTP协议 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80"><span class="nav-number">1.</span> <span class="nav-text">基础</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8C%87%E5%AE%9Aview-state%E7%9A%84view%E5%B1%9E%E6%80%A7%E7%9A%84%E5%87%A0%E7%A7%8D%E6%96%B9%E5%BC%8F"><span class="nav-number">1.1.</span> <span class="nav-text">指定view-state的view属性的几种方式</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%A8viewScope%E4%B8%AD%E5%88%86%E9%85%8D%E5%8F%98%E9%87%8F"><span class="nav-number">1.2.</span> <span class="nav-text">在viewScope中分配变量</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%A8viewScope%E4%B8%AD%E6%93%8D%E4%BD%9C%E5%AF%B9%E8%B1%A1"><span class="nav-number">1.3.</span> <span class="nav-text">在viewScope中操作对象</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#lt-on-render-gt"><span class="nav-number">1.4.</span> <span class="nav-text">&lt;on-render&gt;</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9C%A8view-state%E4%B8%8A%E7%BB%91%E5%AE%9Amodel"><span class="nav-number">1.5.</span> <span class="nav-text">在view-state上绑定model</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Converter%E5%92%8CFormatter%E7%9A%84%E5%8C%BA%E5%88%AB"><span class="nav-number">1.6.</span> <span class="nav-text">Converter和Formatter的区别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%BC%E5%BC%8F%E5%8C%96%E6%B3%A8%E8%A7%A3"><span class="nav-number">1.7.</span> <span class="nav-text">格式化注解</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E7%BB%91%E5%AE%9A%E7%9A%84%E5%8F%A6%E5%A4%96%E4%B8%A4%E7%82%B9"><span class="nav-number">1.8.</span> <span class="nav-text">关于绑定的另外两点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89%E9%AA%8C%E8%AF%81"><span class="nav-number">1.9.</span> <span class="nav-text">自定义验证</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%9A%E8%AF%B4%E4%B8%A4%E7%82%B9"><span class="nav-number">1.10.</span> <span class="nav-text">多说两点</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%BD%AC%E7%A7%BB"><span class="nav-number">2.</span> <span class="nav-text">转移</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#view%E7%9A%84%E5%9B%9E%E9%80%80%E6%8E%A7%E5%88%B6"><span class="nav-number">3.</span> <span class="nav-text">view的回退控制</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%8B%E5%8A%A8%E6%B7%BB%E5%8A%A0%E4%BF%A1%E6%81%AF"><span class="nav-number">3.1.</span> <span class="nav-text">手动添加信息</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E8%87%AA%E5%8A%A8%E4%BA%A7%E7%94%9F%E4%BF%A1%E6%81%AF"><span class="nav-number">3.2.</span> <span class="nav-text">系统自动产生信息</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%99%84"><span class="nav-number">4.</span> <span class="nav-text">附</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>

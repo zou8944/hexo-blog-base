@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文主要包含三部分  WebSocket协议、STOMP协议、SockJS协议三部分的理论介绍 使用Spring实现一个简单的消息推送服务 使用Postman调试STOMP服务   WebSocket我们大概都知道是个啥东西，原理上挺简单，使用起来却没那么容易。因为我们会发现，无论是Spring的WebSocket部分的手册，还是网络上的一大票文章，无不涉及到三个关键词——WebSocket、S">
+<meta property="og:type" content="article">
+<meta property="og:title" content="WebSocket啊喂">
+<meta property="og:url" content="https://zou8944.com/2021/09/03/WebSocket%E5%95%8A%E5%96%82-websocket-a-wei/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="本文主要包含三部分  WebSocket协议、STOMP协议、SockJS协议三部分的理论介绍 使用Spring实现一个简单的消息推送服务 使用Postman调试STOMP服务   WebSocket我们大概都知道是个啥东西，原理上挺简单，使用起来却没那么容易。因为我们会发现，无论是Spring的WebSocket部分的手册，还是网络上的一大票文章，无不涉及到三个关键词——WebSocket、S">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210902223211949.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174636617.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174721948.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174749633.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174948448.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903175110240.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_160e941c-6adc-4459-96bf-bbba2d15e4ad.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_293f66bf-25ab-49c4-8312-2f8cba9da8e5.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903181047727.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_26269104-19a8-4c63-82dc-af94ce05534e.png">
+<meta property="article:published_time" content="2021-09-03T10:39:28.815Z">
+<meta property="article:modified_time" content="2021-09-03T10:39:28.815Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="WebSocket">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210902223211949.png">
+
+<link rel="canonical" href="https://zou8944.com/2021/09/03/WebSocket%E5%95%8A%E5%96%82-websocket-a-wei/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>WebSocket啊喂 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">78</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/09/03/WebSocket%E5%95%8A%E5%96%82-websocket-a-wei/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          WebSocket啊喂
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-09-03 18:39:28" itemprop="dateCreated datePublished" datetime="2021-09-03T18:39:28+08:00">2021-09-03</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">网络基础</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/09/03/WebSocket%E5%95%8A%E5%96%82-websocket-a-wei/" class="post-meta-item leancloud_visitors" data-flag-title="WebSocket啊喂" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>本文主要包含三部分</p>
+<ul>
+<li>WebSocket协议、STOMP协议、SockJS协议三部分的理论介绍</li>
+<li>使用Spring实现一个简单的消息推送服务</li>
+<li>使用Postman调试STOMP服务</li>
+</ul>
+</blockquote>
+<p>WebSocket我们大概都知道是个啥东西，原理上挺简单，使用起来却没那么容易。因为我们会发现，无论是Spring的WebSocket部分的手册，还是网络上的一大票文章，无不涉及到三个关键词——WebSocket、SockJS、STOMP。以至于我们想找一篇介绍只使用WebSocket构建服务的文章都十分困难。究其原因，我想大致有这么几个</p>
+<ul>
+<li>WebSocket协议在数据层面还是太底层了，需要STOMP这样的应用层协议供大家使用；而STOMP又涵盖了消息中心的大部分使用场景，因此变得很必要。</li>
+<li>对前端来说，sockjs-client库很多时候是接入WebSocket的较好的方式，于是SockJS协议映入眼帘。</li>
+</ul>
+<span id="more"></span>
+
+<p>所以，无论如何，这三个协议本身，我们是必须搞清楚的。</p>
+<h2 id="WebSocket"><a href="#WebSocket" class="headerlink" title="WebSocket"></a>WebSocket</h2><p>十分建议详细阅读一下WebSocket的协议标准——<a target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/pdfrfc/rfc6455.txt.pdf">RFC6455</a></p>
+<p>关于WebSocket需要明白的重点</p>
+<ul>
+<li>由HTTP升级而来</li>
+<li>与HTTP共用端口，即80和443(HTTPS)</li>
+<li>升级后CS之间通信与HTTP无任何关系，而是采用类似TCP的二进制帧进行的</li>
+</ul>
+<h3 id="WebSocket的设计哲学"><a href="#WebSocket的设计哲学" class="headerlink" title="WebSocket的设计哲学"></a>WebSocket的设计哲学</h3><ul>
+<li>设计足够简单，使得能够被用来支撑其它应用，如STOMP。STOMP之于WebSocket，好比HTTP之于TCP。</li>
+<li>相较于TCP，它仅仅是被赋予了web的一些特性。如：origin安全模型、类似http 的uri地址模型等</li>
+<li>其它。。。就没有其它了</li>
+</ul>
+<h3 id="协议介绍"><a href="#协议介绍" class="headerlink" title="协议介绍"></a>协议介绍</h3><p>一个完整的WebSocket通信流程包括：握手 -&gt; 全双工通信 -&gt; 关闭连接</p>
+<h4 id="握手"><a href="#握手" class="headerlink" title="握手"></a>握手</h4><p>握手是纯HTTP请求，这为WebSocket鉴权带来了方便。我们依旧可以使用之前HTTP体系下的鉴权方式。</p>
+<p>客户端握手请求示例</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">GET /chat HTTP/1.1</span><br><span class="line">Host: server.example.com</span><br><span class="line">Upgrade: websocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==</span><br><span class="line">Origin: http://example.com</span><br><span class="line">Sec-WebSocket-Protocol: chat, superchat</span><br><span class="line">Sec-WebSocket-Version: 13</span><br></pre></td></tr></table></figure>
+
+<p>服务端响应示例</p>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 101 Switching Protocols</span><br><span class="line">Upgrade: websocket</span><br><span class="line">Connection: Upgrade</span><br><span class="line">Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=</span><br><span class="line">Sec-WebSocket-Protocol: chat</span><br></pre></td></tr></table></figure>
+
+<p>对比较陌生的请求头予以说明</p>
+<table>
+<thead>
+<tr>
+<th>请求头</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Upgrade: websocket</td>
+<td>表明协议升级的目标协议。<br />如果有注意到，从HTTP1.1升级到HTTP2.0，也是采用一样的方式</td>
+</tr>
+<tr>
+<td>Connection: Upgrade</td>
+<td>表明本次请求是协议升级</td>
+</tr>
+<tr>
+<td>Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==</td>
+<td>客户端生成的随机数的BASE64编码结果</td>
+</tr>
+<tr>
+<td>Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=</td>
+<td>服务端根据客户端给的随机数通过固定的算法计算出的结果；<br />客户端收到后会以相同的算法计算结果并对比，以证明这是一个合法的响应</td>
+</tr>
+<tr>
+<td>Sec-WebSocket-Protocol: chat, superchat</td>
+<td>子协议选择，客户端列出可选子协议，服务端选择支持的子协议<br />由于WebSocket过于底层，因此支持子协议以适应不同应用场景</td>
+</tr>
+<tr>
+<td>Sec-WebSocket-Version: 13</td>
+<td>WebSocket版本</td>
+</tr>
+<tr>
+<td>HTTP/1.1 101 Switching Protocols</td>
+<td>101表示升级成功，即握手成功</td>
+</tr>
+</tbody></table>
+<h4 id="协议帧"><a href="#协议帧" class="headerlink" title="协议帧"></a>协议帧</h4><p>握手成功之后就是正常的通信。WebSocket通信时以帧为单位进行数据的收发，一条完整的信息可能被分为多个帧进行传输，到远端后再被拼接在一次。</p>
+<p>协议帧结构如下，是不是很熟悉，有点TCP协议帧的味道。这也是说它很底层的原因。各bit的详细含义，参见RFC</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210902223211949.png" alt="image-20210902223211949"></p>
+<h4 id="协议帧类型"><a href="#协议帧类型" class="headerlink" title="协议帧类型"></a>协议帧类型</h4><p>WebSocket协议帧有两种类型：数据帧和控制帧。数据帧顾名思义，用于传输数据；我们这里重点关注数据帧</p>
+<ul>
+<li>Close：用于关闭连接</li>
+<li>Ping：心跳发起</li>
+<li>Pong：心跳响应，Ping、Pong总是成对出现</li>
+</ul>
+<p>注意，协议虽然定义了新跳帧，但是否使用，需要使用者决定。</p>
+<h2 id="SockJS"><a href="#SockJS" class="headerlink" title="SockJS"></a>SockJS</h2><p>同样，十分建议阅读一下SockJS的协议标准——<a target="_blank" rel="noopener" href="https://sockjs.github.io/sockjs-protocol/sockjs-protocol-0.3.3.html">它并非ITEF拟定的，而是一个开源项目</a></p>
+<p>我们知道，早在WebSocket出现之前，从服务端向客户端推数据这个需求，就一直存在。其中最常用的尝试就有轮询、长轮询等，后面又有了EventSource之类的机制。而SockJS，就是集合了现今所有这类方式的库（包含websocket）。如今，SockJS已经成为了一个协议标准，主流语言都有了支持的库，尤其是web前端。</p>
+<p>简单地说，SocketJS定义了一个服务端必须有哪些HTTP端点，以便使用不同的通信方式。定义了帧结构，用于传输数据</p>
+<h3 id="端点"><a href="#端点" class="headerlink" title="端点"></a>端点</h3><p>这里列出关键的端点，省略了域名和base url</p>
+<ul>
+<li><p>/info：用于查询客户端支持的通信方式，如是否支持WebSocket。可以理解为通信协商</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># 这里展示一个典型地info响应</span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;entropy&quot;</span>:<span class="number">2143307232</span>,</span><br><span class="line">  <span class="attr">&quot;origins&quot;</span>:[</span><br><span class="line">    <span class="string">&quot;*:*&quot;</span></span><br><span class="line">  ],</span><br><span class="line">  <span class="attr">&quot;cookie_needed&quot;</span>:<span class="literal">true</span>,</span><br><span class="line">  <span class="attr">&quot;websocket&quot;</span>:<span class="literal">true</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>/(server_id)/(session_id)/websocket：暴露的websocket端点，用于websocket通信</p>
+</li>
+<li><p>/(server_id)/(session_id)/xhr，/(server_id)/(session_id)/xhr_send：暴露的长连接端点，用于ajax长连接</p>
+</li>
+<li><p>/(server_id)/(session_id)/eventsource：eventsource端点</p>
+</li>
+<li><p>/websocket：这是一个外挂，该端点直接走裸的websocket协议，这为SockJS服务端直接使用WebSocket客户端库提供了条件</p>
+</li>
+</ul>
+<p>SockJS协议通信分为两步：访问/info询问支持的通信方式；访问对应的端点进行通信</p>
+<h3 id="帧结构"><a href="#帧结构" class="headerlink" title="帧结构"></a>帧结构</h3><p>SockJS是一个协议，也有自己的帧定义，但它的帧定义足够简单，就几个字符</p>
+<ul>
+<li>o：通信开启帧</li>
+<li>h：心跳帧，服务端下发</li>
+<li>a：消息数组</li>
+<li>c：通信关闭帧</li>
+</ul>
+<h3 id="SockJS的缺点"><a href="#SockJS的缺点" class="headerlink" title="SockJS的缺点"></a>SockJS的缺点</h3><ul>
+<li>出于安全原因，在协议层面就不支持自定义请求头，我们应该能发现所有sockjs客户端库都无法添加请求头吧。<a target="_blank" rel="noopener" href="https://github.com/sockjs/sockjs-client/issues/196">原因看这</a></li>
+<li>与WebSocket是包含关系，而非兼容关系。如果一个服务端暴露SockJS服务，客户端是没办法直接将这个端点用在WebSocket库的，而是要通过SockJS暴露出的websocket原生端点进行访问（即base url/websocket），不大友好</li>
+</ul>
+<h2 id="STOMP"><a href="#STOMP" class="headerlink" title="STOMP"></a>STOMP</h2><p>再次，十分建议阅读一下STOMP的协议标准——<a target="_blank" rel="noopener" href="https://stomp.github.io/stomp-specification-1.2.html">它也是一个开源项目</a></p>
+<p>STOMP是一个高级的应用协议，用于异步消息传输，支持点对点发送、发布订阅等消息传递方式。它的设计哲学就是足够简单，这也体现在协议长度上，如果看过AMQP、MQTT之类的消息协议，就能体会什么叫简单。</p>
+<h3 id="帧结构-1"><a href="#帧结构-1" class="headerlink" title="帧结构"></a>帧结构</h3><p>这是它的帧结构，就是纯文本帧。包含命令、头部、body三部分。最后以ascii为0的字符结尾。</p>
+<ul>
+<li>命令：表明帧类型</li>
+<li>头部：额外的帧属性，如心跳配置、content-type等</li>
+<li>body：消息体，只有消息帧时才有</li>
+</ul>
+<figure class="highlight html"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">COMMAND</span><br><span class="line">header1:value1</span><br><span class="line">header2:value2</span><br><span class="line"></span><br><span class="line">Body^@</span><br></pre></td></tr></table></figure>
+
+<h3 id="帧类型"><a href="#帧类型" class="headerlink" title="帧类型"></a>帧类型</h3><p>帧类型也足够简单</p>
+<table>
+<thead>
+<tr>
+<th>Side</th>
+<th>命令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>客户端</td>
+<td>CONNECT</td>
+<td>发起连接</td>
+</tr>
+<tr>
+<td></td>
+<td>DISCONNECT</td>
+<td>断开连接</td>
+</tr>
+<tr>
+<td></td>
+<td>SEND</td>
+<td>发送消息</td>
+</tr>
+<tr>
+<td></td>
+<td>SUBSCRIBE</td>
+<td>订阅</td>
+</tr>
+<tr>
+<td></td>
+<td>UNSUBSCRIBE</td>
+<td>取消订阅</td>
+</tr>
+<tr>
+<td></td>
+<td>ACK/NACK</td>
+<td>响应</td>
+</tr>
+<tr>
+<td></td>
+<td>BEGIN/COMMIT/ABORT</td>
+<td>事务相关</td>
+</tr>
+<tr>
+<td>服务端</td>
+<td>CONNECTED</td>
+<td>连接成功</td>
+</tr>
+<tr>
+<td></td>
+<td>MESSAGE</td>
+<td>发送订阅的消息给客户端</td>
+</tr>
+<tr>
+<td></td>
+<td>RECEIPT</td>
+<td>凭据，如果客户端需要的话</td>
+</tr>
+<tr>
+<td></td>
+<td>ERROR</td>
+<td>错误通报</td>
+</tr>
+</tbody></table>
+<h2 id="所以这三个协议的关系？"><a href="#所以这三个协议的关系？" class="headerlink" title="所以这三个协议的关系？"></a>所以这三个协议的关系？</h2><p>WebSocket、SockJS、STOMP三者，从前往后，层级依次上升，就像洋葱，WebSocket在里面，SockJS其次，STOMP在最外面。如果我们使用建立在SockJS协议上的STOMP服务，而SockJS又选择WebSocket作为底层的通信协议。在通信过程中，STOMP帧会被组装成SockJS的帧；SockJS的帧会被组装成WebSocket的帧；再深一点，WebSocket的帧会被组装成TCP的帧；TCP的帧被组装成IP层的帧，然后传输；到远端后执行相反操作。</p>
+<p>从分类上说，WebSocket和SockJS都只是通用的数据传输协议；而STOMP是一种消息协议，抽象层级更高。</p>
+<h2 id="心跳"><a href="#心跳" class="headerlink" title="心跳"></a>心跳</h2><p>三个协议都定义了心跳，其中</p>
+<ul>
+<li>WebSocket只定义了心跳帧，但发送的时机与策略，由具体实现来定。目前来看，默认情况下WebSocket库是不会自动发送心跳的，需调用者手动发送</li>
+<li>SockJS规定服务端必须发送心跳，默认25秒一次，可配，不需要调用者手动开启</li>
+<li>STOMP也定义了心跳，默认不开启，一般实现库都有提供，只需手动配置开启即可。需要说明的是，开启了STOMP的心跳，会关闭掉SockJS的心跳。</li>
+</ul>
+<h2 id="Spring实现一个消息推送服务"><a href="#Spring实现一个消息推送服务" class="headerlink" title="Spring实现一个消息推送服务"></a>Spring实现一个消息推送服务</h2><p>Spring对WebSocket的支持看<a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/docs/4.3.x/spring-framework-reference/html/websocket.html">这里</a>。</p>
+<p>我们实现一个简单的需求</p>
+<ul>
+<li>暴露STOMP端点</li>
+<li>提供主题，供用户订阅，支持对单个用户广播。即，需要鉴权</li>
+<li>提供一个STOMP地址，用户向该地址发送数据时，从其订阅的主体下发消息</li>
+</ul>
+<h3 id="配置"><a href="#配置" class="headerlink" title="配置"></a>配置</h3><p>配置类如下，这不是一个完全可用的类，直接复制很可能无法正常运行。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 配置类</span></span><br><span class="line"><span class="meta">@Configuration</span></span><br><span class="line"><span class="meta">@EnableWebSocketMessageBroker</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">WebSocketConfig</span> : <span class="type">WebSocketMessageBrokerConfigurer &#123;</span></span></span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">lateinit</span> <span class="keyword">var</span> objectMapper: ObjectMapper</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">registerStompEndpoints</span><span class="params">(registry: <span class="type">StompEndpointRegistry</span>)</span></span> &#123;</span><br><span class="line">      	<span class="comment">// 暴露STOMP端点</span></span><br><span class="line">        registry.addEndpoint(<span class="string">&quot;/stomp&quot;</span>)</span><br><span class="line">      			<span class="comment">// 添加握手拦截器，用于做权限验证</span></span><br><span class="line">            .addInterceptors(AuthHandshakeInterceptor(objectMapper))</span><br><span class="line">      			<span class="comment">// 握手处理器</span></span><br><span class="line">            .setHandshakeHandler(AuthHandshakeHandler())</span><br><span class="line">            .setAllowedOriginPatterns(<span class="string">&quot;*&quot;</span>)</span><br><span class="line">            .withSockJS()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">configureMessageBroker</span><span class="params">(registry: <span class="type">MessageBrokerRegistry</span>)</span></span> &#123;</span><br><span class="line">        <span class="comment">// 用于发送心跳的调度器，一定要有。其它层级协议的心跳不能替代STOMP层级的心跳</span></span><br><span class="line">        <span class="keyword">val</span> scheduler = TaskSchedulerBuilder().build().apply &#123; initialize() &#125;</span><br><span class="line">        registry.enableSimpleBroker(<span class="string">&quot;/topic&quot;</span>).setTaskScheduler(scheduler)</span><br><span class="line">        registry.setApplicationDestinationPrefixes(<span class="string">&quot;/app&quot;</span>)</span><br><span class="line">        <span class="comment">// 订阅/user/打头的destination时，STOMP可自动将每个用户对应一个主题，实现向指定用户发送消息的能力</span></span><br><span class="line">        registry.setUserDestinationPrefix(<span class="string">&quot;/user/&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">AuthHandshakeInterceptor</span></span>(<span class="keyword">val</span> objectMapper: ObjectMapper) : HandshakeInterceptor &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">beforeHandshake</span><span class="params">(request: <span class="type">ServerHttpRequest</span>, response: <span class="type">ServerHttpResponse</span>, wsHandler: <span class="type">WebSocketHandler</span>, attributes: <span class="type">MutableMap</span>&lt;<span class="type">String</span>, Any&gt;)</span></span>: <span class="built_in">Boolean</span> &#123;</span><br><span class="line">      	<span class="comment">// 从request的header或query中提取用户，具体逻辑自己实现</span></span><br><span class="line">        <span class="keyword">val</span> user = request.parseUser(objectMapper)</span><br><span class="line">        <span class="keyword">if</span> (user == <span class="literal">null</span>) &#123;</span><br><span class="line">          	<span class="comment">// </span></span><br><span class="line">            <span class="keyword">val</span> error = ResErrCode.NEED_AUTHORIZE</span><br><span class="line">            response.setStatusCode(error.httpStatus)</span><br><span class="line">            response.headers.contentType = MediaType.APPLICATION_JSON</span><br><span class="line">            response.body.write(objectMapper.writeValueAsBytes(R.fail(error)))</span><br><span class="line">            <span class="keyword">return</span> <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">        attributes[<span class="string">&quot;user&quot;</span>] = user</span><br><span class="line">        <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">afterHandshake</span><span class="params">(request: <span class="type">ServerHttpRequest</span>, response: <span class="type">ServerHttpResponse</span>, wsHandler: <span class="type">WebSocketHandler</span>, exception: <span class="type">Exception</span>?)</span></span> &#123;</span><br><span class="line">			<span class="comment">// 这里啥也没做</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="class"><span class="keyword">class</span> <span class="title">AuthHandshakeHandler</span> : <span class="type">DefaultHandshakeHandler</span></span>() &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">determineUser</span><span class="params">(request: <span class="type">ServerHttpRequest</span>, wsHandler: <span class="type">WebSocketHandler</span>, attributes: <span class="type">MutableMap</span>&lt;<span class="type">String</span>, Any&gt;)</span></span>: Principal? &#123;</span><br><span class="line">        <span class="keyword">return</span> attributes[<span class="string">&quot;user&quot;</span>] <span class="keyword">as</span> Principal?</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><ul>
+<li><p>暴露接收用户信息的地址。</p>
+<p>这里的关键在于MessageMapping和SendToUser两个注解的使用，它们能够直接在Controller中使用。</p>
+<p>前者将用户发送的消息导入；后者将方法返回的内容发送给对应的用户。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Controller</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">WebSocketController</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 手动触发拉取通知，随便发个啥，都会触发一次拉取通知</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="meta">@MessageMapping(<span class="meta-string">&quot;/triggerPullNotification&quot;</span>)</span></span><br><span class="line">    <span class="meta">@SendToUser(destinations = [<span class="meta-string">&quot;topic/pullNotification&quot;</span>])</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">echo</span><span class="params">(income: <span class="type">String</span>, principal: <span class="type">Principal</span>)</span></span>: Any &#123;</span><br><span class="line">        log.info(<span class="string">&quot;trigger pull notification manually: user &#123;&#125;; message: &#123;&#125;&quot;</span>, principal.name, income)</span><br><span class="line">        <span class="keyword">return</span> STOMP_USER_PULL_NOTIFICATION_PAYLOAD</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面的例子，STOMP客户端向/app/triggerPullNotification发送消息时，会进入echo方法，发送的内容被传递到income参数中，发送消息的用户被传递到principal参数中。echo返回的对象会被发送给订阅了/user/topic/pullNotification主题的当前session的用户，即触发这个消息的用户。</p>
+</li>
+<li><p>在其他地方向指定用户发送消息</p>
+<p>这里的关键是注入SimpMessagingTemplate</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExampleService</span></span>(<span class="keyword">val</span> stomp: SimpMessagingTemplate) &#123;</span><br><span class="line">  </span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">test</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="comment">// 这里是你的自由逻辑</span></span><br><span class="line">    ...</span><br><span class="line">    <span class="comment">// 发送给某个用户</span></span><br><span class="line">    stomp.convertAndSendToUser(<span class="number">12345</span>, <span class="string">&quot;/topic/pullNotification&quot;</span>, <span class="string">&quot;your payload&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h3 id="测试连接"><a href="#测试连接" class="headerlink" title="测试连接"></a>测试连接</h3><p>JS测试脚本</p>
+<figure class="highlight javascript"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 连接并订阅</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">connect</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    <span class="keyword">const</span> socket = <span class="keyword">new</span> SockJS(<span class="string">&#x27;https://apitest.wemore.com/mylogs/stomp?X-5E-TOKEN=qhMtjBjVozY3zYLrOfMStgvffeFjBofY&#x27;</span>);</span><br><span class="line">    stompClient = Stomp.over(socket);</span><br><span class="line">    stompClient.connect(&#123;</span><br><span class="line">    &#125;, <span class="function"><span class="keyword">function</span> (<span class="params">frame</span>) </span>&#123;</span><br><span class="line">        setConnected(<span class="literal">true</span>);</span><br><span class="line">        stompClient.subscribe(<span class="string">&#x27;/user/topic/pullNotification&#x27;</span>, <span class="function"><span class="keyword">function</span> (<span class="params">data</span>) </span>&#123;</span><br><span class="line">            <span class="comment">// console.log(&#x27;received: &#x27; + data);</span></span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 发送消息给服务端</span></span><br><span class="line"><span class="function"><span class="keyword">function</span> <span class="title">trigger</span>(<span class="params"></span>) </span>&#123;</span><br><span class="line">    stompClient.send(<span class="string">&quot;/app/triggerPullNotification&quot;</span>, &#123;&#125;, <span class="built_in">JSON</span>.stringify(&#123;<span class="string">&#x27;name&#x27;</span>: <span class="string">&#x27;啥呀&#x27;</span>&#125;));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>使用Chrome进行测试，在点击连接时，我们能看到先通过info询问，再调用websocket</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174636617.png" alt="image-20210903174636617"></p>
+<p>info的响应</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174721948.png" alt="image-20210903174721948"></p>
+<p>websocket的消息流：可以看到就是SockJS帧套STOMP帧。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174749633.png" alt="image-20210903174749633"></p>
+<p>其中的[“\n”]和a[“\n”]是STOMP的心跳，我们把视线转移到console看得更为直观，它详细地展示了STOMP的通信过程</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903174948448.png" alt="image-20210903174948448"></p>
+<p>此时如果我们再触发一次消息，可以观察到消息的发出和接收</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903175110240.png" alt="image-20210903175110240"></p>
+<h3 id="强调几点"><a href="#强调几点" class="headerlink" title="强调几点"></a>强调几点</h3><ol>
+<li><p><code>HandShakeIntercepter</code>和<code>HandShakeHandler</code>的区别</p>
+<ul>
+<li><p><code>HandShakeIntercepter</code>前者能够拦截握手的请求，并且可操作直接对握手请求进行响应</p>
+</li>
+<li><p><code>HandShakeHandler</code>用于处理握手成功后的细节问题，尤其是允许我们自己设置当前session的用户</p>
+</li>
+<li><p>我们在<code>HandShakeIntercepter</code>进行鉴权；在<code>HandShakeHandler</code>将鉴权得来的用户设置为当前session的用户</p>
+</li>
+</ul>
+</li>
+<li><p>心跳</p>
+<p>STOMP服务端的心跳一定要配：如果客户端直接采用了WebSocket连接，没有心跳配置，连接可能随时会断</p>
+</li>
+<li><p>标记用户</p>
+<p>这是Spring Stomp为我们提供的方便的功能。它使得我们可以方便地只发送消息给订阅某个主题的单个用户。要完成它，必须有这么几步</p>
+<ul>
+<li><p>注入我们的用户逻辑，可以迁入Spring Security，也可以自定义。本文中我们在<code>HandShakeHandler</code>中将自己用户体系中的user传递给了Stomp作为用户标记。记得给user实现Principal接口哦。</p>
+</li>
+<li><p>配置用户地址前缀。并不是每个主题都能支持这样的功能的，我们需要设置一个固定的前缀，那么订阅了这些指定前缀主题的用户，就具有了被标记的能力</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">configureMessageBroker</span><span class="params">(registry: <span class="type">MessageBrokerRegistry</span>)</span></span> &#123;</span><br><span class="line">  			... ...</span><br><span class="line">        <span class="comment">// 订阅/user/打头的destination时，STOMP可自动将每个用户对应一个主题，实现向指定用户发送消息的能力</span></span><br><span class="line">        registry.setUserDestinationPrefix(<span class="string">&quot;/user&quot;</span>)</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>使用规则</p>
+<p>需要对地址<code>/topic/pullNotification</code>赋予用户标记的能力，在配置OK后，使用方法</p>
+<ul>
+<li>客户端订阅地址：<code>/user/topic/pullNotification</code></li>
+<li>服务端向指定用户发送消息时，使用：<code>stomp.convertAndSendToUser(12345, &quot;/topic/pullNotification&quot;, &quot;your payload&quot;)</code></li>
+</ul>
+</li>
+</ul>
+</li>
+</ol>
+<h2 id="用Postman调试STOMP服务"><a href="#用Postman调试STOMP服务" class="headerlink" title="用Postman调试STOMP服务"></a>用Postman调试STOMP服务</h2><p>Postman提供WebSocket调试功能，但却不支持调试STOMP服务，这让人感到可惜。但是，如果我们实在想要直接用Postman访问STOMP服务的话。依在下愚见，唯一的办法就是，硬用。即，手动编辑STOMP帧，然后发送。</p>
+<p>手动编辑有个问题，STOMP帧是以ASCII码表中值为0的字符结尾的，即<code>&#39;\u0000&#39;</code>，无法通过文本表达。于是只能通过二进制发送。</p>
+<p>以上面的服务为例，我们要订阅一个STOMP服务，首先要连接上STOMP端点，然后发送CONNECT帧，然后是SUBSCRIBE帧，帧的二进制编码通过代码生成</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> connectMessage = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        CONNECT</span></span><br><span class="line"><span class="string">        heart-beat:5000,5000</span></span><br><span class="line"><span class="string">        accept-version:1.2</span></span><br><span class="line"><span class="string">        host:127.0.0.1</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span>.trimIndent()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> subscription = <span class="string">&quot;&quot;&quot;</span></span><br><span class="line"><span class="string">        SUBSCRIBE</span></span><br><span class="line"><span class="string">        id:0</span></span><br><span class="line"><span class="string">        destination:/user/topic/pullNotification</span></span><br><span class="line"><span class="string">        ack:client</span></span><br><span class="line"><span class="string">    &quot;&quot;&quot;</span>.trimIndent()</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> String.<span class="title">generate</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">        <span class="keyword">val</span> builder = StringBuilder()</span><br><span class="line">        builder.append(<span class="keyword">this</span>)</span><br><span class="line">        builder.append(<span class="string">&#x27;\n&#x27;</span>)</span><br><span class="line">        builder.append(<span class="string">&#x27;\n&#x27;</span>)</span><br><span class="line">        builder.append(<span class="string">&#x27;\u0000&#x27;</span>)</span><br><span class="line">        <span class="keyword">return</span> builder.toString().toByteArray().joinToString(separator = <span class="string">&quot;&quot;</span>) &#123; String.format(<span class="string">&quot;%02x&quot;</span>, it) &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    println(connectMessage.generate()) <span class="comment">// 434f4e4e4543540a6163636570742d76657273696f6e3a312e320a686f73743a3132372e302e302e310a0a00</span></span><br><span class="line">    println(subscription.generate()) <span class="comment">// 5355425343524942450a69643a300a64657374696e6174696f6e3a2f757365722f746f7069632f70756c6c4e6f74696669636174696f6e0a61636b3a636c69656e740a0a00</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面暴露的是SockJS服务，我们有两种方式连接websocket</p>
+<ul>
+<li>使用SockJS暴露的原生WebSocket端点，即/websocket</li>
+<li>使用SockJS协议内容的WebSocket端点，即/server_id/sessioin_id/websocket</li>
+</ul>
+<p>我们用第一种，然后步骤是</p>
+<ol>
+<li><p>输入ws端点：wss://&lt;我的域名&gt;/stomp/websocket，点击连接</p>
+</li>
+<li><p>以二进制格式发送连接帧，重点是选择二进制哦</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_160e941c-6adc-4459-96bf-bbba2d15e4ad.png" alt="企业微信截图_160e941c-6adc-4459-96bf-bbba2d15e4ad"></p>
+<p>出现如下响应，说明连接成功</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_293f66bf-25ab-49c4-8312-2f8cba9da8e5.png" alt="企业微信截图_293f66bf-25ab-49c4-8312-2f8cba9da8e5"></p>
+</li>
+<li><p>发送订阅帧</p>
+</li>
+<li><p>使用刚才的脚本触发一次echo，你就可以看到我们能够正常收到消息了</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/image-20210903181047727.png" alt="image-20210903181047727"></p>
+</li>
+</ol>
+<h3 id="有一个问题"><a href="#有一个问题" class="headerlink" title="有一个问题"></a>有一个问题</h3><p>你会发现，通过Postman尽管连上了，但在最后一次通信的60s后，连接自动断开了！！！</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/halo/%E4%BC%81%E4%B8%9A%E5%BE%AE%E4%BF%A1%E6%88%AA%E5%9B%BE_26269104-19a8-4c63-82dc-af94ce05534e.png" alt="企业微信截图_26269104-19a8-4c63-82dc-af94ce05534e"></p>
+<p>这是因为我们没发心跳呀啊啊啊啊啊啊啊啊啊。由于我将服务部署在nginx后，我们的nginx设置为60s不活动的TCP连接都将被关闭。</p>
+<p>如何解决呢，要解决，只有两个方法</p>
+<ul>
+<li>60s内发心跳续命</li>
+<li>不停进行消息通信</li>
+</ul>
+<p>反正就是不停发就行了。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>要使用WebSocket，那么SockJS和STOMP都是必须了解的，最好的了解方式是去看协议。</p>
+<p>文中的示例代码，不能直接用，只能当做参考。</p>
+<p>Postman调试STOMP？可以用来熟悉协议，但实际用来调试，还是算了吧。</p>
+<p>本文重点：三种协议关键点介绍、Spring的STOMP用户标记功能、通过Postman学习STOMP协议帧。</p>
+<h2 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/pdfrfc/rfc6455.txt.pdf">RFC6455</a></li>
+<li><a target="_blank" rel="noopener" href="https://sockjs.github.io/sockjs-protocol/sockjs-protocol-0.3.3.html">SockJS Protocol</a></li>
+<li><a target="_blank" rel="noopener" href="https://stomp.github.io/stomp-specification-1.2.html">STOMP Specification</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/docs/4.3.x/spring-framework-reference/html/websocket.html">Spring WebSocket</a></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/WebSocket/" rel="tag"># WebSocket</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/08/31/%E6%88%91%E8%AF%BB%E3%80%8A%E8%AE%A4%E7%9F%A5%E8%A7%89%E9%86%92%E3%80%8B-wo-du--ren-zhi-jue-xing-/" rel="prev" title="我读《认知觉醒》">
+      <i class="fa fa-chevron-left"></i> 我读《认知觉醒》
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/09/06/%E6%88%91%E4%B8%BA%E4%BB%80%E4%B9%88%E5%96%9C%E6%AC%A2%E9%B2%81%E9%B2%81%E4%BF%AE--wo-wei-shen-me-xi-huan-lu-lu-xiu-httpswwwnotionsoa72043b53a5a48f3beb069ab6a18be9b/" rel="next" title="我为什么喜欢鲁鲁修">
+      我为什么喜欢鲁鲁修 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#WebSocket"><span class="nav-number">1.</span> <span class="nav-text">WebSocket</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#WebSocket%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%93%B2%E5%AD%A6"><span class="nav-number">1.1.</span> <span class="nav-text">WebSocket的设计哲学</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8D%8F%E8%AE%AE%E4%BB%8B%E7%BB%8D"><span class="nav-number">1.2.</span> <span class="nav-text">协议介绍</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%8F%A1%E6%89%8B"><span class="nav-number">1.2.1.</span> <span class="nav-text">握手</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%8F%E8%AE%AE%E5%B8%A7"><span class="nav-number">1.2.2.</span> <span class="nav-text">协议帧</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8D%8F%E8%AE%AE%E5%B8%A7%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.2.3.</span> <span class="nav-text">协议帧类型</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SockJS"><span class="nav-number">2.</span> <span class="nav-text">SockJS</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%AB%AF%E7%82%B9"><span class="nav-number">2.1.</span> <span class="nav-text">端点</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%A7%E7%BB%93%E6%9E%84"><span class="nav-number">2.2.</span> <span class="nav-text">帧结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SockJS%E7%9A%84%E7%BC%BA%E7%82%B9"><span class="nav-number">2.3.</span> <span class="nav-text">SockJS的缺点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#STOMP"><span class="nav-number">3.</span> <span class="nav-text">STOMP</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%A7%E7%BB%93%E6%9E%84-1"><span class="nav-number">3.1.</span> <span class="nav-text">帧结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%A7%E7%B1%BB%E5%9E%8B"><span class="nav-number">3.2.</span> <span class="nav-text">帧类型</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%89%80%E4%BB%A5%E8%BF%99%E4%B8%89%E4%B8%AA%E5%8D%8F%E8%AE%AE%E7%9A%84%E5%85%B3%E7%B3%BB%EF%BC%9F"><span class="nav-number">4.</span> <span class="nav-text">所以这三个协议的关系？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BF%83%E8%B7%B3"><span class="nav-number">5.</span> <span class="nav-text">心跳</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Spring%E5%AE%9E%E7%8E%B0%E4%B8%80%E4%B8%AA%E6%B6%88%E6%81%AF%E6%8E%A8%E9%80%81%E6%9C%8D%E5%8A%A1"><span class="nav-number">6.</span> <span class="nav-text">Spring实现一个消息推送服务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%85%8D%E7%BD%AE"><span class="nav-number">6.1.</span> <span class="nav-text">配置</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8"><span class="nav-number">6.2.</span> <span class="nav-text">使用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E8%BF%9E%E6%8E%A5"><span class="nav-number">6.3.</span> <span class="nav-text">测试连接</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%BA%E8%B0%83%E5%87%A0%E7%82%B9"><span class="nav-number">6.4.</span> <span class="nav-text">强调几点</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%94%A8Postman%E8%B0%83%E8%AF%95STOMP%E6%9C%8D%E5%8A%A1"><span class="nav-number">7.</span> <span class="nav-text">用Postman调试STOMP服务</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%89%E4%B8%80%E4%B8%AA%E9%97%AE%E9%A2%98"><span class="nav-number">7.1.</span> <span class="nav-text">有一个问题</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">8.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">9.</span> <span class="nav-text">参考文档</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,675 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="这是系列文章  设计模式 - 理论（本文） 设计模式 - JDK 设计模式 - Spring">
+<meta property="og:type" content="article">
+<meta property="og:title" content="设计模式 - 理论部分">
+<meta property="og:url" content="https://zou8944.com/2021/10/04/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%20-%20%E7%90%86%E8%AE%BA%E9%83%A8%E5%88%86-she-ji-mo-shi--li-lun-bu-fen/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="这是系列文章  设计模式 - 理论（本文） 设计模式 - JDK 设计模式 - Spring">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-10-04T10:15:32.124Z">
+<meta property="article:modified_time" content="2021-10-04T10:15:32.124Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="设计模式">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://zou8944.com/2021/10/04/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%20-%20%E7%90%86%E8%AE%BA%E9%83%A8%E5%88%86-she-ji-mo-shi--li-lun-bu-fen/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>设计模式 - 理论部分 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">78</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/10/04/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%20-%20%E7%90%86%E8%AE%BA%E9%83%A8%E5%88%86-she-ji-mo-shi--li-lun-bu-fen/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          设计模式 - 理论部分
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-10-04 18:15:32" itemprop="dateCreated datePublished" datetime="2021-10-04T18:15:32+08:00">2021-10-04</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/10/04/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%20-%20%E7%90%86%E8%AE%BA%E9%83%A8%E5%88%86-she-ji-mo-shi--li-lun-bu-fen/" class="post-meta-item leancloud_visitors" data-flag-title="设计模式 - 理论部分" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>这是系列文章</p>
+<ul>
+<li>设计模式 - 理论（本文）</li>
+<li>设计模式 - JDK</li>
+<li>设计模式 - Spring</li>
+</ul>
+</blockquote>
+<span id="more"></span>
+
+<h2 id="避免陷阱"><a href="#避免陷阱" class="headerlink" title="避免陷阱"></a>避免陷阱</h2><p>以前也学习过设计模式，而且不止一次，都以失败告终。究其原因：</p>
+<p>一是教材选用不对——《大话设计模式》，虽然这本书豆瓣评分8.3，但显然不适合我。讲的太啰嗦，我会讨厌弱智似的故事情节：什么大鸟小鸟老鸟、王二狗林蛋大，读者都是技术人员，作者却还是用小学生作为的语气讲故事，亦或是，难道大家真的都习惯了这种口吻接受知识？</p>
+<p>二来，技术书籍也好，网络文章也好，好像都是一个模子刻出来的，上来就是UML图、代码实现，模式解决了什么问题一笔带过。读者注意力转移不说，还很容易流于形式：更多考虑的是这个模式为什么要定义这个接口？而不是什么情况下、为什么使用这个模式？——后者搞清楚了，与模式规定的接口不一样也没有关系。</p>
+<p>三是，实践不够多，代码量不够，看到的代码也不够——时机不成熟。</p>
+<p>每本设计模式的教材都教我们，不要轻易使用设计模式，只有需要时才使用，以避免过度设计。我觉得这是一个误解，在甚至搞不清楚三个工厂模式具体区别时，弄懂设计模式才是关键。至于使用，我认为该多用，直到熟悉之后，再考虑用得合不合适。</p>
+<p>前段时间Github Daily推荐了<a target="_blank" rel="noopener" href="https://github.com/kamranahmedse/design-patterns-for-humans">《给人看的设计模式》</a>，没有UML图，短小精悍，再次触发了我学习设计模式的兴趣。</p>
+<p>这是一篇总结性的文章，视图用一句话描述一个设计模式存在的价值</p>
+<h2 id="设计模式分类"><a href="#设计模式分类" class="headerlink" title="设计模式分类"></a>设计模式分类</h2><h3 id="创造类"><a href="#创造类" class="headerlink" title="创造类"></a>创造类</h3><p>创造类设计模式，主要关注对创建对象的方式，根据不同的创造需求产生了对应的设计模式。</p>
+<ul>
+<li>当创建一个对象有一定的逻辑复杂度，我们不希望用户直接接触到创建过程，就有了<strong>简单工厂模式</strong>，封装创建过程</li>
+<li>当创建一个对象有一定的逻辑复杂度，但创建过程会依据对象的实现而不同，就有了<strong>工厂方法模式</strong>，定义工厂抽象类，具体创建逻辑留在工厂子类实现，这在SPI经常使用</li>
+<li>当需要创建一族而不是一个相互关联的对象时，就有了<strong>抽象工厂模式</strong></li>
+<li>当创建一个对象可能需要多个步骤，且步骤之间可以自由组合，就有了<strong>建造器模式</strong>，它解决了构造方法地狱的问题</li>
+<li>当一个对象的创建是直接来源于同类的其它对象时，就有了<strong>原型模式</strong></li>
+<li>当需要控制一个类在整个系统仅有一个对象时，就有了<strong>单例模式</strong></li>
+</ul>
+<h3 id="结构类"><a href="#结构类" class="headerlink" title="结构类"></a>结构类</h3><p>结构类设计模式，主要关注对象之间的组合方式，即对象之间如何相互作用。关注的是对象之间的关系</p>
+<ul>
+<li><p>当一个类需要使用另一个类，但类之间接口不兼容时，就有了<strong>适配器模式</strong>，为“另一个类”创建适配器，使其变得兼容</p>
+</li>
+<li><p>当一个类中的某个特性发生变化，使用继承表达这种变化会引发子类泛滥时，就有了<strong>桥接模式</strong>，将变化的特性抽出，任其自身变化，再“桥接”回原类。</p>
+<p>这是一个使用组合替换继承的典型场景</p>
+</li>
+<li><p>当多个对象本身的逻辑关系为树状结构时，我们自然地通过组合的方式将他们联系在一起，用户只需要获取根对象就能操作整套对象，这就是<strong>组合模式</strong></p>
+</li>
+<li><p>当需要为一个类动态增加一系列功能，而又不改变原类，且增加的功能要灵活增减，就有了<strong>装饰器模式</strong></p>
+</li>
+<li><p>当需要为一个功能复杂的类提供一套使用简单的访问接口时，就有了<strong>外观模式</strong></p>
+</li>
+<li><p>当系统中有大量相同对象，为了减少内容消耗，我们让这些对象共用一个存储位置，就有了<strong>享元模式</strong></p>
+</li>
+<li><p>当需要在调用对象时增加额外的控制逻辑，或者因某些原因不方便直接调用该对象，就有了<strong>代理模式</strong></p>
+</li>
+</ul>
+<h3 id="行为类"><a href="#行为类" class="headerlink" title="行为类"></a>行为类</h3><p>行为类设计模式关注的是如何在对象之间进行通讯，即如何在软件组件中运行行为</p>
+<ul>
+<li><p>当对同一个源对象，我们有多套处理方案，或多套处理逻辑，此时可以使用<strong>责任链模式</strong>，将每个方案或逻辑抽象为一个责任对象，他们共同构成责任链，源对象从责任链的这头走到那头，依次应用每一个逻辑</p>
+</li>
+<li><p>将行为封装在对象中，然后传递给执行者，这就是<strong>命令模式</strong>，它将执行者和行为解耦。想象操作系统是执行者，各种shell命令就是被封装的行为对象。</p>
+</li>
+<li><p>当我们需要在不暴露底层实现的情况下，提供一个简单的接口访问容器元素，这就是<strong>迭代器模式</strong></p>
+</li>
+<li><p>当两个或多个对象需要相互交流时，就有了<strong>中介者模式</strong>，中介者定义了这些类交流的行为，提供了一个平台。</p>
+</li>
+<li><p>当需要永久保留程序运行状态，并提供日后恢复可能性时，就有了<strong>备忘录模式</strong>，它提供了回滚的能力</p>
+</li>
+<li><p>当一个对象需要对另一个对象的状态变化做出响应时，就有了<strong>观察者模式</strong>，这个就太常用了</p>
+</li>
+<li><p>当要对一个对象添加更多操作，又不想修改他们时，就有了<strong>访问者模式</strong>，将添加的操作集中到访问者</p>
+<p>被访问者需要提供接收访问者的接口；访问者一般访问的是被访问者的实现类</p>
+</li>
+<li><p>当需要将行为的算法抽象出来，在运行时候动态动态应用不同的算法抽象，就有了<strong>策略模式</strong>，典型的如比较器</p>
+</li>
+<li><p>当对象的行为需要根据“状态”变化，就有了<strong>状态设计模式</strong>，它允许我们通过修改“状态”来修改对象的行为</p>
+</li>
+<li><p>当对象的行为步骤固定，但步骤的具体实现要放到子类中实现，就有了<strong>模板方法模式</strong>，他允许我们先定义算法框架，后定义算法实现</p>
+</li>
+</ul>
+<h2 id="自问自答"><a href="#自问自答" class="headerlink" title="自问自答"></a>自问自答</h2><h3 id="三个工厂模式如何区分"><a href="#三个工厂模式如何区分" class="headerlink" title="三个工厂模式如何区分"></a>三个工厂模式如何区分</h3><ul>
+<li>简单工厂：静态方法，只是封装了单个对象的创建过程</li>
+<li>工厂方法：非静态方法，对象创建的具体过程需要等到子类实现</li>
+<li>抽象工厂：非静态方法，提供的是多个创建方法，创建一组关联的对象</li>
+</ul>
+<p>当抽象工厂的创建方法只有一个时，退化为工厂方法；当工厂方法的实现类和抽象类变成一个，且方法变成静态时，退化为简单工厂</p>
+<h3 id="命令模式与策略模式区分"><a href="#命令模式与策略模式区分" class="headerlink" title="命令模式与策略模式区分"></a>命令模式与策略模式区分</h3><p>疑惑点：都是将行为抽象出来</p>
+<p>不同点：前者可能会包含命令接收者的状态信息，相对来说，它更加完整，增加一个环境就能运行了；后者只是一个纯粹算法的抽象</p>
+<h3 id="迭代器模式和外观模式区分"><a href="#迭代器模式和外观模式区分" class="headerlink" title="迭代器模式和外观模式区分"></a>迭代器模式和外观模式区分</h3><p>疑惑点：都隐藏了底层实现，通过简单接口暴露</p>
+<p>不同点：从隐藏底层暴露简单接口这一点看，后者是包含前者的，因为前者仅针对容器类对象；但后者在实现上，是单独创建一个类对原类进行封装；而前者往往是一个可迭代接口</p>
+<h3 id="中介者模式和适配器模式区分"><a href="#中介者模式和适配器模式区分" class="headerlink" title="中介者模式和适配器模式区分"></a>中介者模式和适配器模式区分</h3><p>疑惑点：都是为两个对象提供“沟通渠道”</p>
+<p>不同点：其实二者完全不同，前者是真的提供沟通渠道；后者只是在接口形式上使得二者兼容</p>
+<h3 id="访问者模式和装饰器模式区分"><a href="#访问者模式和装饰器模式区分" class="headerlink" title="访问者模式和装饰器模式区分"></a>访问者模式和装饰器模式区分</h3><p>疑惑点：都是不修改原对象的情况下添加了更多操作</p>
+<p>不同点：后者是真的完全不改变原有对象，通过创建新类将原类进行包装，在新类中添加功能，新类除了方法调用外，是访问不到原类内部的；前者并非无痛，访问者为了能够访问到被访问者，需要被访问者暴露方法将访问者注入。</p>
+<p>且装饰器模式重点在”添加“功能；访问者模式重点在”访问“，正因为是”访问“，才需要将访问者注入被访问者。</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文没有代码，没有UML图，只有使用场景和容易搞混的设计模式区分。适合已经了解设计模式的人加深印象，要想详细了解，还是十分建议去看<a target="_blank" rel="noopener" href="https://github.com/kamranahmedse/design-patterns-for-humans">《给人看的设计模式》</a>。此外，强调几个点：</p>
+<ul>
+<li>忘记UML图，忘记UML图，忘记UML图，重要的事情说三遍。UML图只是形式上的定义，不用想肯定记不住，重点在于理解场景和实现思路。只要思路正确，和标准UML图差一点也没关系，并且，我们实现的代码最终一定会靠向该模式的标准结构。</li>
+<li>不要一个一个看，全部看完并理解，才能有对比。</li>
+<li>很多设计模式看起来比较相似，实际上他们确实有共通点，此时就需要自己体会了，不大好讲通。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F/" rel="tag"># 设计模式</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/09/30/%E7%90%86%E8%A7%A3UUID%EF%BC%88%E4%BB%AC%EF%BC%89-li-jie-uuid-men-/" rel="prev" title="理解UUID（们）">
+      <i class="fa fa-chevron-left"></i> 理解UUID（们）
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/10/06/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%B8%80%20-%20Java-xu-lie-hua-tan-suo-zhi-yi--java/" rel="next" title="序列化探索之一 - Java">
+      序列化探索之一 - Java <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%81%BF%E5%85%8D%E9%99%B7%E9%98%B1"><span class="nav-number">1.</span> <span class="nav-text">避免陷阱</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%BE%E8%AE%A1%E6%A8%A1%E5%BC%8F%E5%88%86%E7%B1%BB"><span class="nav-number">2.</span> <span class="nav-text">设计模式分类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E9%80%A0%E7%B1%BB"><span class="nav-number">2.1.</span> <span class="nav-text">创造类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%BB%93%E6%9E%84%E7%B1%BB"><span class="nav-number">2.2.</span> <span class="nav-text">结构类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A1%8C%E4%B8%BA%E7%B1%BB"><span class="nav-number">2.3.</span> <span class="nav-text">行为类</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94"><span class="nav-number">3.</span> <span class="nav-text">自问自答</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%89%E4%B8%AA%E5%B7%A5%E5%8E%82%E6%A8%A1%E5%BC%8F%E5%A6%82%E4%BD%95%E5%8C%BA%E5%88%86"><span class="nav-number">3.1.</span> <span class="nav-text">三个工厂模式如何区分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4%E6%A8%A1%E5%BC%8F%E4%B8%8E%E7%AD%96%E7%95%A5%E6%A8%A1%E5%BC%8F%E5%8C%BA%E5%88%86"><span class="nav-number">3.2.</span> <span class="nav-text">命令模式与策略模式区分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%AD%E4%BB%A3%E5%99%A8%E6%A8%A1%E5%BC%8F%E5%92%8C%E5%A4%96%E8%A7%82%E6%A8%A1%E5%BC%8F%E5%8C%BA%E5%88%86"><span class="nav-number">3.3.</span> <span class="nav-text">迭代器模式和外观模式区分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%AD%E4%BB%8B%E8%80%85%E6%A8%A1%E5%BC%8F%E5%92%8C%E9%80%82%E9%85%8D%E5%99%A8%E6%A8%A1%E5%BC%8F%E5%8C%BA%E5%88%86"><span class="nav-number">3.4.</span> <span class="nav-text">中介者模式和适配器模式区分</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%BF%E9%97%AE%E8%80%85%E6%A8%A1%E5%BC%8F%E5%92%8C%E8%A3%85%E9%A5%B0%E5%99%A8%E6%A8%A1%E5%BC%8F%E5%8C%BA%E5%88%86"><span class="nav-number">3.5.</span> <span class="nav-text">访问者模式和装饰器模式区分</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>

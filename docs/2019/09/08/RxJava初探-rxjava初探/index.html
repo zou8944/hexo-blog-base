@@ -1,0 +1,750 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Observable ReactiveX中, 应用的是观察者模式, 一个观察者订阅一个被观察者. 然后该观察者根据被观察者释放的任何信息进行反应. 这样能够使得并发称为可能, 观察者不必阻塞等待被观察者的响应内容, 而是创建一个哨兵, 并随时准备在未来的任何时候响应被观察者释放出的内容">
+<meta property="og:type" content="article">
+<meta property="og:title" content="RxJava初探">
+<meta property="og:url" content="https://zou8944.com/2019/09/08/RxJava%E5%88%9D%E6%8E%A2-rxjava%E5%88%9D%E6%8E%A2/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="Observable ReactiveX中, 应用的是观察者模式, 一个观察者订阅一个被观察者. 然后该观察者根据被观察者释放的任何信息进行反应. 这样能够使得并发称为可能, 观察者不必阻塞等待被观察者的响应内容, 而是创建一个哨兵, 并随时准备在未来的任何时候响应被观察者释放出的内容">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564802038820.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564822583394.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564823248295.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564823342178.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564823975876.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/switch.c.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564824218864.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564825542157.png">
+<meta property="article:published_time" content="2019-09-08T03:00:21.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:26:30.182Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="RxJava">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564802038820.png">
+
+<link rel="canonical" href="https://zou8944.com/2019/09/08/RxJava%E5%88%9D%E6%8E%A2-rxjava%E5%88%9D%E6%8E%A2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>RxJava初探 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">78</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2019/09/08/RxJava%E5%88%9D%E6%8E%A2-rxjava%E5%88%9D%E6%8E%A2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          RxJava初探
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-09-08 11:00:21" itemprop="dateCreated datePublished" datetime="2019-09-08T11:00:21+08:00">2019-09-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-02-16 23:26:30" itemprop="dateModified" datetime="2021-02-16T23:26:30+08:00">2021-02-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%93%8D%E5%BA%94%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">响应式</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2019/09/08/RxJava%E5%88%9D%E6%8E%A2-rxjava%E5%88%9D%E6%8E%A2/" class="post-meta-item leancloud_visitors" data-flag-title="RxJava初探" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <h2 id="Observable"><a href="#Observable" class="headerlink" title="Observable"></a>Observable</h2><p> ReactiveX中, 应用的是观察者模式, 一个观察者订阅一个被观察者. 然后该观察者根据被观察者释放的任何信息进行反应. 这样能够使得并发称为可能, 观察者不必阻塞等待被观察者的响应内容, 而是创建一个哨兵, 并随时准备在未来的任何时候响应被观察者释放出的内容<br> <span id="more"></span><br>Observable通过调用Observer的方法向其发送通知<br>如下图片能够展示一个被观察者释放的一系列数据, 以及对这些数据进行转换的操作</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564802038820.png" alt="1564802038820"></p>
+<p>本文中称的观察者, 在别的文档中有时也被称为订阅者, 也叫作反应器. 该模型对应于 反应式模型</p>
+<h3 id="建立一个Observable"><a href="#建立一个Observable" class="headerlink" title="建立一个Observable"></a>建立一个Observable</h3><ul>
+<li>定义一个结果处理的方法, 该方法是观察者的一部分</li>
+<li>将异步调用本身定义为被观察者</li>
+<li>通过订阅的方式, 将观察者附加到被观察者身上. </li>
+</ul>
+<h3 id="OnNext-OnCompleted-OnError"><a href="#OnNext-OnCompleted-OnError" class="headerlink" title="OnNext, OnCompleted, OnError"></a>OnNext, OnCompleted, OnError</h3><p>这些是观察者的一部分. 三个方法被调用的时机不同</p>
+<ul>
+<li><p>OnNext<br>被观察者每次释放一个数据都会调用它</p>
+</li>
+<li><p>OnError<br>当被观察者发生错误时会调用, 调用该方法后, OnNext和OnCompleted方法都不会再被调用</p>
+</li>
+<li><p>OnCompleted<br>在调用最后一次OnNext时会调用OnCompleted</p>
+</li>
+</ul>
+<p>我们管OnNext叫做释放数据, 管OnError和OnCompleted叫通知.</p>
+<h3 id="观察者约定-The-Observable-Contract"><a href="#观察者约定-The-Observable-Contract" class="headerlink" title="观察者约定(The Observable Contract)"></a>观察者约定(The Observable Contract)</h3><p>该约定尝试对被观察者做一个正式的定义, 他会出现在Rx文档的很多地方</p>
+<h4 id="通知"><a href="#通知" class="headerlink" title="通知"></a>通知</h4><p>一个被观察者通过如下方式和它的观察者们交流</p>
+<ul>
+<li>OnNext: 从被观察者向观察者传送一个item</li>
+<li>OnCompleted: 表明被观察者已经成功地完成, 并且不会再释放数据</li>
+<li>OnError: 表明被观察者已经被某个原因中止, 并且不会再释放数据</li>
+<li>OnSubscribe(背压): 表明被观察者已经准备好接收来自观察者的请求通知</li>
+</ul>
+<p>一个观察者通过如下方式和它的被观察者交流</p>
+<ul>
+<li>Subscribe: 表明观察者已经准备好接收来自被观察者的通知</li>
+<li>UnSubscribe: 表明观察者已经不想要再接收到被观察者的通知了</li>
+<li>Request(背压): 表明观察者只希望接收到不超过特定数量的来自被观察者的通知(通过OnNext发送过来的)</li>
+</ul>
+<h4 id="约定"><a href="#约定" class="headerlink" title="约定"></a>约定</h4><p>一个被观察者可能调用0次或多次OnNext, OnCompleted和OnError只会且一定会调用其一, 且其后不得再发送任何通知</p>
+<p>一个被观察者可能根本不会释放任何数据, 也可能因为永远不停止而不会发出OnCompleted和OnError. 即: 观察者可能不发出任何通知, 可能发出OnCompleted和OnError通知, 也可能仅发出OnNext通知</p>
+<p>一个被观察者发送给观察者的通知必须是串行的, 他们可以在不同的线程发出, 但必须有一个先行发生原则确保其顺序</p>
+<h4 id="被观察者的中止"><a href="#被观察者的中止" class="headerlink" title="被观察者的中止"></a>被观察者的中止</h4><p>如果被观察者没有发出完成或错误通知, 观察者会认为它仍然是活动的, 并且可能会给他发送通知(如unsubscribe和request通知等).<br>如果被观察者发出了完成或错误通知, 该被观察者会释放其资源, 其观察者不应试图与其有进一步的沟通<br>一个OnError通知必须包含错误原因, 就是说传入一个null的OnError是无效的<br>被观察者停止自己之前, 必须先向它的所有订阅者发出OnCompleted或OnError消息</p>
+<h4 id="订阅和取消订阅"><a href="#订阅和取消订阅" class="headerlink" title="订阅和取消订阅"></a>订阅和取消订阅</h4><p>被观察者可以在收到观察者发出的Subscribe通知后马上开始向其发送通知<br>当观察者发送UnSubscribe通知给被观察者时, 被观察者会试图停止向其发送通知, 但这是不被保证的,<br>被观察者发送OnCompleted或OnError通知给观察者时, 它们的订阅关系将会自动结束. 不需要再由观察者发送UnSubscribe消息给被观察者</p>
+<h4 id="多个订阅者"><a href="#多个订阅者" class="headerlink" title="多个订阅者"></a>多个订阅者</h4><p>如果第二个观察者订阅了一个已经向第一个观察者释放了一些数据的被观察者, 那么第二个观察者收到的消息可能如下</p>
+<ul>
+<li>从订阅开始, 所有订阅者将收到一样的消息,(即新的订阅者会收不到已经释放原来订阅者的消息)</li>
+<li>重新向新的订阅者发送完全相同的数据</li>
+<li>新的订阅者将会收到顺序完全不同的数据</li>
+</ul>
+<p>上面这些都是可能的, 具体哪一种取决于被观察者的实现. </p>
+<p>没有一个通用的约定说两个多个观察者能够得到一样顺序的消息</p>
+<h4 id="背压"><a href="#背压" class="headerlink" title="背压"></a>背压</h4><p>背压是可选的, 并非所有ReactiveX实现都包括背压.而且在哪些包括了背压的实现中, 也并非所有被观察者都支持背压.<br>如果一个被观察者实现了背压，并且它的观察者使用了背压，那么该被观察者不会在订阅后立即向观察者发出项目。相反，它将向观察者发出一个onsubscribe通知。<br>观察者收到onsubscribe消息后, 会发送一个请求通知给被观察者, 指定需要数据的数量, 被观察者就会释放不多于该数量的数据. 当然, 被观察者也可以主动发出OnCompleted和OnError通知, 甚至在观察者发送请求通知前发出以结束订阅.</p>
+<p>对于没有实现背压的被观察者, 当它收到来自观察者的请求通知时, 应该回敬一个OnError通知, 说明自己并不支持背压</p>
+<p>请求是累积的: 如果一个观察者发出了三个请求通知, 分别请求3,5,10条数据, 则被观察者将会至多发送18条数据, 不会因为说刚发了两条时马上来了一个5条的请求就把原本剩下的那一条忽略掉.<br>如果被观察者产生了多余请求数量的数据, 多出来的数据的处理方式完全看被观察者自己.</p>
+<h3 id="热-冷-的被观察者"><a href="#热-冷-的被观察者" class="headerlink" title="热 , 冷 的被观察者"></a>热 , 冷 的被观察者</h3><ul>
+<li>热: 指的是被观察者从一开始就释放数据, 这样观察者从订阅开始就只能从中途获取数据</li>
+<li>冷: 指的是被观察者在被定于后才开始释放数据, 这样就能保证获取完整的数据</li>
+<li>connectable: 这是在部分ReactiveX实现中的被观察者, 只有当connect方法被调用时才会释放数据, 而不管有没有观察者订阅他</li>
+</ul>
+<h3 id="被观察者操作符的组合"><a href="#被观察者操作符的组合" class="headerlink" title="被观察者操作符的组合"></a>被观察者操作符的组合</h3><p>被观察者和观察者仅仅是ReactiveX的开始, 他们本身只是标准的观察者模式的轻量级扩展, 更适合处理一连串事件, 而不是单个回调<br>其真正厉害的地方在于通过操作符转换, 组合, 运算由被观察者释放出来的一系列数据</p>
+<h2 id="Operators"><a href="#Operators" class="headerlink" title="Operators"></a>Operators</h2><h3 id="操作分类"><a href="#操作分类" class="headerlink" title="操作分类"></a>操作分类</h3><h4 id="创建被观察者"><a href="#创建被观察者" class="headerlink" title="创建被观察者"></a>创建被观察者</h4><ul>
+<li>create: 通知显式调用订阅者方法来创建Observable</li>
+<li>defer: 观察者订阅时才创建, 不订阅就不创建, 且为每个新的观察者创建一个新的被观察者</li>
+<li>interval: 创建一个每隔一段时间释放一个数据的被观察者</li>
+</ul>
+<h4 id="处理操作"><a href="#处理操作" class="headerlink" title="处理操作"></a>处理操作</h4><ul>
+<li>buffer: 被观察者一个一个地发送数据, 该操作设定缓存个数, 缓存满了之后将整个缓存一起释放</li>
+<li>flatMap: 将多个被观察者释放的数据合并到一个被观察者中</li>
+<li>groupBy: 将单个被观察者切分成多个被观察者, 每次只从原被观察者处释放一组</li>
+<li>scan: 对每个释放的数据应用一个函数, 将结果释放出去, 一次运算释放的值会作为下一次运算的输入</li>
+</ul>
+<h4 id="过滤操作"><a href="#过滤操作" class="headerlink" title="过滤操作"></a>过滤操作</h4><ul>
+<li>debounce: 只释放这样的数据, 该数据被释放之后, 指定的一段时间内没有新数据的出现, 则释放该数据.否则对新释放的数据继续做此判断</li>
+<li>elementAt: 只获取释放的第n个元素</li>
+<li>first: 只释放第一个数据, 或满足条件的数据</li>
+<li>last: 只释放最后一个数据</li>
+<li>sample: 获取一段时间内被观察者释放的最后一个数据</li>
+<li>take: 只获取头几个释放的数据</li>
+<li>takeLast: 只获取最后几个释放的数据</li>
+</ul>
+<h4 id="组合操作"><a href="#组合操作" class="headerlink" title="组合操作"></a>组合操作</h4><p>将多个被观察者合并为一个被观察者</p>
+<ul>
+<li>combineLatest: 将一个被观察者释放的数据和另一个被观察者释放的最近的一个数据组合起来</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564822583394.png" alt="1564822583394"></p>
+<ul>
+<li>join: 将两个被观察者释放的在一个时间窗中的数据进行合并</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564823248295.png" alt="1564823248295"></p>
+<ul>
+<li>merge: 直接将两个释放合并</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564823342178.png" alt="1564823342178"></p>
+<ul>
+<li>startWith: 在释放常规数据前, 先释放指定的数据</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564823975876.png" alt="1564823975876"></p>
+<ul>
+<li>switch: 将释放数据为Observable的几个被观察者转换成一个释放所有这些数据的被观察者</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/switch.c.png" alt="Switch"></p>
+<ul>
+<li>zip: 将多个被观察者释放的数据以一定的方法合并到一个被观察者上</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564824218864.png" alt="1564824218864"></p>
+<h4 id="错误处理操作"><a href="#错误处理操作" class="headerlink" title="错误处理操作"></a>错误处理操作</h4><ul>
+<li>catch: 从错误中恢复出来, 使原被观察者继续执行</li>
+<li>retry: 被观察者抛出错误时, 重新订阅它</li>
+</ul>
+<h4 id="被观察者的工具操作"><a href="#被观察者的工具操作" class="headerlink" title="被观察者的工具操作"></a>被观察者的工具操作</h4><ul>
+<li>delay: 每个元素都延迟释放</li>
+<li>doOnEach: 为每个元素执行一个操作</li>
+<li>materialize: 将释放的消息和发送的通知都当做释放的消息</li>
+<li>observeOn: 指定观察者将会在哪个schedudler上对被观察者进行观察</li>
+<li>subscribe: 将被观察者绑定到观察者</li>
+<li>timeInterval: 将一个释放普通元素的被观察者转换为释放元素之间的时间间隔的被观察者</li>
+<li>timeout: 一个元素释放后的指定时间内不再释放新的元素时, 停止该被观察者</li>
+<li>timestamp: 为每一个释放的元素绑定一个时间戳</li>
+</ul>
+<h4 id="条件和布尔操作"><a href="#条件和布尔操作" class="headerlink" title="条件和布尔操作"></a>条件和布尔操作</h4><ul>
+<li>all: 判断是否释放的所有元素都满足给定条件</li>
+<li>amb: 给定多个被观察者, 只获取最先释放数据的被观察者的所有数据</li>
+<li>contains: 判断释放的元素是否包含指定元素</li>
+<li>sequenceEqual: 判断两个被观察者是否释放了一样的数据流</li>
+</ul>
+<h4 id="数学和聚集操作"><a href="#数学和聚集操作" class="headerlink" title="数学和聚集操作"></a>数学和聚集操作</h4><ul>
+<li>concat:  将两个被观察者连接起来, 一个被观察者释放完所有数据后, 另一个被观察者才继续释放它的所有数据</li>
+<li>reduce: 对每个释放的数据应用某个函数, 并输出最终结果</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E8%AF%BB%E4%B9%A6%E7%AC%94%E8%AE%B0%20-%20RxJava/1564825542157.png" alt="1564825542157"></p>
+<h4 id="背压操作"><a href="#背压操作" class="headerlink" title="背压操作"></a>背压操作</h4><p>这是用来应对生产数据快过消费数据的情况</p>
+<h4 id="Connectable-Observable的操作"><a href="#Connectable-Observable的操作" class="headerlink" title="Connectable Observable的操作"></a>Connectable Observable的操作</h4><ul>
+<li>connect: 开始释放数据</li>
+<li>publish: 将原本的observable转换成一个Connectable Observable</li>
+<li>refcount: 使Connectable Observable向一个原始Observable一样工作</li>
+<li>replay: 确保所有观察者都能够看到相同顺序的数据, 即使他们在不同时刻订阅</li>
+</ul>
+<h4 id="Observable转换操作"><a href="#Observable转换操作" class="headerlink" title="Observable转换操作"></a>Observable转换操作</h4><ul>
+<li>to:  将一个Observable转换成其它对象或数据结构</li>
+</ul>
+<h2 id="Single"><a href="#Single" class="headerlink" title="Single"></a>Single</h2><p>Single是Observable的一个变体, 不同于Observable是释放一系列数据, Single仅释放一个数据, 或触发一次错误.因此, Single中, 仅能使用OnSuccess与OnError同观察者交流. 当上述两个方法中任意一个被调用了, 另一个都不会再被调用, Single也停止了, 订阅关系也自动解除了.<br>也就是说, Single没有结束一说, 只有成功和错误两个时机, 因此调用doOnCompleted是不会被触发的</p>
+<h3 id="Single中值得记住的方法"><a href="#Single中值得记住的方法" class="headerlink" title="Single中值得记住的方法"></a>Single中值得记住的方法</h3><ul>
+<li>doOnSuccess/doOnError: 在调用OnSuccess和OnError方法时, 会同时触发该方法</li>
+</ul>
+<h2 id="Subject"><a href="#Subject" class="headerlink" title="Subject"></a>Subject</h2><p>Subject在某些实现中有做, 它可以看做是一个桥梁或是一个代理, 能够同时充当订阅者, 获取其它被观察者的消息, 也能够充当被观察者, 向其它观察者发送消息.</p>
+<p>Subject有四种变形, 分别用在不同的场景下</p>
+<h3 id="AsyncSubject"><a href="#AsyncSubject" class="headerlink" title="AsyncSubject"></a>AsyncSubject</h3><p>AsyncSubject在源Observable结束时, 释放源Observable的最后一个元素, 如果源Observable一个元素都没有释放, 则AsyncSubject也会什么都不释放, 然后结束. 如果源Observable发生错误, 则AsyncSubject会直接将该错误释放, 不会释放其它数据</p>
+<h3 id="BehaviorSubject"><a href="#BehaviorSubject" class="headerlink" title="BehaviorSubject"></a>BehaviorSubject</h3><p>BehaviorSubject会释放源Observable最近释放过的数据, 如果没有最近释放过的数据, 则返回指定的默认值.</p>
+<p>当源Observable发生错误时, BehaviorSubject不会释放任何数据. 而是直接释放该数据</p>
+<h3 id="PublishSubject"><a href="#PublishSubject" class="headerlink" title="PublishSubject"></a>PublishSubject</h3><p>PublishSubject直接将源Observable的数据进行原样释放, 源Observable来一个它就释放一个, 这意味着较晚订阅它的订阅者会丢失订阅之前的消息</p>
+<h3 id="ReplaySubject"><a href="#ReplaySubject" class="headerlink" title="ReplaySubject"></a>ReplaySubject</h3><p>ReplaySubject会将源Observable所释放的数据全部再次释放一遍.</p>
+<h2 id="Scheduler"><a href="#Scheduler" class="headerlink" title="Scheduler"></a>Scheduler</h2><p>Scheduler用于做线程调度.</p>
+<p>默认情况下, Observable及其操作链将会工作在subscribe调用时的线程上. 可以通过ObserveOn操作符改变该行为. 该方法指定一个线程调度器, Observable会在其上运行.</p>
+<p>SubscribeOn指定了Observable将会在哪个调度器上进行操作, 即观察者所在的线程.</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/RxJava/" rel="tag"># RxJava</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/09/07/Common%20FileUpload%E4%BB%8B%E7%BB%8D-commonfileupload%E4%BB%8B%E7%BB%8D/" rel="prev" title="Common FileUpload介绍">
+      <i class="fa fa-chevron-left"></i> Common FileUpload介绍
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/09/08/%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F%20-%20%E6%A6%82%E8%BF%B0-%E6%8E%A8%E8%8D%90%E7%B3%BB%E7%BB%9F-%E6%A6%82%E8%BF%B0/" rel="next" title="推荐系统 - 概述">
+      推荐系统 - 概述 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#Observable"><span class="nav-number">1.</span> <span class="nav-text">Observable</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BB%BA%E7%AB%8B%E4%B8%80%E4%B8%AAObservable"><span class="nav-number">1.1.</span> <span class="nav-text">建立一个Observable</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#OnNext-OnCompleted-OnError"><span class="nav-number">1.2.</span> <span class="nav-text">OnNext, OnCompleted, OnError</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A7%82%E5%AF%9F%E8%80%85%E7%BA%A6%E5%AE%9A-The-Observable-Contract"><span class="nav-number">1.3.</span> <span class="nav-text">观察者约定(The Observable Contract)</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%80%9A%E7%9F%A5"><span class="nav-number">1.3.1.</span> <span class="nav-text">通知</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BA%A6%E5%AE%9A"><span class="nav-number">1.3.2.</span> <span class="nav-text">约定</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A2%AB%E8%A7%82%E5%AF%9F%E8%80%85%E7%9A%84%E4%B8%AD%E6%AD%A2"><span class="nav-number">1.3.3.</span> <span class="nav-text">被观察者的中止</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%AE%A2%E9%98%85%E5%92%8C%E5%8F%96%E6%B6%88%E8%AE%A2%E9%98%85"><span class="nav-number">1.3.4.</span> <span class="nav-text">订阅和取消订阅</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%9A%E4%B8%AA%E8%AE%A2%E9%98%85%E8%80%85"><span class="nav-number">1.3.5.</span> <span class="nav-text">多个订阅者</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%83%8C%E5%8E%8B"><span class="nav-number">1.3.6.</span> <span class="nav-text">背压</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%83%AD-%E5%86%B7-%E7%9A%84%E8%A2%AB%E8%A7%82%E5%AF%9F%E8%80%85"><span class="nav-number">1.4.</span> <span class="nav-text">热 , 冷 的被观察者</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A2%AB%E8%A7%82%E5%AF%9F%E8%80%85%E6%93%8D%E4%BD%9C%E7%AC%A6%E7%9A%84%E7%BB%84%E5%90%88"><span class="nav-number">1.5.</span> <span class="nav-text">被观察者操作符的组合</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Operators"><span class="nav-number">2.</span> <span class="nav-text">Operators</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%93%8D%E4%BD%9C%E5%88%86%E7%B1%BB"><span class="nav-number">2.1.</span> <span class="nav-text">操作分类</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E8%A2%AB%E8%A7%82%E5%AF%9F%E8%80%85"><span class="nav-number">2.1.1.</span> <span class="nav-text">创建被观察者</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%A4%84%E7%90%86%E6%93%8D%E4%BD%9C"><span class="nav-number">2.1.2.</span> <span class="nav-text">处理操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%BF%87%E6%BB%A4%E6%93%8D%E4%BD%9C"><span class="nav-number">2.1.3.</span> <span class="nav-text">过滤操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%BB%84%E5%90%88%E6%93%8D%E4%BD%9C"><span class="nav-number">2.1.4.</span> <span class="nav-text">组合操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86%E6%93%8D%E4%BD%9C"><span class="nav-number">2.1.5.</span> <span class="nav-text">错误处理操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%A2%AB%E8%A7%82%E5%AF%9F%E8%80%85%E7%9A%84%E5%B7%A5%E5%85%B7%E6%93%8D%E4%BD%9C"><span class="nav-number">2.1.6.</span> <span class="nav-text">被观察者的工具操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%9D%A1%E4%BB%B6%E5%92%8C%E5%B8%83%E5%B0%94%E6%93%8D%E4%BD%9C"><span class="nav-number">2.1.7.</span> <span class="nav-text">条件和布尔操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E6%95%B0%E5%AD%A6%E5%92%8C%E8%81%9A%E9%9B%86%E6%93%8D%E4%BD%9C"><span class="nav-number">2.1.8.</span> <span class="nav-text">数学和聚集操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E8%83%8C%E5%8E%8B%E6%93%8D%E4%BD%9C"><span class="nav-number">2.1.9.</span> <span class="nav-text">背压操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Connectable-Observable%E7%9A%84%E6%93%8D%E4%BD%9C"><span class="nav-number">2.1.10.</span> <span class="nav-text">Connectable Observable的操作</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#Observable%E8%BD%AC%E6%8D%A2%E6%93%8D%E4%BD%9C"><span class="nav-number">2.1.11.</span> <span class="nav-text">Observable转换操作</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Single"><span class="nav-number">3.</span> <span class="nav-text">Single</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Single%E4%B8%AD%E5%80%BC%E5%BE%97%E8%AE%B0%E4%BD%8F%E7%9A%84%E6%96%B9%E6%B3%95"><span class="nav-number">3.1.</span> <span class="nav-text">Single中值得记住的方法</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Subject"><span class="nav-number">4.</span> <span class="nav-text">Subject</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#AsyncSubject"><span class="nav-number">4.1.</span> <span class="nav-text">AsyncSubject</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#BehaviorSubject"><span class="nav-number">4.2.</span> <span class="nav-text">BehaviorSubject</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#PublishSubject"><span class="nav-number">4.3.</span> <span class="nav-text">PublishSubject</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ReplaySubject"><span class="nav-number">4.4.</span> <span class="nav-text">ReplaySubject</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Scheduler"><span class="nav-number">5.</span> <span class="nav-text">Scheduler</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>

@@ -1,0 +1,833 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="写这篇文章时，我一度陷入了纠结与不安，再次体会到了聚焦的重要性。Jackson看似简单，实则功能强大，这两天有些迷失，不知道要看些什么，要写些什么。但路得一步一步走，饭得一口一口吃，纵使它可供探索的点繁如星辰，我也得将焦点拉回，否则就叫失控。至于其它的点，以后再说。因此，本文将聚焦如下几点  Jackson的能力 基本原理 module工作原理">
+<meta property="og:type" content="article">
+<meta property="og:title" content="序列化探索之三 - Jackson">
+<meta property="og:url" content="https://zou8944.com/2021/10/14/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%B8%89%20-%20Jackson-xu-lie-hua-tan-suo-zhi-san--jackson/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="写这篇文章时，我一度陷入了纠结与不安，再次体会到了聚焦的重要性。Jackson看似简单，实则功能强大，这两天有些迷失，不知道要看些什么，要写些什么。但路得一步一步走，饭得一口一口吃，纵使它可供探索的点繁如星辰，我也得将焦点拉回，否则就叫失控。至于其它的点，以后再说。因此，本文将聚焦如下几点  Jackson的能力 基本原理 module工作原理">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013173735959.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013193907907.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013204532184.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013205612048.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013210926397.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211014120133817.png">
+<meta property="article:published_time" content="2021-10-14T04:38:21.850Z">
+<meta property="article:modified_time" content="2021-10-14T04:38:21.850Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="序列化">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013173735959.png">
+
+<link rel="canonical" href="https://zou8944.com/2021/10/14/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%B8%89%20-%20Jackson-xu-lie-hua-tan-suo-zhi-san--jackson/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>序列化探索之三 - Jackson | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">78</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/10/14/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%B8%89%20-%20Jackson-xu-lie-hua-tan-suo-zhi-san--jackson/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          序列化探索之三 - Jackson
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-10-14 12:38:21" itemprop="dateCreated datePublished" datetime="2021-10-14T12:38:21+08:00">2021-10-14</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/10/14/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%B8%89%20-%20Jackson-xu-lie-hua-tan-suo-zhi-san--jackson/" class="post-meta-item leancloud_visitors" data-flag-title="序列化探索之三 - Jackson" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>写这篇文章时，我一度陷入了纠结与不安，再次体会到了聚焦的重要性。Jackson看似简单，实则功能强大，这两天有些迷失，不知道要看些什么，要写些什么。但路得一步一步走，饭得一口一口吃，纵使它可供探索的点繁如星辰，我也得将焦点拉回，否则就叫失控。至于其它的点，以后再说。因此，本文将聚焦如下几点</p>
+<ul>
+<li>Jackson的能力</li>
+<li>基本原理</li>
+<li>module工作原理</li>
+</ul>
+<span id="more"></span>
+
+<h2 id="基本组成"><a href="#基本组成" class="headerlink" title="基本组成"></a>基本组成</h2><p>Jackson文档怎么看，是一个问题。如果初次接触Jackson，看<a target="_blank" rel="noopener" href="https://github.com/FasterXML/jackson">主项目的介绍</a>半个小时，多半还是云里雾里，我认为这是Jackson文档做的很不好的一点，并没有一个Guide，而是需要自己一个一个项目看，而如果你恰巧点到了第三方module，就更不知道它在说什么了。</p>
+<p>总的说来，Jackson由三部分组成</p>
+<ul>
+<li>Jackson-core：提供低层级的流式API，灵活程度高，效率高，但易用性差</li>
+<li>Jackson-annotations：提供注解定义，这些注解是与我么打交道最多的</li>
+<li>Jackson-databind：在前两个部分的基础上封装了一层，提供序列化和反序列化功能，我们直接使用的API，基本都来自于此。</li>
+</ul>
+<p>在jackson-databind中，提供了可插入的module机制，允许第三方定义自己的类型转换库，通过ObjectMapper().registerModule的方式注册，常见的有</p>
+<ul>
+<li>针对java.time包下的时间的类型库</li>
+<li>针对kotlin的类型库</li>
+<li>好多其它的</li>
+</ul>
+<p>又，Jackson并非仅仅针对Json，还支持Protobuf、TOML、Yaml等诸多格式，他们是通过自定义jackson-core提供的流式API和Codec实现的。</p>
+<p>还有，Jackson中的很多概念都和kotlinx.serialization类似，学习过程中可做类比，加深印象。</p>
+<h2 id="能力"><a href="#能力" class="headerlink" title="能力"></a>能力</h2><p>Jackson提供三种方式进行序列化和反序列化</p>
+<ul>
+<li>低层级的流式API，直接控制基础token的写入（要理解Jackson所谓的token，一个字符、一个起始符，都是token）</li>
+<li>ObjectMapper，直接进行POJO和json之间的转换，也可以进行POJO和POJO之间的转换，但原理是一样的。</li>
+<li>基于TreeModel，脱离POJO直接构建json结构</li>
+</ul>
+<h3 id="流式API"><a href="#流式API" class="headerlink" title="流式API"></a>流式API</h3><p>要想快，就用流式API，只需引入jackson-core，这里简单展示</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ResourceWithStream</span> </span>&#123;</span><br><span class="line">    <span class="keyword">var</span> resourceId: String? = <span class="literal">null</span></span><br><span class="line">    <span class="keyword">var</span> resourceType: String? = <span class="literal">null</span></span><br><span class="line">    <span class="keyword">var</span> usn: <span class="built_in">Long</span>? = <span class="literal">null</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">toString</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;ResourceWithStream(resourceId=<span class="variable">$resourceId</span>, resourceType=<span class="variable">$resourceType</span>, usn=<span class="variable">$usn</span>)&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> JsonGenerator.<span class="title">encoding</span><span class="params">(resource: <span class="type">ResourceWithStream</span>)</span></span> &#123;</span><br><span class="line">    <span class="keyword">this</span>.writeStartObject()</span><br><span class="line">    <span class="keyword">this</span>.writeStringField(<span class="string">&quot;resourceId&quot;</span>, resource.resourceId)</span><br><span class="line">    <span class="keyword">this</span>.writeStringField(<span class="string">&quot;resourceType&quot;</span>, resource.resourceType)</span><br><span class="line">    resource.usn.let &#123; usn -&gt;</span><br><span class="line">        <span class="keyword">this</span>.writeFieldName(<span class="string">&quot;usn&quot;</span>)</span><br><span class="line">        <span class="keyword">if</span> (usn == <span class="literal">null</span>) <span class="keyword">this</span>.writeNull()</span><br><span class="line">        <span class="keyword">else</span> <span class="keyword">this</span>.writeNumber(usn)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.writeEndObject()</span><br><span class="line">    <span class="keyword">this</span>.close()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> JsonParser.<span class="title">decoding</span><span class="params">()</span></span>: ResourceWithStream &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.nextToken() != JsonToken.START_OBJECT) <span class="keyword">throw</span> Exception(<span class="string">&quot;没有以对象起头&quot;</span>)</span><br><span class="line">    <span class="keyword">return</span> ResourceWithStream().also &#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="keyword">this</span>.nextToken() != JsonToken.END_OBJECT) &#123;</span><br><span class="line">            <span class="keyword">when</span> (<span class="keyword">this</span>.currentName) &#123;</span><br><span class="line">                <span class="string">&quot;resourceId&quot;</span> -&gt; it.resourceId = <span class="keyword">this</span>.valueAsString</span><br><span class="line">                <span class="string">&quot;resourceType&quot;</span> -&gt; it.resourceType = <span class="keyword">this</span>.valueAsString</span><br><span class="line">                <span class="string">&quot;usn&quot;</span> -&gt; it.usn = <span class="keyword">this</span>.valueAsLong</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">this</span>.close()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> resource = ResourceWithStream().apply &#123;</span><br><span class="line">        <span class="keyword">this</span>.resourceId = <span class="string">&quot;1&quot;</span></span><br><span class="line">        <span class="keyword">this</span>.resourceType = <span class="string">&quot;record&quot;</span></span><br><span class="line">        <span class="keyword">this</span>.usn = <span class="number">123456</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">val</span> bos = ByteArrayOutputStream()</span><br><span class="line">    <span class="keyword">val</span> jsonFactory = JsonFactoryBuilder().build()</span><br><span class="line">    <span class="comment">// 序列化</span></span><br><span class="line">    <span class="keyword">val</span> jsonGenerator = jsonFactory.createGenerator(bos)</span><br><span class="line">    jsonGenerator.encoding(resource)</span><br><span class="line">    println(bos.toString())</span><br><span class="line">    <span class="comment">// 反序列化</span></span><br><span class="line">    <span class="keyword">val</span> jsonParser = jsonFactory.createParser(bos.toByteArray())</span><br><span class="line">    println(jsonParser.decoding())</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="string">&quot;resourceId&quot;</span>:<span class="string">&quot;1&quot;</span>,<span class="string">&quot;resourceType&quot;</span>:<span class="string">&quot;record&quot;</span>,<span class="string">&quot;usn&quot;</span>:123456&#125;</span><br><span class="line">ResourceWithStream(resourceId=1, resourceType=record, usn=123456)</span><br></pre></td></tr></table></figure>
+
+<h3 id="注解"><a href="#注解" class="headerlink" title="注解"></a>注解</h3><p>Jackson的注解可就多了去了，一个简单而骚气的展示：序列化时将Map类型的数据提取到顶层，反序列化时再将这些数据塞回去。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Resource2</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">var</span> resourceId: String? = <span class="literal">null</span></span><br><span class="line"></span><br><span class="line">    <span class="meta">@JsonIgnore</span></span><br><span class="line">    <span class="keyword">var</span> <span class="keyword">data</span>: MutableMap&lt;String, Any&gt;? = mutableMapOf()</span><br><span class="line"></span><br><span class="line">    <span class="meta">@JsonAnySetter</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">add</span><span class="params">(key: <span class="type">String</span>, value: <span class="type">String</span>)</span></span> &#123;</span><br><span class="line">        <span class="keyword">data</span>?.put(key, value)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@JsonAnyGetter</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">getOther</span><span class="params">()</span></span>: MutableMap&lt;String, Any&gt;? = <span class="keyword">data</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">toString</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="string">&quot;Resource2(resourceId=<span class="variable">$resourceId</span>, data=<span class="variable">$data</span>)&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> resource = Resource2().apply &#123;</span><br><span class="line">        <span class="keyword">this</span>.resourceId = <span class="string">&quot;资源ID&quot;</span></span><br><span class="line">        <span class="keyword">this</span>.<span class="keyword">data</span> = mutableMapOf(</span><br><span class="line">            <span class="string">&quot;key&quot;</span> to <span class="string">&quot;value&quot;</span>,</span><br><span class="line">            <span class="string">&quot;key2&quot;</span> to <span class="string">&quot;value2&quot;</span>,</span><br><span class="line">            <span class="string">&quot;key3&quot;</span> to <span class="string">&quot;value3&quot;</span></span><br><span class="line">        )</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">val</span> objectMapper = ObjectMapper()</span><br><span class="line">    <span class="keyword">val</span> jsonString = objectMapper</span><br><span class="line">        .writerWithDefaultPrettyPrinter()</span><br><span class="line">        .writeValueAsString(resource)</span><br><span class="line">        .also &#123; println(it) &#125;</span><br><span class="line">    objectMapper.readValue(jsonString, Resource2::<span class="keyword">class</span>.java)</span><br><span class="line">        .also &#123; println(it) &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>考虑到注解多又常用，这里有不能每一个都展示，我们穷举场景</p>
+<ul>
+<li><p>如果需要自定义POJO某个属性的和序列化结果的对应关系，使用**@JsonProperty、@JsonSetter、@JsonGetter**</p>
+</li>
+<li><p>如果需要指定序列化后字段之间的顺序，使用**@JsonPropertyOrder**</p>
+</li>
+<li><p>如果POJO的某个字段需要直接当做json格式输出，使用@Js<strong>onRawValue</strong></p>
+</li>
+<li><p>如果需要忽略某些字段，使用**@JsonIgnore、@JsonIgnoreProperties、@JsonIgnoreType**</p>
+</li>
+<li><p>如果需要修改Jackson针对属性、POJO创建器等的检测逻辑，使用**@JsonAutoDetect**配置</p>
+<p>典型地就是设置field、getter、setter、creator方法的可见性，指定哪种可见性能够被检测到</p>
+</li>
+<li><p>如果需要根据属性的值的情况决定是否序列化，可以使用**@JsonInclude**，它甚至可以指定当属性为某个特定的值时才序列化</p>
+</li>
+<li><p>如果某个类需要将某个属性当做该类型最终序列化结果的值，使用**@JsonValue**，一般用于枚举</p>
+</li>
+<li><p>如果需要配置jata.util中的日期相关序列化和反序列化转换逻辑，使用**@JsonFormat**</p>
+</li>
+<li><p>如果同一个POJO，在不同的情况下需要有不同的序列化结果，使用**@JsonView**</p>
+</li>
+<li><p>如果POJO中存在自定义类型，要想将该类型字段在序列化时提取到顶层，使用**@JsonUnwrapped**</p>
+</li>
+<li><p>如果POJO中存在map，想要把map的值提到顶层，使用**@JsonAnyGetter**</p>
+<p>反之，如果json拥有多个属性，POJO中仅有少量字段，为了将多余的字段直接放在map中，使用**@JsonAnySetter**</p>
+</li>
+<li><p>如果想要自定义反序列化时调用的POJO构建器，使用**@JsonCreator**</p>
+</li>
+<li><p>针对枚举类型，如果想要在反序列化时匹配不到的情况下设置一个默认值，使用**@JsonEnumDefaultValue**</p>
+</li>
+<li><p>如果在反序列化时需要强制干预一个字段的值，可以使用**@JacksonInject**，但要结合ObjectMapper..setInjectableValues使用</p>
+</li>
+<li><p>如果要使用多态，需要使用**@JsonSubTypes、@JsonTypeId、@JsonTypeInfo、@JsonTypeName**</p>
+</li>
+<li><p>如果你的POJO之间有相互引用，导致序列化时出现递归，你需要使用**@JsonManagedReference、@JsonBackReference或@JsonIdentityInfo**解递归</p>
+</li>
+<li><p>如果希望某个POJO序列化后放在一个字段下，使用**@JsonRootName**</p>
+</li>
+</ul>
+<p>他们的使用，可以参考这篇文章，还挺全的：<a target="_blank" rel="noopener" href="https://www.baeldung.com/jackson-annotations">就是我</a></p>
+<h3 id="TreeModel"><a href="#TreeModel" class="headerlink" title="TreeModel"></a>TreeModel</h3><p>树形结构，是Jackson提供的又一强大功能，它允许我们直接构建Json，类似Kotlin的JsonElement，但是更强大。给一个简单的例子</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  	<span class="comment">// 两种创建node的方式都一样</span></span><br><span class="line"><span class="comment">//    val node = JsonNodeFactory.instance.objectNode()</span></span><br><span class="line">    <span class="keyword">val</span> objectMapper = ObjectMapper()</span><br><span class="line">    <span class="keyword">val</span> node = objectMapper.createObjectNode()</span><br><span class="line">    node.put(<span class="string">&quot;resourceId&quot;</span>, <span class="string">&quot;这是ID&quot;</span>)</span><br><span class="line">        .put(<span class="string">&quot;resourceType&quot;</span>, <span class="string">&quot;这是Type&quot;</span>)</span><br><span class="line">        .put(</span><br><span class="line">            <span class="string">&quot;data&quot;</span>, objectMapper.createObjectNode().apply &#123;</span><br><span class="line">                put(</span><br><span class="line">                    <span class="string">&quot;images&quot;</span>, objectMapper.createArrayNode().apply &#123;</span><br><span class="line">                        add(<span class="string">&quot;这是第一个链接&quot;</span>)</span><br><span class="line">                        add(<span class="string">&quot;这是第二个链接&quot;</span>)</span><br><span class="line">                    &#125;</span><br><span class="line">                )</span><br><span class="line">            &#125;</span><br><span class="line">        )</span><br><span class="line">    println(node.toPrettyString())</span><br><span class="line">    println(objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;resourceId&quot;</span> : <span class="string">&quot;这是ID&quot;</span>,</span><br><span class="line">  <span class="string">&quot;resourceType&quot;</span> : <span class="string">&quot;这是Type&quot;</span>,</span><br><span class="line">  <span class="string">&quot;data&quot;</span> : &#123;</span><br><span class="line">    <span class="string">&quot;images&quot;</span> : [ <span class="string">&quot;这是第一个链接&quot;</span>, <span class="string">&quot;这是第二个链接&quot;</span> ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line">&#123;</span><br><span class="line">  <span class="string">&quot;resourceId&quot;</span> : <span class="string">&quot;这是ID&quot;</span>,</span><br><span class="line">  <span class="string">&quot;resourceType&quot;</span> : <span class="string">&quot;这是Type&quot;</span>,</span><br><span class="line">  <span class="string">&quot;data&quot;</span> : &#123;</span><br><span class="line">    <span class="string">&quot;images&quot;</span> : [ <span class="string">&quot;这是第一个链接&quot;</span>, <span class="string">&quot;这是第二个链接&quot;</span> ]</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="可扩展性"><a href="#可扩展性" class="headerlink" title="可扩展性"></a>可扩展性</h3><p>在MapperFeature、SerializationFeature、DeserializationFeature中，定义了很多开关，可根据需要打开或关闭。具体看三个文档</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://github.com/FasterXML/jackson-databind/wiki/Mapper-Features">针对整个ObjectMapper的配置</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/FasterXML/jackson-databind/wiki/Serialization-features">针对序列化的配置</a></li>
+<li><a target="_blank" rel="noopener" href="https://github.com/FasterXML/jackson-databind/wiki/Deserialization-Features">针对反序列化的配置</a></li>
+</ul>
+<h2 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h2><h3 id="流式API-1"><a href="#流式API-1" class="headerlink" title="流式API"></a>流式API</h3><p> 流式API也支持很多功能，翻开JsonGenerator源码，将近三千行的文件长度有点吓人，但总的来说，它大概也只有功能配置和各种写方法。这其中，我们目前只关心之前用到的内容：</p>
+<ul>
+<li>一个基本的写方法的实现，即writeXXX</li>
+<li>序列化过程中的状态维护，即JsonWriteContext</li>
+<li>ObjectMapper的基础，即ObjectCodec</li>
+</ul>
+<p><strong>最底层的原理</strong></p>
+<p>一般来说，通过<code>JsonFactoryBuilder().build().createGenerator(xxx)</code>创建出来的是<code>UTC8JsonGenerator</code>实例，我们来看两个方法的示例</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 写对象开头</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">writeStartObject</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  _verifyValueWrite(<span class="string">&quot;start an object&quot;</span>);</span><br><span class="line">  _writeContext = _writeContext.createChildObjectContext();</span><br><span class="line">  <span class="keyword">if</span> (_outputTail &gt;= _outputEnd) &#123;</span><br><span class="line">    _flushBuffer();</span><br><span class="line">  &#125;</span><br><span class="line">  _outputBuffer[_outputTail++] = BYTE_LCURLY;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 写一个普通字符串</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">writeString</span><span class="params">(String text)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="keyword">this</span>._verifyValueWrite(<span class="string">&quot;write a string&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (text == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>._writeNull();</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">int</span> len = text.length();</span><br><span class="line">    <span class="keyword">if</span> (len &gt; <span class="keyword">this</span>._outputMaxContiguous) &#123;</span><br><span class="line">      <span class="keyword">this</span>._writeStringSegments(text, <span class="keyword">true</span>);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">this</span>._outputTail + len &gt;= <span class="keyword">this</span>._outputEnd) &#123;</span><br><span class="line">        <span class="keyword">this</span>._flushBuffer();</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">this</span>._outputBuffer[<span class="keyword">this</span>._outputTail++] = <span class="keyword">this</span>._quoteChar;</span><br><span class="line">      <span class="keyword">this</span>._writeStringSegment((String)text, <span class="number">0</span>, len);</span><br><span class="line">      <span class="keyword">if</span> (<span class="keyword">this</span>._outputTail &gt;= <span class="keyword">this</span>._outputEnd) &#123;</span><br><span class="line">        <span class="keyword">this</span>._flushBuffer();</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="keyword">this</span>._outputBuffer[<span class="keyword">this</span>._outputTail++] = <span class="keyword">this</span>._quoteChar;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// flush</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">_flushBuffer</span><span class="params">()</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="keyword">int</span> len = <span class="keyword">this</span>._outputTail;</span><br><span class="line">  <span class="keyword">if</span> (len &gt; <span class="number">0</span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>._outputTail = <span class="number">0</span>;</span><br><span class="line">    <span class="keyword">this</span>._outputStream.write(<span class="keyword">this</span>._outputBuffer, <span class="number">0</span>, len);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 验证写入是否正确</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">_verifyValueWrite</span><span class="params">(String typeMsg)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="keyword">int</span> status = <span class="keyword">this</span>._writeContext.writeValue();</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">this</span>._cfgPrettyPrinter != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">this</span>._verifyPrettyValueWrite(typeMsg, status);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="keyword">byte</span> b;</span><br><span class="line">    <span class="keyword">switch</span>(status) &#123;</span><br><span class="line">      <span class="keyword">case</span> <span class="number">0</span>:</span><br><span class="line">      <span class="keyword">case</span> <span class="number">4</span>:</span><br><span class="line">      <span class="keyword">default</span>:</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      <span class="keyword">case</span> <span class="number">1</span>:</span><br><span class="line">        b = <span class="number">44</span>;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> <span class="number">2</span>:</span><br><span class="line">        b = <span class="number">58</span>;</span><br><span class="line">        <span class="keyword">break</span>;</span><br><span class="line">      <span class="keyword">case</span> <span class="number">3</span>:</span><br><span class="line">        <span class="keyword">if</span> (<span class="keyword">this</span>._rootValueSeparator != <span class="keyword">null</span>) &#123;</span><br><span class="line">          <span class="keyword">byte</span>[] raw = <span class="keyword">this</span>._rootValueSeparator.asUnquotedUTF8();</span><br><span class="line">          <span class="keyword">if</span> (raw.length &gt; <span class="number">0</span>) &#123;</span><br><span class="line">            <span class="keyword">this</span>._writeBytes(raw);</span><br><span class="line">          &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">      <span class="keyword">case</span> <span class="number">5</span>:</span><br><span class="line">        <span class="keyword">this</span>._reportCantWriteValueExpectName(typeMsg);</span><br><span class="line">        <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>._outputTail &gt;= <span class="keyword">this</span>._outputEnd) &#123;</span><br><span class="line">      <span class="keyword">this</span>._flushBuffer();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">this</span>._outputBuffer[<span class="keyword">this</span>._outputTail++] = b;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们忽略_cfgPrettyPrinter这个东西，它不是关键。有要点</p>
+<ul>
+<li>流式API的输出原理：维护一个输出流，维护一个缓存字节数组。每次写入，只是写入缓存数组中，只有主动调用flush()或缓存长度超过设定值(_outputEnd)时，才会将数据批量写入输入流，这样可以提升效率</li>
+<li>每次写入前，都会调用_verifyValueWrite对当前的状态进行验证，它验证的内容其实是即将写入的内容是否符合Json格式，这是通过JsonStreamContext实现的（对写，对应JsonWriteContext），它维护了序列化过程中，当前的写入状态。比如，刚刚写入了一个key，现在必须写入一个value，否则就会报错。</li>
+<li>在写对象的起始符时，也创建了jsonContext的子context，可见，Context是有层次结构的，其结构和Json的层次结构保持一致。</li>
+</ul>
+<p>看看JsonContext的层次结构，我们大概能猜出其工作原理</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013173735959.png" alt="image-20211013173735959"></p>
+<ul>
+<li><p>三个type（TYPE_ROOT等），是Context的类型，对应了根、数组、对象三种</p>
+</li>
+<li><p>几个status（STATUS_OK_AS_IS等），是Context检查后返回给调用者的结果，其中</p>
+<ul>
+<li>STATUS_OK_AS_IS：表明格式检查正确</li>
+<li>STATUS_OK_AFTER_COMMA：表明格式检查正确，且当前位置后面应该添加逗号</li>
+<li>STATUS_OK_AFTER_COLON：表明格式正确，且当前位置后面应该添加冒号</li>
+<li>STATUS_OK_AFTER_SPACE：表明格式正确，且当前位置后面应该添加空白符</li>
+<li>STATUS_EXPECT_VALUE：表明格式错误，预期是一个值</li>
+<li>STATUS_EXPECT_NAME：表明格式错误，预期是一个字段名</li>
+</ul>
+<p>对它们的处理方式，在上面展示的方式_verifyValueWrite中也能看到。</p>
+</li>
+<li><p>其余属性，是为了维持当前状态用，根据状态判定当前调用是否合法，我们忽略”重复属性检查”，主要有两个方法，逻辑见注释</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 写字段名</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">writeFieldName</span><span class="params">(String name)</span> <span class="keyword">throws</span> JsonProcessingException </span>&#123;</span><br><span class="line">  <span class="comment">// 当前类型是对象或已经写过了字段名，肯定就错了嘛</span></span><br><span class="line">  <span class="keyword">if</span> ((_type != TYPE_OBJECT) || _gotName) &#123;</span><br><span class="line">    <span class="keyword">return</span> STATUS_EXPECT_VALUE;</span><br><span class="line">  &#125;</span><br><span class="line">  _gotName = <span class="keyword">true</span>;</span><br><span class="line">  _currentName = name;</span><br><span class="line">  <span class="keyword">if</span> (_dups != <span class="keyword">null</span>) &#123; _checkDup(_dups, name); &#125;</span><br><span class="line">  <span class="comment">// 如果这是第一个键值对，则啥都不管，否则，需要在这个键前面加逗号</span></span><br><span class="line">  <span class="keyword">return</span> (_index &lt; <span class="number">0</span>) ? STATUS_OK_AS_IS : STATUS_OK_AFTER_COMMA;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 写值</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">int</span> <span class="title">writeValue</span><span class="params">()</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (_type == TYPE_OBJECT) &#123;</span><br><span class="line">    <span class="comment">// 如果还没有设置键，应该先设置键</span></span><br><span class="line">    <span class="keyword">if</span> (!_gotName) &#123;</span><br><span class="line">      <span class="keyword">return</span> STATUS_EXPECT_NAME;</span><br><span class="line">    &#125;</span><br><span class="line">    _gotName = <span class="keyword">false</span>;</span><br><span class="line">    ++_index;</span><br><span class="line">    <span class="comment">// 在值前面加冒号</span></span><br><span class="line">    <span class="keyword">return</span> STATUS_OK_AFTER_COLON;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (_type == TYPE_ARRAY) &#123;</span><br><span class="line">    <span class="keyword">int</span> ix = _index;</span><br><span class="line">    ++_index;</span><br><span class="line">    <span class="comment">// 如果是数组，如果数组里还一个值都没有，啥也不做，否则，应该在这个之前面加逗号</span></span><br><span class="line">    <span class="keyword">return</span> (ix &lt; <span class="number">0</span>) ? STATUS_OK_AS_IS : STATUS_OK_AFTER_COMMA;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  ++_index;</span><br><span class="line">  <span class="comment">// 否则就是根对象咯，如果根对象里还没有元素，就啥也不错，否则应该在前面加空格</span></span><br><span class="line">  <span class="keyword">return</span> (_index == <span class="number">0</span>) ? STATUS_OK_AS_IS : STATUS_OK_AFTER_SPACE;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p><strong>编解码器</strong></p>
+<p>如果了解Kotlin的序列化设计策略，就很好理解编解码器了，可以将它类比SerialFormat——为了将流式API的复杂逻辑封装起来，提供一个简单易用的API，我们看它的接口定义。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">ObjectCodec</span> <span class="keyword">extends</span> <span class="title">TreeCodec</span> <span class="keyword">implements</span> <span class="title">Versioned</span></span></span><br><span class="line"><span class="class"></span>&#123;</span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="title">ObjectCodec</span><span class="params">()</span> </span>&#123; &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> Version <span class="title">version</span><span class="params">()</span></span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">abstract</span> &lt;T&gt; <span class="function">T <span class="title">readValue</span><span class="params">(JsonParser p, Class&lt;T&gt; valueType)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">abstract</span> &lt;T&gt; <span class="function">T <span class="title">readValue</span><span class="params">(JsonParser p, TypeReference&lt;T&gt; valueTypeRef)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">abstract</span> &lt;T&gt; <span class="function">T <span class="title">readValue</span><span class="params">(JsonParser p, ResolvedType valueType)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">abstract</span> &lt;T&gt; <span class="function">Iterator&lt;T&gt; <span class="title">readValues</span><span class="params">(JsonParser p, Class&lt;T&gt; valueType)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">abstract</span> &lt;T&gt; <span class="function">Iterator&lt;T&gt; <span class="title">readValues</span><span class="params">(JsonParser p, TypeReference&lt;T&gt; valueTypeRef)</span></span>;</span><br><span class="line">    </span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">abstract</span> &lt;T&gt; <span class="function">Iterator&lt;T&gt; <span class="title">readValues</span><span class="params">(JsonParser p, ResolvedType valueType)</span></span></span><br><span class="line"><span class="function"></span></span><br><span class="line"><span class="function">    <span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">writeValue</span><span class="params">(JsonGenerator gen, Object value)</span> <span class="keyword">throws</span> IOException</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">abstract</span> &lt;T extends TreeNode&gt; <span class="function">T <span class="title">readTree</span><span class="params">(JsonParser p)</span> <span class="keyword">throws</span> IOException</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> <span class="keyword">void</span> <span class="title">writeTree</span><span class="params">(JsonGenerator gen, TreeNode tree)</span> <span class="keyword">throws</span> IOException</span>;</span><br><span class="line">    </span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> TreeNode <span class="title">createObjectNode</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> TreeNode <span class="title">createArrayNode</span><span class="params">()</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">abstract</span> JsonParser <span class="title">treeAsTokens</span><span class="params">(TreeNode n)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">abstract</span> &lt;T&gt; <span class="function">T <span class="title">treeToValue</span><span class="params">(TreeNode n, Class&lt;T&gt; valueType)</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Deprecated</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> JsonFactory <span class="title">getJsonFactory</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> getFactory(); &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> JsonFactory <span class="title">getFactory</span><span class="params">()</span> </span>&#123; <span class="keyword">return</span> getJsonFactory(); &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，它提供的方法非常有限，大致分为两类</p>
+<ul>
+<li>针对一般类型及其集合类型的读、写方法，接收JsonParser/JsonGenerator、类型参数</li>
+<li>针对树模型的读写方法</li>
+</ul>
+<h3 id="ObjectMapper"><a href="#ObjectMapper" class="headerlink" title="ObjectMapper"></a>ObjectMapper</h3><p>ObjectMapper是data-bind最主要的类，而他，直接继承ObjectCodec，也就是说，可以直接使用ObjectCodec中定义的那些方法。但会发现，最常用的却不是它们，类似SerialFormat，尽管ObjectCodec已经为我们提供了一些方法，但它们只是将流式API的端点和类型联系了起来，还是不够易用，因此data-bind定义了更多易用的方法，将JsonGenerator之类的创建封装在类内部，于是我们就有了writeValueAsString()这样的方法可以直接使用。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013193907907.png" alt="image-20211013193907907"></p>
+<p>来看写方法，其实所有的写方法内部实现都是一样的，writeValueAsString也只是在其内部用一个流缓存序列化输出，再转换为字符串。它们的重点，在于com.fasterxml.jackson.databind.ObjectMapper#_writeValueAndClose</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 所有写方法都会调用的内部方法</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">_writeValueAndClose</span><span class="params">(JsonGenerator g, Object value)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  SerializationConfig cfg = getSerializationConfig();</span><br><span class="line">  <span class="keyword">if</span> (cfg.isEnabled(SerializationFeature.CLOSE_CLOSEABLE) &amp;&amp; (value <span class="keyword">instanceof</span> Closeable)) &#123;</span><br><span class="line">    _writeCloseable(g, value, cfg);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="comment">// 重点在serializeValue</span></span><br><span class="line">    _serializerProvider(cfg).serializeValue(g, value);</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    ClassUtil.closeOnFailAndThrowAsIOE(g, e);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  g.close();</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 序列化值</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">serializeValue</span><span class="params">(JsonGenerator gen, Object value)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  _generator = gen;</span><br><span class="line">  <span class="keyword">if</span> (value == <span class="keyword">null</span>) &#123;</span><br><span class="line">    _serializeNull(gen);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">final</span> Class&lt;?&gt; cls = value.getClass();</span><br><span class="line">  <span class="comment">// 这是重点</span></span><br><span class="line">  <span class="keyword">final</span> JsonSerializer&lt;Object&gt; ser = findTypedValueSerializer(cls, <span class="keyword">true</span>, <span class="keyword">null</span>);</span><br><span class="line">  PropertyName rootName = _config.getFullRootName();</span><br><span class="line">  <span class="keyword">if</span> (rootName == <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (_config.isEnabled(SerializationFeature.WRAP_ROOT_VALUE)) &#123;</span><br><span class="line">      _serialize(gen, value, ser, _config.findRootName(cls));</span><br><span class="line">      <span class="keyword">return</span>;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (!rootName.isEmpty()) &#123;</span><br><span class="line">    _serialize(gen, value, ser, rootName);</span><br><span class="line">    <span class="keyword">return</span>;</span><br><span class="line">  &#125;</span><br><span class="line">  _serialize(gen, value, ser);</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 写入JsonGenerator</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">final</span> <span class="keyword">void</span> <span class="title">_serialize</span><span class="params">(JsonGenerator gen, Object value, JsonSerializer&lt;Object&gt; ser, PropertyName rootName)</span> <span class="keyword">throws</span> IOException </span>&#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    gen.writeStartObject();</span><br><span class="line">    gen.writeFieldName(rootName.simpleAsEncoded(_config));</span><br><span class="line">    ser.serialize(value, gen, <span class="keyword">this</span>);</span><br><span class="line">    gen.writeEndObject();</span><br><span class="line">  &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">    <span class="keyword">throw</span> _wrapAsIOE(gen, e);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们展示了三层调用层次的方法，排除干扰项，要点如下</p>
+<ul>
+<li>获取待序列化的类型对应的序列化器</li>
+<li>使用找到的序列化器，执行最后的序列化逻辑<ul>
+<li>向JsonGenerator写入对象起始符</li>
+<li>向JsonGenerator写入根字段名</li>
+<li>用得到的序列化器向JsonGenerator写入对象相关信息</li>
+<li>向JsonGenerator写入对象结束符</li>
+</ul>
+</li>
+</ul>
+<p>这里出现了一个新的概念：序列化器，之前是没有见过的。序列化器和反序列化器的创建，是data-bind的重要内容，我们可以想象一下：序列化器负责对整个对象的序列化，这里的序列化，其实是将对象属性转换为json的token的过程。我们又没有创建序列化器，那要么是编译器创建，要么是运行时创建，很显然前者是不可能的。可以猜测，序列化器的生成，包含了以下逻辑（反序列化类似）</p>
+<ul>
+<li>包含对Json注解的支持，反射读取注解，然后体现在序列化器上</li>
+<li>包含对各种功能的支持，目前data-bind的功能主要有MapperFeature、SerializationFeature、DeserializationFeature的支持，生成序列化器时，根据这些条件动态调整转换行为。这其实最终体现在了SerializationConfig中。</li>
+<li>对新增逻辑的支持，module的扩展性，应该要靠它来支持</li>
+</ul>
+<p>有关序列化器的生成逻辑，主要在SerializerProvider，比较深，有兴趣自己跟跟看，解析一下其生成逻辑。对于一个自定义的POJO，创建逻辑最终会来到这里：com.fasterxml.jackson.databind.ser.BeanSerializerFactory#constructBeanOrAddOnSerializer，逻辑过于复杂，所有上面说的那些都交织在其中，有兴趣可以自己研究。下图展示了构建过程中判断MapperFeature.USE_STATIC_TYPING开关的情况。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013204532184.png" alt="image-20211013204532184"></p>
+<p>实际上，序列化器会首先在预先设置的序列化器中查找，然后从缓存中查找，实在没有，才会自动生成，且生成后的序列化器会添加到缓存，避免多次生成，从而提升性能。而那些针对Jackson的三方库，基本都是自定义类型的处理方式，是否可以推测，所谓第三方库，其实就是自己提前定义的序列化器和反序列化器，然后注册进来就好。</p>
+<h3 id="正确认识ObjectMapper"><a href="#正确认识ObjectMapper" class="headerlink" title="正确认识ObjectMapper"></a>正确认识ObjectMapper</h3><p>ObjectMapper是Jackson使用的核心，一般来说，一个ObjectMapper实例对应了一套配置，配置一旦添加不可去除，如果想用多套不同的配置，则需维护多个ObjectMapper，这也是常规使用方法，你看整个Spring中，正常情况下，都只有一个ObejctMapper实例的。</p>
+<h3 id="module"><a href="#module" class="headerlink" title="module"></a>module</h3><p>在Jackson主项目下，能看到很多第三方插件（数据类型模块），我们来探究它是如何工作的。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013205612048.png" alt="image-20211013205612048"></p>
+<p>注册一个module的调用方式是</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">ObjectMapper().registerModule(JavaTimeModule())</span><br></pre></td></tr></table></figure>
+
+<p>它干了啥呢？参见com.fasterxml.jackson.databind.ObjectMapper#registerModule（代码太长就不贴了），简单说来</p>
+<ul>
+<li>将Module依赖的Module进行递归注册</li>
+<li>将Module中定义的序列化器和反序列化器注册到ObjectMapper</li>
+</ul>
+<p>当然，能够自定义的，肯定不止序列化器，看com.fasterxml.jackson.databind.Module.SetupContext</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211013210926397.png" alt="image-20211013210926397"></p>
+<p>可以看到，它提供了多种配置能力，这些能力怎么用，后面可以单独开一篇文章介绍。</p>
+<ul>
+<li>可开启各种功能</li>
+<li>可添加各种序列化器、反序列化器</li>
+<li>可添加序列化和反序列化描述符</li>
+<li>添加类型解析器</li>
+<li>添加注解</li>
+<li>注册子类型（用于多态）</li>
+<li>混入</li>
+<li>命名策略</li>
+</ul>
+<h2 id="自定义Module"><a href="#自定义Module" class="headerlink" title="自定义Module"></a>自定义Module</h2><p>Jackson提供了SimpleModule，帮助我们在自定义类型module时简化开发，现在我们自定义一个Module。</p>
+<p>假设有一系列类型（这里就展示一个），比如</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">Operation2</span></span>(</span><br><span class="line">    <span class="keyword">val</span> id: <span class="built_in">Int</span>?</span><br><span class="line">)</span><br></pre></td></tr></table></figure>
+
+<p>现在希望Jackson支持它们，于是可以定义一个Module，它需要包含针对这些类型的序列化器，将这些序列化器包装进一个自定义Module，如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OperationSerializer</span> : <span class="type">StdSerializer</span>&lt;<span class="type">Operation2</span>&gt;</span>(Operation2::<span class="keyword">class</span>.java) &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">serialize</span><span class="params">(value: <span class="type">Operation2</span>?, gen: <span class="type">JsonGenerator</span>, provider: <span class="type">SerializerProvider</span>?)</span></span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (value == <span class="literal">null</span>) &#123;</span><br><span class="line">            gen.writeNull()</span><br><span class="line">            <span class="keyword">return</span></span><br><span class="line">        &#125;</span><br><span class="line">        gen.writeStartObject()</span><br><span class="line">        gen.writeNumberField(<span class="string">&quot;operationId&quot;</span>, value.id!!)</span><br><span class="line">        gen.writeEndObject()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">OperationModule</span> : <span class="type">SimpleModule</span></span>() &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">init</span> &#123;</span><br><span class="line">        addSerializer(OperationSerializer())</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">getModuleName</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>::<span class="keyword">class</span>.qualifiedName.toString()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>然后，在使用时就可以注册并使用了</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> objectMapper = ObjectMapper().registerModule(OperationModule())</span><br><span class="line">    println(objectMapper.writeValueAsString(Operation2(<span class="number">1</span>)))</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出如下</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&#123;<span class="string">&quot;operationId&quot;</span>:1&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="与Kotlin序列化对比"><a href="#与Kotlin序列化对比" class="headerlink" title="与Kotlin序列化对比"></a>与Kotlin序列化对比</h2><p>相对而言，Kotlin序列化功能还非常年轻，有类似也有不同，将二者进行对比，有助于理解。</p>
+<table>
+<thead>
+<tr>
+<th>Jackson接口</th>
+<th>Kotlin接口</th>
+<th>用途</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JsonGenerator/JsonParser</td>
+<td>Encoder/Decoder</td>
+<td>底层接口，负责将支持的基本类型编码到流中</td>
+</tr>
+<tr>
+<td>JsonSerializer/JsonDeserializer</td>
+<td>KSerializer</td>
+<td>序列化器/反序列化器，负责将具有结构的对象，转换为基本类型</td>
+</tr>
+<tr>
+<td>ObjectCodec/ObjectMapper</td>
+<td>SerialFormat/Json</td>
+<td>编解码器，略有不同，不过都是对用户隐藏了实现，暴露简单接口</td>
+</tr>
+<tr>
+<td>TreeNode</td>
+<td>JsonElement</td>
+<td>树抽象模型，二者都有，不过Jackson的更加强大</td>
+</tr>
+<tr>
+<td>Module</td>
+<td>serializerModule</td>
+<td>功能完全不一样，但思想类似，都是维护一堆上下文对象。<br />区别在于，前者功能更多；后者只有上下文和多态的声明</td>
+</tr>
+</tbody></table>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>初以为Jackson，区区一Json序列化库，能复杂到哪里去；看了官方手册，不知道是它写的乱，还是我悟性不好，看半天反正不知道在讲啥；后来耐着性子看，并尝试了不少方式，发现用起来还挺简单，模型上又和Kotlin序列化有几分类似，原理上也没那么难懂嘛；多翻一些源码，发现这个历史悠久的库果然不是泛泛之辈，功能太多了，眼花缭乱的，很多功能单拎出来都能写一篇长文，也不怪得网络上那么多Jackson专栏。所以它也不是那种一两天就能搞定的库，更不是一篇文章能说清楚的。</p>
+<p>本文我们简要介绍了Jackson的基础能力、基本原理、基本模型等。抓住Jackson主干是主要目的，细枝末节，更加高级偏僻的功能，留待日后探索。通过本文，你应该知道了</p>
+<ul>
+<li>Jackson由core提供核心能力，data-bind提供各种功能，annotations提供注解支持</li>
+<li>Jackson的常用场景使用方法</li>
+<li>Jackson和核心原理，Module的工作原理</li>
+</ul>
+<h2 id="What’s-Next"><a href="#What’s-Next" class="headerlink" title="What’s Next"></a>What’s Next</h2><p>有了本文的基础，我们就能更加流畅地去看其他文章了，<a target="_blank" rel="noopener" href="https://github.com/FasterXML/jackson#tutorials">官网推荐的那些</a>就很好</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211014120133817.png" alt="image-20211014120133817"></p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%BA%8F%E5%88%97%E5%8C%96/" rel="tag"># 序列化</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/10/09/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%BA%8C%20-%20Kotlin-xu-lie-hua-tan-suo-zhi-er-kotlin/" rel="prev" title="序列化探索之二 - Kotlin">
+      <i class="fa fa-chevron-left"></i> 序列化探索之二 - Kotlin
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/10/15/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E5%9B%9B%20-%20Fastjson-xu-lie-hua-tan-suo-zhi-fastjson/" rel="next" title="序列化探索之四 - Fastjson">
+      序列化探索之四 - Fastjson <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E6%9C%AC%E7%BB%84%E6%88%90"><span class="nav-number">1.</span> <span class="nav-text">基本组成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%83%BD%E5%8A%9B"><span class="nav-number">2.</span> <span class="nav-text">能力</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%81%E5%BC%8FAPI"><span class="nav-number">2.1.</span> <span class="nav-text">流式API</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B3%A8%E8%A7%A3"><span class="nav-number">2.2.</span> <span class="nav-text">注解</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TreeModel"><span class="nav-number">2.3.</span> <span class="nav-text">TreeModel</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7"><span class="nav-number">2.4.</span> <span class="nav-text">可扩展性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="nav-number">3.</span> <span class="nav-text">工作原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B5%81%E5%BC%8FAPI-1"><span class="nav-number">3.1.</span> <span class="nav-text">流式API</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ObjectMapper"><span class="nav-number">3.2.</span> <span class="nav-text">ObjectMapper</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%AD%A3%E7%A1%AE%E8%AE%A4%E8%AF%86ObjectMapper"><span class="nav-number">3.3.</span> <span class="nav-text">正确认识ObjectMapper</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#module"><span class="nav-number">3.4.</span> <span class="nav-text">module</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%87%AA%E5%AE%9A%E4%B9%89Module"><span class="nav-number">4.</span> <span class="nav-text">自定义Module</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8EKotlin%E5%BA%8F%E5%88%97%E5%8C%96%E5%AF%B9%E6%AF%94"><span class="nav-number">5.</span> <span class="nav-text">与Kotlin序列化对比</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#What%E2%80%99s-Next"><span class="nav-number">7.</span> <span class="nav-text">What’s Next</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>

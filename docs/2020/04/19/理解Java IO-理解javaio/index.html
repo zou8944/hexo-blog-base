@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="BIO、NIO、NIO2、AIO、Reactor、Proactor、EventLoop、Linux五种IO模型 上述术语和概念，相信大多数人都知道或部分知道，但都无法完整表达他们之间的意思，处于模棱两可的状态。我也不例外，而触发写这篇文章的契机，是有人问起我Vertx高性能的原因是什么时？我不假思索地回答NIO，因为在我的印象中，Vertx基于Netty实现，Netty又是对NIO的包装。但仔细想">
+<meta property="og:type" content="article">
+<meta property="og:title" content="理解Java IO">
+<meta property="og:url" content="https://zou8944.com/2020/04/19/%E7%90%86%E8%A7%A3Java%20IO-%E7%90%86%E8%A7%A3javaio/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="BIO、NIO、NIO2、AIO、Reactor、Proactor、EventLoop、Linux五种IO模型 上述术语和概念，相信大多数人都知道或部分知道，但都无法完整表达他们之间的意思，处于模棱两可的状态。我也不例外，而触发写这篇文章的契机，是有人问起我Vertx高性能的原因是什么时？我不假思索地回答NIO，因为在我的印象中，Vertx基于Netty实现，Netty又是对NIO的包装。但仔细想">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419135156288.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419135442933.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419135918743.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419135944879.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419140010012.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419140042409.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419140100782.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419140118975.png">
+<meta property="og:image" content="https://camo.githubusercontent.com/e003cc17f60eb161197e22302dca51c5ab63d569/68747470733a2f2f75706c6f61642e77696b696d656469612e6f72672f77696b6970656469612f636f6d6d6f6e732f362f36312f50726f6163746f722e5653445f53657175656e63654469616772616d2e706e67">
+<meta property="article:published_time" content="2020-04-19T04:34:51.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:21:39.480Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="NIO">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419135156288.png">
+
+<link rel="canonical" href="https://zou8944.com/2020/04/19/%E7%90%86%E8%A7%A3Java%20IO-%E7%90%86%E8%A7%A3javaio/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>理解Java IO | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">78</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2020/04/19/%E7%90%86%E8%A7%A3Java%20IO-%E7%90%86%E8%A7%A3javaio/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          理解Java IO
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-04-19 12:34:51" itemprop="dateCreated datePublished" datetime="2020-04-19T12:34:51+08:00">2020-04-19</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-02-16 23:21:39" itemprop="dateModified" datetime="2021-02-16T23:21:39+08:00">2021-02-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/04/19/%E7%90%86%E8%A7%A3Java%20IO-%E7%90%86%E8%A7%A3javaio/" class="post-meta-item leancloud_visitors" data-flag-title="理解Java IO" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>BIO、NIO、NIO2、AIO、Reactor、Proactor、EventLoop、Linux五种IO模型</p>
+<p>上述术语和概念，相信大多数人都知道或部分知道，但都无法完整表达他们之间的意思，处于模棱两可的状态。我也不例外，而触发写这篇文章的契机，是有人问起我Vertx高性能的原因是什么时？我不假思索地回答NIO，因为在我的印象中，Vertx基于Netty实现，Netty又是对NIO的包装。但仔细想想，用NIO就能高性能吗？NIO和Vertx的EventLoop有什么关系呢？和Reactor又是什么关系呢？——我不禁开始思考人生。</p>
+<p>下面就开始探索吧</p>
+<span id="more"></span>
+
+<h1 id="疑问"><a href="#疑问" class="headerlink" title="疑问"></a>疑问</h1><p>带着疑问探索是最有效手段。本文专注于搞懂如下几个问题</p>
+<ol>
+<li>Java中的各种IO概念是怎么回事？</li>
+<li>Linux五种IO模型，以及他们和Java IO的关系？</li>
+<li>Netty和NIO？</li>
+<li>Java IO和Reactor设计模式的关系？</li>
+</ol>
+<h1 id="Java的IO"><a href="#Java的IO" class="headerlink" title="Java的IO"></a>Java的IO</h1><p>截止目前，Java的IO有三种：BIO、NIO、NIO2(AIO)，他们被引入的时间点如下。</p>
+<ul>
+<li>JDK 1.0 - JDK1.3 Java都只有BIO，很多Unix的概念或接口在其库中都没有体现。</li>
+<li>2002年发布JDK 1.4，增加java.nio包，主要引入了支持异步操作的各种核心类库：管道、缓冲区、Channel、Selector等。</li>
+<li>2011年发布JDK 1.7，对原来的NIO包进行了升级，称为NIO2.0，主要提供了AIO功能。</li>
+</ul>
+<h2 id="BIO"><a href="#BIO" class="headerlink" title="BIO"></a>BIO</h2><p>即传统的Socket API，很多Java程序员的第一个网络程序就是BIO。BIO的问题是数据的读取会阻塞线程，提升性能的方式是引入多线程，而系统能够启动线程的数量有限，不可避免会引入线程池，而线程池又会造成并发处理请求不够多，从而限制吞吐量。且线程切换费时费力，浪费CPU资源。因此在处理高并发网络请求时BIO是不堪重任的。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">const</span> <span class="keyword">val</span> PORT = <span class="number">9090</span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">val</span> serverSocket = ServerSocket(PORT)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">    <span class="keyword">val</span> socket = serverSocket.accept()</span><br><span class="line">    <span class="keyword">val</span> inputStream = socket.getInputStream()</span><br><span class="line">    <span class="keyword">val</span> outputStream = socket.getOutputStream()</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> reader = BufferedReader(InputStreamReader(inputStream))</span><br><span class="line">    <span class="keyword">val</span> writer = PrintWriter(OutputStreamWriter(outputStream))</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> line = reader.readLine()</span><br><span class="line">    writer.println(line)</span><br><span class="line">    writer.flush()</span><br><span class="line"></span><br><span class="line">    writer.close()</span><br><span class="line">    socket.close()</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="NIO"><a href="#NIO" class="headerlink" title="NIO"></a>NIO</h2><p>Java NIO引入了多路选择器Selector、通道Channel、缓存区ByteBuffer的概念。通过轮询选择器的方式获取准备好的Channel，数据读取均采用ByteBuffer。</p>
+<p>在使用上我们只需要在多路选择器上注册感兴趣的Channel，然后不断轮训该选择器，每当通道就绪时，我们再处理对应的事件，可响应的事件如下</p>
+<ul>
+<li><p>ACCEPT</p>
+<p>服务端事件，表示有客户端连接</p>
+</li>
+<li><p>CONNCET</p>
+<p>客户端时间，表示已经连接到服务端</p>
+</li>
+<li><p>READ</p>
+<p>系统已将数据读取到缓冲区，触发该事件，我们从缓冲区读取数据即可。</p>
+</li>
+<li><p>WRITE</p>
+<p>系统检查缓冲区是否可写，如果可写，触发该事件，我们向缓冲区写入即可。</p>
+</li>
+</ul>
+<p>典型的示例如下。与BIO相比，NIO为我们节省了阻塞等待读取数据的时间，数据不再是我们阻塞等待，而是交给系统读取到执行位置(缓冲区)，我们再直接从缓冲区读取。</p>
+<p>NIO的缺点是使用过于复杂，且存在空轮训的bug。</p>
+<p>注意NIO != 高性能，当连接数小于1000、并发程度不高时，NIO并没有显著的性能优势。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 这里使用了两个Selector，其实也完全可以仅仅使用一个Selector进行轮训</span></span><br><span class="line"><span class="comment"> * JDK 的 NIO 底层由 epoll 实现，该实现饱受诟病的空轮询 bug 会导致 cpu 飙升 100%</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="comment">// 用于轮询是否有新的连接，当产生新的连接时，将新连接绑定在client selector上进行数据轮训</span></span><br><span class="line">  <span class="keyword">val</span> serverSelector = Selector.<span class="keyword">open</span>()</span><br><span class="line">  <span class="comment">// 轮训连接是否有数据可读</span></span><br><span class="line">  <span class="keyword">val</span> clientSelector = Selector.<span class="keyword">open</span>()</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 处理连接</span></span><br><span class="line">  Thread &#123;</span><br><span class="line">    <span class="keyword">val</span> serverChannel = ServerSocketChannel.<span class="keyword">open</span>()</span><br><span class="line">    serverChannel.socket().bind(InetSocketAddress(<span class="number">9090</span>))</span><br><span class="line">    serverChannel.configureBlocking(<span class="literal">false</span>)</span><br><span class="line">    serverChannel.register(serverSelector, SelectionKey.OP_ACCEPT)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (serverSelector.select(<span class="number">1</span>) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">val</span> it = serverSelector.selectedKeys().iterator()</span><br><span class="line">        <span class="keyword">while</span> (it.hasNext()) &#123;</span><br><span class="line">          <span class="keyword">val</span> key = it.next()</span><br><span class="line">          <span class="keyword">if</span> (key.isAcceptable) &#123;</span><br><span class="line">            <span class="keyword">val</span> clientChannel = (key.channel() <span class="keyword">as</span> ServerSocketChannel).accept()</span><br><span class="line">            clientChannel.configureBlocking(<span class="literal">false</span>)</span><br><span class="line">            clientChannel.register(clientSelector, SelectionKey.OP_READ)</span><br><span class="line">          &#125;</span><br><span class="line">          it.remove()</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;.start()</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 处理数据</span></span><br><span class="line">  Thread &#123;</span><br><span class="line">    <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">      <span class="keyword">if</span> (clientSelector.select(<span class="number">1</span>) &gt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">val</span> it = clientSelector.selectedKeys().iterator()</span><br><span class="line">        <span class="keyword">while</span> (it.hasNext()) &#123;</span><br><span class="line">          <span class="keyword">val</span> key = it.next()</span><br><span class="line">          <span class="keyword">if</span> (key.isReadable) &#123;</span><br><span class="line">            <span class="keyword">val</span> clientChannel = key.channel() <span class="keyword">as</span> SocketChannel</span><br><span class="line">            <span class="keyword">val</span> byteBuffer = ByteBuffer.allocate(<span class="number">1024</span>)</span><br><span class="line">            clientChannel.read(byteBuffer)</span><br><span class="line">            byteBuffer.flip()</span><br><span class="line">            clientChannel.write(byteBuffer)</span><br><span class="line">            byteBuffer.clear()</span><br><span class="line">            clientChannel.close()</span><br><span class="line">          &#125;</span><br><span class="line">          it.remove()</span><br><span class="line">        &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;.start()</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="NIO2-AIO"><a href="#NIO2-AIO" class="headerlink" title="NIO2 (AIO)"></a>NIO2 (AIO)</h2><p>NIO2是对NIO的一次升级，但因其主要引入了异步调用IO——AIO，因此也把NIO2称为AIO。对熟悉异步编程的同学，AIO的编程方式是非常自然的，它只需要开启服务器并注册数据处理器即可，系统负责读取数据并调用处理器，整个过程异步。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">val</span> server = AsynchronousServerSocketChannel.<span class="keyword">open</span>().bind(InetSocketAddress(<span class="number">9090</span>))</span><br><span class="line"></span><br><span class="line">  <span class="keyword">val</span> obj: CompletionHandler&lt;AsynchronousSocketChannel, Any?&gt; = <span class="keyword">object</span> : CompletionHandler&lt;AsynchronousSocketChannel, Any?&gt; &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">completed</span><span class="params">(channel: <span class="type">AsynchronousSocketChannel</span>, attachment: <span class="type">Any</span>?)</span></span> &#123;</span><br><span class="line"></span><br><span class="line">      server.accept(<span class="literal">null</span> <span class="keyword">as</span> Any?, <span class="keyword">this</span>)</span><br><span class="line"></span><br><span class="line">      <span class="keyword">val</span> buffer = ByteBuffer.allocate(<span class="number">1024</span>)</span><br><span class="line">      channel.read(buffer).<span class="keyword">get</span>(<span class="number">100</span>, TimeUnit.MILLISECONDS)</span><br><span class="line">      buffer.flip()</span><br><span class="line">      channel.write(buffer)</span><br><span class="line">      channel.close()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">failed</span><span class="params">(exc: <span class="type">Throwable</span>?, attachment: <span class="type">Any</span>?)</span></span> &#123;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  server.accept(<span class="literal">null</span> <span class="keyword">as</span> Any?, obj)</span><br><span class="line"></span><br><span class="line">  Thread.sleep(<span class="number">1000000000</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="疑问-1"><a href="#疑问-1" class="headerlink" title="疑问"></a>疑问</h2><p>如果只是学习Java的三种IO API，肯定会有很多疑问</p>
+<ul>
+<li>为什么会有这三种API？</li>
+<li>如果我们不阻塞等待数据，而让系统做，那系统就不会阻塞CPU了吗？还有，系统是谁？JVM还是宿主机（Linux、Window server）</li>
+</ul>
+<p>这里可以简要回答</p>
+<ul>
+<li>这三种API分别对应Linux的三种IO模型，Java的IO只是对操作系统IO模型的封装。提供这三种API可以仅看成是提供了三种产品，供用户选择。起初Java只提供了BIO，因此在高并发网络编程领域无法站住，提供了NIO后就提供了高并发网络编程的支持。</li>
+<li>系统不会阻塞CPU，因为这是IO操作。以网络IO为例，数据读取时，网卡负责接收信号并解析成数据，然后转移到系统内核中，这个过程可以由硬件完成，而BIO读取的等待，就是在等待网卡接收信号并将数据导入系统内核的时间；NIO将这一步等待从用户程序中去除，但用户依然负责从系统内核到用户数据区的数据转移；而AIO中，用户连这一步转义都不需要，系统直接将数据处理到一个内核和用户数据共享的区域，通知用户程序处理即可。</li>
+</ul>
+<p>要进一步了解，就需要对Linux的网络编程方式及常见IO模型进行了解</p>
+<h1 id="Linux的IO模型"><a href="#Linux的IO模型" class="headerlink" title="Linux的IO模型"></a>Linux的IO模型</h1><h2 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h2><p>Linux中网络程序设计完全靠套接字接受和发送消息，Socket是一个接口，它在系统中的位置如下。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419135156288.png" alt="image-20200419135156288"></p>
+<p>即意味着，只要在Linux系统上运行的网络程序，其在操作系统层面的操作都是需要通过Socket进行的。通过scoket进行通讯的服务端和客户端调用流程如下，注意其read()、write()等都是Linux提供的方法。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419135442933.png" alt="image-20200419135442933"></p>
+<p>Linux/UNIX系统中，有如下五种IO模式</p>
+<ul>
+<li>阻塞I/O</li>
+<li>非阻塞I/O</li>
+<li>I/O多路复用</li>
+<li>信号驱动I/O（SIGIO）</li>
+<li>异步I/O</li>
+</ul>
+<p>对于一个套接字的输入操作，总的来说一般分为两步。这是大前提，五种IO模式都是在这上面做文章的。</p>
+<ul>
+<li>等待数据从网络到达本地，当数据到达后，系统将数据从网络层拷贝到内核的缓存</li>
+<li>将数据从内核的缓存拷贝到应用程序的数据区中</li>
+</ul>
+<h2 id="阻塞I-O"><a href="#阻塞I-O" class="headerlink" title="阻塞I/O"></a>阻塞I/O</h2><p>缺省模式，一个socket建立后自动处于阻塞I/O模式。如下图，阻塞I/O大致流程为</p>
+<ul>
+<li>调用recvfrom发起数据接收</li>
+<li>内核尚未收到数据，于是阻塞等待</li>
+<li>内核收到数据（数据到了内核缓存），将数据从内核缓存拷贝到应用程序数据区</li>
+<li>拷贝完成，recvfrom返回，应用程序处理数据</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419135918743.png" alt="image-20200419135918743"></p>
+<h2 id="非阻塞I-O"><a href="#非阻塞I-O" class="headerlink" title="非阻塞I/O"></a>非阻塞I/O</h2><p>设置为此模式后，相当于告诉内核：当我请求的IO不能马上返回时，不要让我的进程进入休眠，而是返回一个错误给我。而为了能够及时收到数据，应用程序需要循环调用recevfrom来测试一个文件描述符（创建socket时生成）是否有数据可读。这称作polling。应用程序不停滴polling是一个浪费CPU的操作，因此这种模式不是很普遍。</p>
+<ul>
+<li>调用recvfrom发起数据接收</li>
+<li>内核尚未收到数据，响应应用程序EWOULDBLOCK错误，而内核自己则继续等待数据</li>
+<li>多次调用recvfrom询问内核数据是否准备好。</li>
+<li>当数据终于准备好时，内核将数据拷贝到应用程序数据区，返回recvfrom</li>
+<li>应用程序处理数据</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419135944879.png" alt="image-20200419135944879"></p>
+<h2 id="I-O多路复用"><a href="#I-O多路复用" class="headerlink" title="I/O多路复用"></a>I/O多路复用</h2><p>此模式下，在开始接收数据之前，我们不是调用recvfrom函数，而是调用select函数或poll函数，当他们有响应时，再调用recvfrom接收数据，调用select函数时也会阻塞，但它的优点在于，能够同时等待多个文件描述符，只要有一个准备好了，select就会返回。I/O多路复用经常被使用。</p>
+<ul>
+<li>调用select，阻塞等待直到有文件描述符的数据就绪</li>
+<li>有就绪的文件描述符，select返回，应用程序调用recvfrom接收数据</li>
+<li>内核将数据拷贝到应用程序数据区，返回recvfrom</li>
+<li>应用程序处理数据</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419140010012.png" alt="image-20200419140010012"></p>
+<ul>
+<li><p>关于select</p>
+<p>select函数可以同时监视多个套接字，它能够告诉你哪一个套接字已经可以读取数据、哪一个套接字已经可以写入数据、哪一个套接字出现了错误等。</p>
+</li>
+<li><p>epoll</p>
+<p>select和poll的使用有较大的局限性，无法满足并发量特别高的情况，epoll是对他们的增强。增强的原理这里不深究。</p>
+</li>
+</ul>
+<h2 id="信号驱动I-O"><a href="#信号驱动I-O" class="headerlink" title="信号驱动I/O"></a>信号驱动I/O</h2><p>该模式将内核等待数据这段时间变主动为被动，在数据就绪时使用SIGIO（或SIGPOLL）信号通知我们。</p>
+<p>使用方法上，让套接字工作在信号驱动I/O工作模式中，并安装一个SIGIO处理函数。这样在内核等待数据期间我们就是完全异步的情况了。只需要在SIGIO处理函数中接收数据处理即可。</p>
+<ul>
+<li>创建套接字，允许工作在信号驱动模式，并注册SIGIO信号处理函数</li>
+<li>内核数据就绪后，响应SIGIO信号</li>
+<li>事先注册的SIGIO处理函数中调用recvfrom函数</li>
+<li>内核将数据拷贝到应用程序数据区，返回recvfrom</li>
+<li>应用程序处理数据</li>
+</ul>
+<p>信号驱动I/O的编程有一个最大的难点是除了数据就绪外，还有很多触发SIGIO信号的场景，区分这些场景是难点。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419140042409.png" alt="image-20200419140042409"></p>
+<h2 id="异步I-O"><a href="#异步I-O" class="headerlink" title="异步I/O"></a>异步I/O</h2><p>异步I/O模式下，我们只需要告诉内核我们要进行I/O操作，然后内核马上返回，具体的I/O操作和数据拷贝全部由内核完成，完成后再通知我们的应用程序。与信号驱动I/O所不同的是，这次不仅在等待数据阶段是异步的，连内核数据拷贝都是异步的。</p>
+<ul>
+<li>创建套接字，工作在异步I/O模式，指定套接字文件描述符、数据需要拷贝到的缓冲区、回调函数等，不需要等待，马上返回</li>
+<li>内核负责等待数据病将数据从内核缓冲区拷贝到应用程序数据区</li>
+<li>内核拷贝结束后，回调第一步注册的函数，完成应用程序的数据处理</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419140100782.png" alt="image-20200419140100782"></p>
+<h2 id="五种模式总结"><a href="#五种模式总结" class="headerlink" title="五种模式总结"></a>五种模式总结</h2><p>前四种模式都有阻塞的地方——将数据从内核拷贝到应用程序数据区，只有第五种是完全异步的。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/%E7%90%86%E8%A7%A3Java-IO/image-20200419140118975.png" alt="image-20200419140118975"></p>
+<h2 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h2><p>Java的IO可以看做是对宿主系统的IO模型的封装，BIO对应了阻塞IO模型、NIO对应IO多路复用、AIO则对应了异步IO模型。通过了解Linux的五种IO模型，我们学习了Java的IO从哪里来及基本原理，算是解决了底层原理这个疑问。接下来我们看看Java IO的使用。</p>
+<h1 id="Netty和NIO"><a href="#Netty和NIO" class="headerlink" title="Netty和NIO"></a>Netty和NIO</h1><p>Netty是Java非常流行的网络库，基于Java NIO实现，Vertx本身包括众多异步库都基于Netty实现，这里进行简单了解。</p>
+<h2 id="为什么使用Netty"><a href="#为什么使用Netty" class="headerlink" title="为什么使用Netty"></a>为什么使用Netty</h2><p>尽管Java已经提供了NIO类库，但实际的网络编程环境非常复杂，NIO并没有完全屏蔽平台差异，它仍然是基于各个操作系统的I/O系统实现的，差异仍然存在。使用NIO做网络编程构建事件驱动模型并不容易，陷阱重重。要开发出一个稳定可用的网络程序使用NIO的周期将会非常长，而Netty封装了各种IO实现，提供简单的API，工作稳定，适用于各种场景。</p>
+<p>顺便一提，Java的NIO库存在空轮询的bug：</p>
+<p>原本select()方法应该是阻塞的，但JDK的select()方法在一些情况下会在没有事件时返回。造成在死循环中空转，使得CPU达到100%的情况。该bug到2013年才修复</p>
+<p>Netty中的解决方式是在短时间内检测到超过一定数量的select()调用，就判定为空转。通过创建新的Selector并将原Selector中的Channel注册到新的Selector达到消除这个问题的目的。</p>
+<h2 id="为什么不用AIO"><a href="#为什么不用AIO" class="headerlink" title="为什么不用AIO"></a>为什么不用AIO</h2><p>通过上面的模型讲解，看起来AIO比NIO在模型上要更加先进，那为什么Netty不基于AIO实现呢？从Netty的<a target="_blank" rel="noopener" href="https://github.com/netty/netty/issues/2515">这个Issue</a>看，总结起来有几点</p>
+<ul>
+<li>Netty主要注重Linux，而在Linux上，AIO的底层实现仍然采用EPOLL，性能上没有明显优势，而且既然都采用EPOLL，还不如直接使用NIO方便自定义优化</li>
+<li>Netty的线程模型，使用AIO看起来会非常杂乱</li>
+<li>AIO在使用前必须预先分配缓冲区，高并发连接时不好优化</li>
+</ul>
+<p>当然上面几点只是我随他人附和，并没有真正理解，如有需要，可以再详细了解并新开一篇博文描述。</p>
+<h2 id="Netty如何使用NIO"><a href="#Netty如何使用NIO" class="headerlink" title="Netty如何使用NIO"></a>Netty如何使用NIO</h2><p>通过不同的配置，Netty能够支持Reactor单线程模式、Reactor多线程模式、主从Reactor多线程模式</p>
+<p>这里暂时没有必要去纠结单线程还是多线程，只需要关心Reactor模式。在Netty中，它正是基于NIO的多路复用实现的。</p>
+<p>Netty的核心NioEventLoop就是基于NIO的多路复用实现的，除了NIO外，它还兼顾处理两个任务</p>
+<ul>
+<li>用户通过NioEventLoop.execute方法注册的事件放在消息队列中，由I/O线程执行</li>
+<li>用户通过NioEventLoop.schedule方法注册的定时任务</li>
+</ul>
+<p>他们的简单原理就是在一个死循环内反复轮询Selector、消息队列、定时任务。即，Netty基于NIO构建了自己的EventLoop。</p>
+<h2 id="小结-1"><a href="#小结-1" class="headerlink" title="小结"></a>小结</h2><p>这里仅从概念上简单介绍了Netty，没有一点深入了解，其目的仅在于让我们了解NIO和Netty是如何结合的。</p>
+<h1 id="EventLoop"><a href="#EventLoop" class="headerlink" title="EventLoop"></a>EventLoop</h1><p>Event Loop是一个程序结构，用于等待和发送消息和事件。</p>
+<p>其实，简单地理解EventLoop，就是一个反复定时轮询检查事件队列，并在事件发生时将事件分发到对应的handler中的一个工具。算是一种编程模型。</p>
+<p>维基百科对EventLoop的讲解可以说是非常清楚的：</p>
+<p>事件循环是一种等待和分发程序中事件或消息的编程结构或设计模式。实际工作上，它通过向事件提供程序（如消息队列、NIO的Selector）发出请求以获取事件，然后调用对应的事件处理程序进行工作。因此它有时也被称为消息分发程序。</p>
+<p>事件循环可以和Reactor模式相结合，这就是我们常用的NIO编程。</p>
+<p>从原理上说，我们可以自己提供事件消息队列，但一般来说这个消息队列是由对应的运行环境(操作系统)提供的，比如Java的NIO，这样可以将I/O放到系统中进行，避免阻塞工作线程。</p>
+<p>事件循环是基于消息传输的系统的典型技术特征。</p>
+<h2 id="EventLoop和NIO的关系"><a href="#EventLoop和NIO的关系" class="headerlink" title="EventLoop和NIO的关系"></a>EventLoop和NIO的关系</h2><p>NIO的Selector对应EventLoop模型中的事件提供程序，即事件源，即可以基于NIO构建一个EventLoop程序。如Netty的EventLoop模型，其事件源包括了NIO Selector，也包括了自定义任务队列和定时任务队列。</p>
+<h1 id="Reactor-Proactor"><a href="#Reactor-Proactor" class="headerlink" title="Reactor Proactor"></a>Reactor Proactor</h1><h2 id="Reactor"><a href="#Reactor" class="headerlink" title="Reactor"></a>Reactor</h2><p>Reactor是一种设计模式，是一种事件处理模式。IO多路复用就是Reactor模式的一种实现。</p>
+<p>它要求存在一个处理结构，接收并发的多个输入请求，并将这些请求同步分发到关联的请求处理handler的情况。</p>
+<p>一个反应器的基本结构如下</p>
+<ul>
+<li><p>资源</p>
+<p>可以是向系统发送消息的请求、也可以是从系统获取消息的请求</p>
+</li>
+<li><p>同步的事件复用器。</p>
+<p>用一个EventLoop阻塞地等待所有资源（即请求），比如I/O多路复用模型中的epoll，当资源准备好时EventLoop将资源发送给调度器</p>
+</li>
+<li><p>Dispatcher分发器</p>
+<p>用于管理请求处理器的注册和注销。同时将从复用器中得到的资源分发给对应的请求处理器</p>
+</li>
+<li><p>请求处理器</p>
+<p>定义了资源的处理逻辑</p>
+</li>
+</ul>
+<p>所有的Reacto系统在定义上将都是单线程的，但改良后的可以是多线程的，比如Netty中就对Reactor进行了多线程改进，使得能够发挥最大性能。</p>
+<p>实际实现中的Reactor模型常常被用来解决IO并发问题，最常见的就是I/O多路复用。死循环阻塞等待select()就是EventLoop，有事件时调用对应于分发器。</p>
+<p>在I/O上，这样能够提高I/O高并发的效率；在编程模型上，它将事件的处理逻辑完全分开。</p>
+<p>当然，Reactor并不是只能用于I/O，就像Netty在EventLoop加入用户自定义的task和定时task、Vertx基于EventLoop构建自己的神经系统一样，它也可以用来处理事件请求和处理分离的模式，在运行效率和编程效率上都有所提升。</p>
+<h2 id="Proactor"><a href="#Proactor" class="headerlink" title="Proactor"></a>Proactor</h2><p>Proactor也是用于事件处理的设计模式，它可以被看做是同步的Reactor模式的变体。它将需要长时间运行的操作异步执行，在执行完后调用对应的处理器进行结果处理即可。异步I/O就是Proactor模式的一种实现。</p>
+<p>模型上的结构和工作流程如下</p>
+<p><a target="_blank" rel="noopener" href="https://camo.githubusercontent.com/e003cc17f60eb161197e22302dca51c5ab63d569/68747470733a2f2f75706c6f61642e77696b696d656469612e6f72672f77696b6970656469612f636f6d6d6f6e732f362f36312f50726f6163746f722e5653445f53657175656e63654469616772616d2e706e67"><img src="https://camo.githubusercontent.com/e003cc17f60eb161197e22302dca51c5ab63d569/68747470733a2f2f75706c6f61642e77696b696d656469612e6f72672f77696b6970656469612f636f6d6d6f6e732f362f36312f50726f6163746f722e5653445f53657175656e63654469616772616d2e706e67" alt="Proactor.VSD_SequenceDiagram.png (577×325)"></a></p>
+<p>在实际应用中，模型中的Asynchronous Operation Processor、Asynchronous Operation、Completion Dispatcher一般依赖于操作系统完成，我们负责发起异步调用和注册完成处理函数。比如LInux的异步IO模型。我们能做的只是发起I/O请求、指明数据要存放的位置、注册处理函数，待系统异步处理完I/O请求后，调用注册的处理函数。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>本文以Java IO为切入点，介绍了其在Linux上对应IO模型，使得大家了解了底层工作原理；再以NIO为基础，介绍了流行的网络框架——Netty；由Netty中的一些概念，介绍了EventLoop、Reactor、Proactor三种编程模型和设计模式。使得大家对这一系列概念的联系有了较为完整的认识。</p>
+<p>需要注意的是，Java的IO针对不同的系统有不同的具体实现，实际使用过程中存在差异，本文仅介绍了其在Linux中对应的模型，在其它系统中可能会有所不同，这点需要了解。</p>
+<p>最后，本文草稿可以在<a target="_blank" rel="noopener" href="https://github.com/zou8944/Asynchronous">这里</a>找到，可以看到资料收集的过程。</p>
+<p>不足之处，还请评论指出，谢谢。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><ol>
+<li>Linux网络编程 - 第六章（书籍）</li>
+<li>Netty权威指南 - 第一、二、十八章（书籍）</li>
+<li><a target="_blank" rel="noopener" href="https://github.com/Snailclimb/JavaGuide/blob/master/docs/java/BIO-NIO-AIO.md#1-bio-blocking-io">Java NIO BIO AIO简单总结 - 佚名</a></li>
+<li><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/23488863">Java NIO浅析 - 美团技术团队</a></li>
+<li><a target="_blank" rel="noopener" href="https://www.ruanyifeng.com/blog/2013/10/event_loop.html">什么是EventLoop - 阮一峰</a></li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reactor_pattern">Reactor pattern - Wikipedia</a></li>
+<li><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Proactor_pattern">Proactor pattern - Wikipedia</a></li>
+</ol>
+<h1 id="博文预告"><a href="#博文预告" class="headerlink" title="博文预告"></a>博文预告</h1><p>《Vertx Core源码解析 - 1》</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/NIO/" rel="tag"># NIO</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/04/11/java%E6%97%B6%E9%97%B4%20-%20java.time%E4%BB%8B%E7%BB%8D-java%E6%97%B6%E9%97%B4-javatime%E4%BB%8B%E7%BB%8D/" rel="prev" title="java时间 - java.time介绍">
+      <i class="fa fa-chevron-left"></i> java时间 - java.time介绍
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/05/25/Kotlin%E5%8D%8F%E7%A8%8B-%E4%BD%BF%E7%94%A8%E7%AF%87-kotlin%E5%8D%8F%E7%A8%8B-%E4%BD%BF%E7%94%A8%E7%AF%87md/" rel="next" title="Kotlin协程-使用篇">
+      Kotlin协程-使用篇 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%96%91%E9%97%AE"><span class="nav-number">1.</span> <span class="nav-text">疑问</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Java%E7%9A%84IO"><span class="nav-number">2.</span> <span class="nav-text">Java的IO</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#BIO"><span class="nav-number">2.1.</span> <span class="nav-text">BIO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NIO"><span class="nav-number">2.2.</span> <span class="nav-text">NIO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#NIO2-AIO"><span class="nav-number">2.3.</span> <span class="nav-text">NIO2 (AIO)</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%96%91%E9%97%AE-1"><span class="nav-number">2.4.</span> <span class="nav-text">疑问</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Linux%E7%9A%84IO%E6%A8%A1%E5%9E%8B"><span class="nav-number">3.</span> <span class="nav-text">Linux的IO模型</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80"><span class="nav-number">3.1.</span> <span class="nav-text">基础</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%BB%E5%A1%9EI-O"><span class="nav-number">3.2.</span> <span class="nav-text">阻塞I&#x2F;O</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%9E%E9%98%BB%E5%A1%9EI-O"><span class="nav-number">3.3.</span> <span class="nav-text">非阻塞I&#x2F;O</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#I-O%E5%A4%9A%E8%B7%AF%E5%A4%8D%E7%94%A8"><span class="nav-number">3.4.</span> <span class="nav-text">I&#x2F;O多路复用</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%A1%E5%8F%B7%E9%A9%B1%E5%8A%A8I-O"><span class="nav-number">3.5.</span> <span class="nav-text">信号驱动I&#x2F;O</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BC%82%E6%AD%A5I-O"><span class="nav-number">3.6.</span> <span class="nav-text">异步I&#x2F;O</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%94%E7%A7%8D%E6%A8%A1%E5%BC%8F%E6%80%BB%E7%BB%93"><span class="nav-number">3.7.</span> <span class="nav-text">五种模式总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">3.8.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Netty%E5%92%8CNIO"><span class="nav-number">4.</span> <span class="nav-text">Netty和NIO</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%BD%BF%E7%94%A8Netty"><span class="nav-number">4.1.</span> <span class="nav-text">为什么使用Netty</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%94%A8AIO"><span class="nav-number">4.2.</span> <span class="nav-text">为什么不用AIO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Netty%E5%A6%82%E4%BD%95%E4%BD%BF%E7%94%A8NIO"><span class="nav-number">4.3.</span> <span class="nav-text">Netty如何使用NIO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93-1"><span class="nav-number">4.4.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#EventLoop"><span class="nav-number">5.</span> <span class="nav-text">EventLoop</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#EventLoop%E5%92%8CNIO%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">5.1.</span> <span class="nav-text">EventLoop和NIO的关系</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Reactor-Proactor"><span class="nav-number">6.</span> <span class="nav-text">Reactor Proactor</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#Reactor"><span class="nav-number">6.1.</span> <span class="nav-text">Reactor</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Proactor"><span class="nav-number">6.2.</span> <span class="nav-text">Proactor</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E8%B5%84%E6%96%99"><span class="nav-number">8.</span> <span class="nav-text">参考资料</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8D%9A%E6%96%87%E9%A2%84%E5%91%8A"><span class="nav-number">9.</span> <span class="nav-text">博文预告</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">78</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
