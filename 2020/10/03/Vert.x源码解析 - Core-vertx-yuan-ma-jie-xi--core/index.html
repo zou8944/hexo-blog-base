@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="希望通过本文的解析，让读者了解Vertx的关键部分的实现原理。对诸如如下问题有一个具象的认识。  Vertx实例的作用？一个应用是否只对应一个Vertx实例？ Verticle是一个怎样的存在？ 本地模式下消息是如何在EventBus上传输和响应的？ EventBus和EventLoop是如何关联起来的？">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Vert.x源码解析 - Core">
+<meta property="og:url" content="https://zou8944.com/2020/10/03/Vert.x%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%20-%20Core-vertx-yuan-ma-jie-xi--core/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="希望通过本文的解析，让读者了解Vertx的关键部分的实现原理。对诸如如下问题有一个具象的认识。  Vertx实例的作用？一个应用是否只对应一个Vertx实例？ Verticle是一个怎样的存在？ 本地模式下消息是如何在EventBus上传输和响应的？ EventBus和EventLoop是如何关联起来的？">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003110710869.png#pic_center">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003110732393.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003110752755.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003110812514.png#pic_center">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003110827811.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003110844860.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003110857360.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003110909141.png#pic_center">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003111022872.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003111046409.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center">
+<meta property="og:image" content="https://img-blog.csdnimg.cn/20201003111106890.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center">
+<meta property="article:published_time" content="2020-10-03T15:43:22.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:43:48.611Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="Vert.x">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://img-blog.csdnimg.cn/20201003110710869.png#pic_center">
+
+<link rel="canonical" href="https://zou8944.com/2020/10/03/Vert.x%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%20-%20Core-vertx-yuan-ma-jie-xi--core/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Vert.x源码解析 - Core | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">81</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2020/10/03/Vert.x%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%20-%20Core-vertx-yuan-ma-jie-xi--core/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Vert.x源码解析 - Core
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-10-03 23:43:22" itemprop="dateCreated datePublished" datetime="2020-10-03T23:43:22+08:00">2020-10-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-02-16 23:43:48" itemprop="dateModified" datetime="2021-02-16T23:43:48+08:00">2021-02-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%93%8D%E5%BA%94%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">响应式</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/10/03/Vert.x%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%20-%20Core-vertx-yuan-ma-jie-xi--core/" class="post-meta-item leancloud_visitors" data-flag-title="Vert.x源码解析 - Core" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>希望通过本文的解析，让读者了解Vertx的关键部分的实现原理。对诸如如下问题有一个具象的认识。</p>
+<ul>
+<li>Vertx实例的作用？一个应用是否只对应一个Vertx实例？</li>
+<li>Verticle是一个怎样的存在？</li>
+<li>本地模式下消息是如何在EventBus上传输和响应的？</li>
+<li>EventBus和EventLoop是如何关联起来的？</li>
+</ul>
+</blockquote>
+<span id="more"></span>
+
+<h2 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h2><p>Vert.x是一个事件驱动，基于Netty库构建的高性能应用程序框架。实现了所谓的Multi-Reactor模型，能够充分利用多核CPU实现以事件循环为基础的基本编程模型。同时在此基础上构建了Verticle这样类似Actor的概念，以应对并发编程的需求。</p>
+<p>Vert.x的核心为EventBus和EventLoop，前者用户消息传输，作为联通各个Handler的神经系统；后者作为任务执行的调度者，保证高性能。任何使用Vert.x构建的应用，都必须围绕这二者作文章。否则就失去了使用它的意义。</p>
+<h2 id="核心类"><a href="#核心类" class="headerlink" title="核心类"></a><strong>核心类</strong></h2><h3 id="Vertx"><a href="#Vertx" class="headerlink" title="Vertx"></a>Vertx</h3><p>Vertx是最为核心的类，创建任何Vertx组件几乎都需要Vertx类的实例。</p>
+<p>创建一个单机实例的方法是<code>Vertx.vertx()</code>，然后就可以使用了。以此为入口，我们看看Vertx在创建时都做了什么。</p>
+<h4 id="看继承关系"><a href="#看继承关系" class="headerlink" title="看继承关系"></a>看继承关系</h4><p>Vertx是一个接口，VertxImpl是最终实现类，也是唯一的实现类。其中包含了单机和集群两种模式的实现。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201003110710869.png#pic_center" alt="在这里插入图片描述"></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 单机实现，创建返回VertxImpl即可</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> VertxImpl <span class="title">vertx</span><span class="params">(VertxOptions options, Transport transport)</span> </span>&#123;</span><br><span class="line">    VertxImpl vertx = <span class="keyword">new</span> VertxImpl(options, transport);</span><br><span class="line">    vertx.init();</span><br><span class="line">    <span class="keyword">return</span> vertx;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 集群实现，创建并加入集群</span></span><br><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">clusteredVertx</span><span class="params">(VertxOptions options, Transport transport, Handler&lt;AsyncResult&lt;Vertx&gt;&gt; resultHandler)</span> </span>&#123;</span><br><span class="line">    VertxImpl vertx = <span class="keyword">new</span> VertxImpl(options, transport);</span><br><span class="line">    vertx.joinCluster(options, resultHandler);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="看Vertx接口的功能"><a href="#看Vertx接口的功能" class="headerlink" title="看Vertx接口的功能"></a>看Vertx接口的功能</h4><p>从Vertx接口，看Vertx能干啥。图太长，不方便放，这里只列举核心部分，也是我们用得最多的。</p>
+<ul>
+<li>创建单机/集群版的Vertx实例</li>
+<li>创建或获取上下文Context</li>
+<li>指定特定的Handler运行在当前上下文中</li>
+<li>获取EventBus</li>
+<li>获取共享数据</li>
+<li>设定定时任务</li>
+<li>发布Verticle</li>
+<li>执行阻塞方法</li>
+</ul>
+<p><img src="https://img-blog.csdnimg.cn/20201003110732393.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"><br>如上，Vertx类几乎撑起了所有部分。接着我们看它是如何做到的。</p>
+<h4 id="看VertxImpl构造方法"><a href="#看VertxImpl构造方法" class="headerlink" title="看VertxImpl构造方法"></a>看VertxImpl构造方法</h4><p>VertxImpl在构造时创建了很多私有对象，具体如下。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="title">VertxImpl</span><span class="params">(VertxOptions options, Transport transport)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 创建closeHooks，CloseHooks维护了一个Closeable的Set，可向其中添加、移除任务，还有执行所有钩子的run方法啦。</span></span><br><span class="line">    closeHooks = <span class="keyword">new</span> CloseHooks(log);</span><br><span class="line">    <span class="comment">// 创建线程阻塞检查器，它启动一个名为vertx-blocked-thread-checker的定时器，</span></span><br><span class="line">    checker = <span class="keyword">new</span> BlockedThreadChecker(options.getBlockedThreadCheckInterval(), options.getBlockedThreadCheckIntervalUnit(), options.getWarningExceptionTime(), options.getWarningExceptionTimeUnit());</span><br><span class="line">    <span class="comment">// 指定一个EventLoop最长可以连续执行多久</span></span><br><span class="line">    maxEventLoopExTime = options.getMaxEventLoopExecuteTime();</span><br><span class="line">    maxEventLoopExecTimeUnit = options.getMaxEventLoopExecuteTimeUnit();</span><br><span class="line">    <span class="comment">// 创建EventLoop线程工厂，主要用于指定线程名称和线程阻塞检测器</span></span><br><span class="line">    eventLoopThreadFactory = <span class="keyword">new</span> VertxThreadFactory(<span class="string">&quot;vert.x-eventloop-thread-&quot;</span>, checker, <span class="keyword">false</span>, maxEventLoopExTime, maxEventLoopExecTimeUnit);</span><br><span class="line">    <span class="comment">// 创建EventLoopGroup，它又实际创建了NioEventLoopGroup，它是Netty的组件。一个EventLoopGroup，就是一个EventLoop组。在Netty中，一个EventLoop是线程和IO的结合，一个EventLoop始终绑定在同一个线程上。</span></span><br><span class="line">    eventLoopGroup = transport.eventLoopGroup(Transport.IO_EVENT_LOOP_GROUP, options.getEventLoopPoolSize(), eventLoopThreadFactory, NETTY_IO_RATIO);</span><br><span class="line">    <span class="comment">// 创建一个acceptor EventLoopGroup，创建方式和上面类似。</span></span><br><span class="line">    ThreadFactory acceptorEventLoopThreadFactory = <span class="keyword">new</span> VertxThreadFactory(<span class="string">&quot;vert.x-acceptor-thread-&quot;</span>, checker, <span class="keyword">false</span>, options.getMaxEventLoopExecuteTime(), options.getMaxEventLoopExecuteTimeUnit());</span><br><span class="line">    acceptorEventLoopGroup = transport.eventLoopGroup(Transport.ACCEPTOR_EVENT_LOOP_GROUP, <span class="number">1</span>, acceptorEventLoopThreadFactory, <span class="number">100</span>);</span><br><span class="line">    <span class="comment">// 创建worker线程池</span></span><br><span class="line">    ExecutorService workerExec = <span class="keyword">new</span> ThreadPoolExecutor(workerPoolSize, workerPoolSize,</span><br><span class="line">                                                        <span class="number">0L</span>, TimeUnit.MILLISECONDS, <span class="keyword">new</span> LinkedTransferQueue&lt;&gt;(),</span><br><span class="line">                                                        <span class="keyword">new</span> VertxThreadFactory(<span class="string">&quot;vert.x-worker-thread-&quot;</span>, checker, <span class="keyword">true</span>, options.getMaxWorkerExecuteTime(), options.getMaxWorkerExecuteTimeUnit()));</span><br><span class="line">    PoolMetrics workerPoolMetrics = metrics != <span class="keyword">null</span> ? metrics.createPoolMetrics(<span class="string">&quot;worker&quot;</span>, <span class="string">&quot;vert.x-worker-thread&quot;</span>, 	options.getWorkerPoolSize()) : <span class="keyword">null</span>;</span><br><span class="line">    workerPool = <span class="keyword">new</span> WorkerPool(workerExec, workerPoolMetrics);</span><br><span class="line">    <span class="comment">// 创建inertnal阻塞线程池</span></span><br><span class="line">    ExecutorService internalBlockingExec = Executors.newFixedThreadPool(options.getInternalBlockingPoolSize(),</span><br><span class="line">                                                                        <span class="keyword">new</span> VertxThreadFactory(<span class="string">&quot;vert.x-internal-blocking-&quot;</span>, checker, <span class="keyword">true</span>, options.getMaxWorkerExecuteTime(), options.getMaxWorkerExecuteTimeUnit()));</span><br><span class="line">    internalBlockingPool = <span class="keyword">new</span> WorkerPool(internalBlockingExec, internalBlockingPoolMetrics);</span><br><span class="line">    <span class="comment">// 创建文件解析器，在FileSystem中有使用，进行文件操作时使用的是java nio</span></span><br><span class="line">    <span class="keyword">this</span>.fileResolver = <span class="keyword">new</span> FileResolver(options.getFileSystemOptions());</span><br><span class="line">    <span class="comment">// 创建地址解析器，在DNS解析时会用到</span></span><br><span class="line">    <span class="keyword">this</span>.addressResolver = <span class="keyword">new</span> AddressResolver(<span class="keyword">this</span>, options.getAddressResolverOptions());</span><br><span class="line">    <span class="comment">// 创建发布管理器，用于发布Verticle</span></span><br><span class="line">    <span class="keyword">this</span>.deploymentManager = <span class="keyword">new</span> DeploymentManager(<span class="keyword">this</span>);</span><br><span class="line">    <span class="keyword">if</span> (options.getEventBusOptions().isClustered()) &#123;</span><br><span class="line">        <span class="comment">// 创建集群管理器和集群的EventBus</span></span><br><span class="line">        <span class="keyword">this</span>.clusterManager = getClusterManager(options);</span><br><span class="line">        <span class="keyword">this</span>.eventBus = <span class="keyword">new</span> ClusteredEventBus(<span class="keyword">this</span>, options, clusterManager);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 创建本地EventBus</span></span><br><span class="line">        <span class="keyword">this</span>.clusterManager = <span class="keyword">null</span>;</span><br><span class="line">        <span class="keyword">this</span>.eventBus = <span class="keyword">new</span> EventBusImpl(<span class="keyword">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 创建sharedData，允许你在整个应用中共享你的数据，包括集群范围内</span></span><br><span class="line">    <span class="keyword">this</span>.sharedData = <span class="keyword">new</span> SharedDataImpl(<span class="keyword">this</span>, clusterManager);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>上面太复杂，整理成思维导图会好看很多。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201003110752755.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"><br>EventBus用于进行消息传输；</p>
+<p>EventLoopGroup为事件循环组，是Netty库中的类，每当有新的任务都会被提交到该组中执行；</p>
+<p>而另一个EventLoopGroup——acceptorEventLoopGroup专用于网络服务的创建，目的是避免上面的eventLoopGroup的阻塞造成服务响应不及时；</p>
+<p>WorkerPool为单独开的线程池，负责执行阻塞操作；</p>
+<p>FileSystem用于操作文件；</p>
+<p>AddressResolver用于进行DNS地址解析；</p>
+<p>SharedData用于在整个Vertx应用内部共享数据，包括集群模式；</p>
+<p>ClusterManager用于进行集群管理；</p>
+<p>DeploymentManager和VerticleManager用于发布Verticle，保证Verticle的特性。</p>
+<p>所有上述类你可能都不是很熟悉，没关系，先有个印象，下面分析具体场景时会用到。</p>
+<h3 id="EventBus"><a href="#EventBus" class="headerlink" title="EventBus"></a>EventBus</h3><p>EventBus的继承关系也很简单，其单机版实现类为EventBusImpl，ClusteredEventBus继承自它，除了服务监听和远程调用，均使用了EventBusImpl中的方法。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201003110812514.png#pic_center" alt="在这里插入图片描述"></p>
+<p>EventBus的能力，以及EventBusImpl持有对象如下：<br><img src="https://img-blog.csdnimg.cn/20201003110827811.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"></p>
+<p>出入拦截器自不必说，每次消息进来和出去都会先被拦截器处理；</p>
+<p>vertx对象，主要用于获取发送调用代码所处的上线文环境；</p>
+<p>handerMap是核心，以地址为key，地址上注册的Handler序列为value，存储了地址-处理器的映射管理；当触发发送动作时，就会到该映射中查找对应的处理器然后执行；对于单机应用，handlerMap就是所有；对于集群应用，则是先找到节点，再在节点中的handlerMap查找对应处理器。</p>
+<p>sendNoContext是为了在执行发送的代码块不处于任何上下文时使用的上下文。EventBusImpl创建时使用。</p>
+<p>EventBusImpl的构造方法没什么内容，就不提了。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">EventBusImpl</span><span class="params">(VertxInternal vertx)</span> </span>&#123;</span><br><span class="line">    VertxMetrics metrics = vertx.metricsSPI();</span><br><span class="line">    <span class="keyword">this</span>.vertx = vertx;</span><br><span class="line">    <span class="keyword">this</span>.metrics = metrics != <span class="keyword">null</span> ? metrics.createEventBusMetrics() : <span class="keyword">null</span>;</span><br><span class="line">    <span class="keyword">this</span>.sendNoContext = vertx.getOrCreateContext();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="EventLoop"><a href="#EventLoop" class="headerlink" title="EventLoop"></a>EventLoop</h3><p>Vertx中并没有EventLoop这个类，它是Netty中的类。对Vertx的源码，与EventLoop相关的交互只有两处：创建EventLoopGroup；向EventLoopGroup提交任务。</p>
+<p>具体内容请查找Netty相关资料进行学习。</p>
+<h3 id="Context"><a href="#Context" class="headerlink" title="Context"></a>Context</h3><p>Context是真正提交任务的地方，凡Vertx中涉及到任务的执行，总是少不了Context的身影。<br><img src="https://img-blog.csdnimg.cn/20201003110844860.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"><br>其核心能力主要在协调代码的运行，同时也可存储数据。其大部分逻辑都在ContextImpl中。其两个子类，仅在自我裁定、任务提交、上下文复制上有所不同。<br><img src="https://img-blog.csdnimg.cn/20201003110857360.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"></p>
+<h3 id="Verticle"><a href="#Verticle" class="headerlink" title="Verticle"></a>Verticle</h3><p>Verticle放在这里有一点另类，因为它并非核心组件。只是Vertx提供的actor模式实现的一个发布单元。它的actor特性由VerticleManager、EventBus、Context等一起保证。就其能力来说，也只有启动和停止两个方法。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201003110909141.png#pic_center" alt="在这里插入图片描述"></p>
+<h2 id="从EventBus看Vertx工作原理"><a href="#从EventBus看Vertx工作原理" class="headerlink" title="从EventBus看Vertx工作原理"></a>从EventBus看Vertx工作原理</h2><p>一个简单的Vertx应用如下，我们从它开始分析。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="keyword">val</span> vertx = Vertx.vertx();</span><br><span class="line">  vertx.eventBus().consumer&lt;String&gt;(<span class="string">&quot;helloAddress&quot;</span>).handler&#123;</span><br><span class="line">    print(it.body())</span><br><span class="line">  &#125;</span><br><span class="line">  vertx.eventBus().send(<span class="string">&quot;helloAddress&quot;</span>, <span class="string">&quot;hello world!&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Vertx.vertx()在上面已经看过了，它创建了一个VertxImpl对象，持有一堆用于组织工作的属性，包括EventBus。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// vertx实例时对eventBus赋值的快照</span></span><br><span class="line"><span class="keyword">this</span>.eventBus = <span class="keyword">new</span> EventBusImpl(<span class="keyword">this</span>);</span><br></pre></td></tr></table></figure>
+
+<h3 id="consumer做了什么"><a href="#consumer做了什么" class="headerlink" title="consumer做了什么"></a>consumer做了什么</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> &lt;T&gt; <span class="function">MessageConsumer&lt;T&gt; <span class="title">consumer</span><span class="params">(String address, Handler&lt;Message&lt;T&gt;&gt; handler)</span> </span>&#123;</span><br><span class="line">    Objects.requireNonNull(handler, <span class="string">&quot;handler&quot;</span>);</span><br><span class="line">    MessageConsumer&lt;T&gt; consumer = consumer(address);</span><br><span class="line">    consumer.handler(handler);</span><br><span class="line">    <span class="keyword">return</span> consumer;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 往里进一步</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> &lt;T&gt; <span class="function">MessageConsumer&lt;T&gt; <span class="title">consumer</span><span class="params">(String address)</span> </span>&#123;</span><br><span class="line">    checkStarted();</span><br><span class="line">    Objects.requireNonNull(address, <span class="string">&quot;address&quot;</span>);</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> HandlerRegistration&lt;&gt;(vertx, metrics, <span class="keyword">this</span>, address, <span class="keyword">null</span>, <span class="keyword">false</span>, <span class="keyword">null</span>, -<span class="number">1</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 重点在HandlerRegistration，收集地址后，开启超时回复定时器。</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="title">HandlerRegistration</span><span class="params">(Vertx vertx, EventBusMetrics metrics, EventBusImpl eventBus, String address,</span></span></span><br><span class="line"><span class="params"><span class="function">                               String repliedAddress, <span class="keyword">boolean</span> localOnly,</span></span></span><br><span class="line"><span class="params"><span class="function">                               Handler&lt;AsyncResult&lt;Message&lt;T&gt;&gt;&gt; asyncResultHandler, <span class="keyword">long</span> timeout)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">this</span>.vertx = vertx;</span><br><span class="line">    <span class="keyword">this</span>.metrics = metrics;</span><br><span class="line">    <span class="keyword">this</span>.eventBus = eventBus;</span><br><span class="line">    <span class="keyword">this</span>.address = address;</span><br><span class="line">    <span class="keyword">this</span>.repliedAddress = repliedAddress;</span><br><span class="line">    <span class="keyword">this</span>.localOnly = localOnly;</span><br><span class="line">    <span class="keyword">this</span>.asyncResultHandler = asyncResultHandler;</span><br><span class="line">    <span class="keyword">if</span> (timeout != -<span class="number">1</span>) &#123;</span><br><span class="line">        timeoutID = vertx.setTimer(timeout, tid -&gt; &#123;</span><br><span class="line">            <span class="keyword">if</span> (metrics != <span class="keyword">null</span>) &#123;</span><br><span class="line">                metrics.replyFailure(address, ReplyFailure.TIMEOUT);</span><br><span class="line">            &#125;</span><br><span class="line">            sendAsyncResultFailure(<span class="keyword">new</span> ReplyException(ReplyFailure.TIMEOUT, <span class="string">&quot;Timed out after waiting &quot;</span> + timeout + <span class="string">&quot;(ms) for a reply. address: &quot;</span> + address + <span class="string">&quot;, repliedAddress: &quot;</span> + repliedAddress));</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 最上面的consumer.handler(handler);调用了HandlerRegistration的handler方法，如下。可以看到最终是在eventBus上调用了注册方法。</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> MessageConsumer&lt;T&gt; <span class="title">handler</span><span class="params">(Handler&lt;Message&lt;T&gt;&gt; h)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (h != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">synchronized</span> (<span class="keyword">this</span>) &#123;</span><br><span class="line">            handler = h;</span><br><span class="line">            <span class="keyword">if</span> (registered == <span class="keyword">null</span>) &#123;</span><br><span class="line">                registered = eventBus.addRegistration(address, <span class="keyword">this</span>, repliedAddress != <span class="keyword">null</span>, localOnly);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">this</span>.unregister();</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">this</span>;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 最终来到了EventBus的addRegistration方法。在addLocalRegistration中，创建了HandlerHolder，并将其加入EventBus的成员变量handlerMap，然后返回创建的HandlerHolder</span></span><br><span class="line"><span class="keyword">protected</span> &lt;T&gt; <span class="function">HandlerHolder&lt;T&gt; <span class="title">addRegistration</span><span class="params">(String address, HandlerRegistration&lt;T&gt; registration,</span></span></span><br><span class="line"><span class="params"><span class="function">                                               <span class="keyword">boolean</span> replyHandler, <span class="keyword">boolean</span> localOnly)</span> </span>&#123;</span><br><span class="line">    Objects.requireNonNull(registration.getHandler(), <span class="string">&quot;handler&quot;</span>);</span><br><span class="line">    LocalRegistrationResult&lt;T&gt; result = addLocalRegistration(address, registration, replyHandler, localOnly);</span><br><span class="line">    addRegistration(result.newAddress, address, replyHandler, localOnly, registration::setResult);</span><br><span class="line">    <span class="keyword">return</span> result.holder;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>要点总结</p>
+<ul>
+<li>consumer方法仅仅将给定的handler注册到EventBusImpl持有的handlerMap中，等待被消费。</li>
+</ul>
+<h3 id="send做了什么"><a href="#send做了什么" class="headerlink" title="send做了什么"></a>send做了什么</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br><span class="line">108</span><br><span class="line">109</span><br><span class="line">110</span><br><span class="line">111</span><br><span class="line">112</span><br><span class="line">113</span><br><span class="line">114</span><br><span class="line">115</span><br><span class="line">116</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">//通过跟踪，最终会来到sendOrPubInternal，首先创建一个用于回复的HandlerRegistration，然后创建OutboundDeliveryContext，调用其next方法</span></span><br><span class="line"><span class="keyword">public</span> &lt;T&gt; <span class="function"><span class="keyword">void</span> <span class="title">sendOrPubInternal</span><span class="params">(MessageImpl message, DeliveryOptions options,</span></span></span><br><span class="line"><span class="params"><span class="function">                                  Handler&lt;AsyncResult&lt;Message&lt;T&gt;&gt;&gt; replyHandler)</span> </span>&#123;</span><br><span class="line">    checkStarted();</span><br><span class="line">    HandlerRegistration&lt;T&gt; replyHandlerRegistration = createReplyHandlerRegistration(message, options, replyHandler);</span><br><span class="line">    OutboundDeliveryContext&lt;T&gt; sendContext = <span class="keyword">new</span> OutboundDeliveryContext&lt;&gt;(message, options, replyHandlerRegistration);</span><br><span class="line">    sendContext.next();</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// createReplyHandlerRegistration方法创建了__vertx.reply.xxx地址的响应HandlerRegistration</span></span><br><span class="line"><span class="keyword">private</span> &lt;T&gt; <span class="function">HandlerRegistration&lt;T&gt; <span class="title">createReplyHandlerRegistration</span><span class="params">(MessageImpl message,</span></span></span><br><span class="line"><span class="params"><span class="function">                                                                  DeliveryOptions options,</span></span></span><br><span class="line"><span class="params"><span class="function">                                                                  Handler&lt;AsyncResult&lt;Message&lt;T&gt;&gt;&gt; replyHandler)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (replyHandler != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">long</span> timeout = options.getSendTimeout();</span><br><span class="line">        String replyAddress = generateReplyAddress();</span><br><span class="line">        message.setReplyAddress(replyAddress);</span><br><span class="line">        Handler&lt;Message&lt;T&gt;&gt; simpleReplyHandler = convertHandler(replyHandler);</span><br><span class="line">        HandlerRegistration&lt;T&gt; registration =</span><br><span class="line">            <span class="keyword">new</span> HandlerRegistration&lt;&gt;(vertx, metrics, <span class="keyword">this</span>, replyAddress, message.address, <span class="keyword">true</span>, replyHandler, timeout);</span><br><span class="line">        registration.handler(simpleReplyHandler);</span><br><span class="line">        <span class="keyword">return</span> registration;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">protected</span> String <span class="title">generateReplyAddress</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="string">&quot;__vertx.reply.&quot;</span> + Long.toString(replySequence.incrementAndGet());</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// OutboundDeliveryContext类接收了消息和响应HandlerRegistration，调用next，如下。其中的iter多半是拦截器，暂时不用管。核心在sendOrPub(this)和sendReply(this, replierMessage)</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">next</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (iter.hasNext()) &#123;</span><br><span class="line">        Handler&lt;DeliveryContext&gt; handler = iter.next();</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (handler != <span class="keyword">null</span>) &#123;</span><br><span class="line">                handler.handle(<span class="keyword">this</span>);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                next();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">            log.error(<span class="string">&quot;Failure in interceptor&quot;</span>, t);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (replierMessage == <span class="keyword">null</span>) &#123;</span><br><span class="line">            sendOrPub(<span class="keyword">this</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            sendReply(<span class="keyword">this</span>, replierMessage);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 定义io.vertx.core.eventbus.impl.EventBusImpl#sendOrPub，再定位到io.vertx.core.eventbus.impl.EventBusImpl#deliverMessageLocally,最终来到io.vertx.core.eventbus.impl.EventBusImpl#deliverMessageLocally</span></span><br><span class="line"><span class="comment">// 这里的关键由两个地方：一是点对点的实现——再handlerMap中找到指定地址的handlers，只取第一个进行处理；还有发布订阅的实现——对在一个地址注册的handlers全部处理；第二个关键点是消息发送的方法deliverToHandler(msg, holder)</span></span><br><span class="line"><span class="function"><span class="keyword">protected</span> ReplyException <span class="title">deliverMessageLocally</span><span class="params">(MessageImpl msg)</span> </span>&#123;</span><br><span class="line">    msg.setBus(<span class="keyword">this</span>);</span><br><span class="line">    ConcurrentCyclicSequence&lt;HandlerHolder&gt; handlers = handlerMap.get(msg.address());</span><br><span class="line">    <span class="keyword">if</span> (handlers != <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (msg.isSend()) &#123;</span><br><span class="line">            <span class="comment">//Choose one</span></span><br><span class="line">            HandlerHolder holder = handlers.next();</span><br><span class="line">            <span class="keyword">if</span> (metrics != <span class="keyword">null</span>) &#123;</span><br><span class="line">                metrics.messageReceived(msg.address(), !msg.isSend(), isMessageLocal(msg), holder != <span class="keyword">null</span> ? <span class="number">1</span> : <span class="number">0</span>);</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">if</span> (holder != <span class="keyword">null</span>) &#123;</span><br><span class="line">                deliverToHandler(msg, holder);</span><br><span class="line">                Handler&lt;AsyncResult&lt;Void&gt;&gt; handler = msg.writeHandler;</span><br><span class="line">                <span class="keyword">if</span> (handler != <span class="keyword">null</span>) &#123;</span><br><span class="line">                    handler.handle(Future.succeededFuture());</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// Publish</span></span><br><span class="line">            <span class="keyword">if</span> (metrics != <span class="keyword">null</span>) &#123;</span><br><span class="line">                metrics.messageReceived(msg.address(), !msg.isSend(), isMessageLocal(msg), handlers.size());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">for</span> (HandlerHolder holder: handlers) &#123;</span><br><span class="line">                deliverToHandler(msg, holder);</span><br><span class="line">            &#125;</span><br><span class="line">            Handler&lt;AsyncResult&lt;Void&gt;&gt; handler = msg.writeHandler;</span><br><span class="line">            <span class="keyword">if</span> (handler != <span class="keyword">null</span>) &#123;</span><br><span class="line">                handler.handle(Future.succeededFuture());</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        ... ...</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 最终的处理函数如下：创建InboundDeliveryContext，在HandlerHolder的context环境下运行其next方法：</span></span><br><span class="line"><span class="keyword">private</span> &lt;T&gt; <span class="function"><span class="keyword">void</span> <span class="title">deliverToHandler</span><span class="params">(MessageImpl msg, HandlerHolder&lt;T&gt; holder)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// Each handler gets a fresh copy</span></span><br><span class="line">    MessageImpl copied = msg.copyBeforeReceive();</span><br><span class="line">    DeliveryContext&lt;T&gt; receiveContext = <span class="keyword">new</span> InboundDeliveryContext&lt;&gt;(copied, holder);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (metrics != <span class="keyword">null</span>) &#123;</span><br><span class="line">        metrics.scheduleMessage(holder.getHandler().getMetric(), msg.isLocal());</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    holder.getContext().runOnContext((v) -&gt; &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            receiveContext.next();</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (holder.isReplyHandler()) &#123;</span><br><span class="line">                holder.getHandler().unregister();</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// next方法啥也没干，直接将message传入目标handler</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">next</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (iter.hasNext()) &#123;</span><br><span class="line">        <span class="comment">// ... 拦截器迭代，忽略</span></span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        holder.getHandler().handle(message);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>要点总结</p>
+<ul>
+<li>send分为两步<ul>
+<li>查询handler，调用send时马上执行，是同步的。</li>
+<li>执行handler，通过handler注册时的context执行，是异步的。</li>
+</ul>
+</li>
+<li>消息响应的实现方式是注册一个响应handler到EventBus中，名为__vertx.reply.xxx，其中xxx为单调递增数字。</li>
+<li>如果同一地址注册了多个handler，则点对点传输模式下只会取第一个handler进行处理；发布模式下才会执行所有。</li>
+<li>在一个上下文中注册的handler，不管被执行时机如何，最终都会在该上下文中执行。参见：<code>holder.getContext().runOnContext(...</code>，hodler为HandlerHolder对象，在调用consumer注册时保存了注册上下文。</li>
+</ul>
+<h3 id="和EventLoop的关系在哪？"><a href="#和EventLoop的关系在哪？" class="headerlink" title="和EventLoop的关系在哪？"></a>和EventLoop的关系在哪？</h3><p>通过consumer和send看到了EventBus是如何协调接收和发送的，但并没有看到EventLoop是如何参与的。其实它是有参与的，在<code>holder.getContext().runOnContext(...</code>是进行了参与。</p>
+<p>于是我们看看EventLoopContext.runOnContext()，如下。就是向Context保存的EventLoop对象提交一个任务即可。调度的事，交给Netty来做</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 看到只调用了一个executeAsync()</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">runOnContext</span><span class="params">(Handler&lt;Void&gt; task)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        executeAsync(task);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (RejectedExecutionException ignore) &#123;</span><br><span class="line">        <span class="comment">// Pool is already shut down</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">// 这里就能看到Vertx的底了，它直接将任务提交给了netty的eventLoop</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">executeAsync</span><span class="params">(Handler&lt;Void&gt; task)</span> </span>&#123;</span><br><span class="line">    nettyEventLoop().execute(() -&gt; executeTask(<span class="keyword">null</span>, task));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Verticle工作机制"><a href="#Verticle工作机制" class="headerlink" title="Verticle工作机制"></a>Verticle工作机制</h2><p>Vert.x推荐使用Verticle进行开发，它是一个类Actor的模型，具有如下特点。</p>
+<ul>
+<li>同一Verticle下的所有操作均在一个EventLoop线程上执行。以此避免了线程安全问题。</li>
+<li>Verticle之间通过EventBus进行消息传递</li>
+<li>Verticle具有父子层级关系</li>
+</ul>
+<p>一个典型的代码结构如下（官方starter使用Launcher启动的应用，本质上也是通过这种方式启动的）</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Verticle1</span> : <span class="type">AbstractVerticle</span></span>() &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">start</span><span class="params">()</span></span> &#123;</span><br><span class="line">        println(<span class="string">&quot;Verticle 1 started&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Verticle2</span> : <span class="type">AbstractVerticle</span></span>() &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">start</span><span class="params">()</span></span> &#123;</span><br><span class="line">        println(<span class="string">&quot;Verticle 2 started&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> vertx = Vertx.vertx();</span><br><span class="line">    vertx.deployVerticle(Verticle1::<span class="keyword">class</span>.java.canonicalName)</span><br><span class="line">    vertx.deployVerticle(Verticle2::<span class="keyword">class</span>.java.canonicalName)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>我们需要探究的问题是</p>
+<ul>
+<li>deployVerticle时发生了什么？</li>
+<li>start()和stop()方法什么时候被调用？</li>
+<li>如何保证一个Verticle下的所有操作都在一个EventLoop线程上执行？</li>
+<li>父子层级关系如何维持？有什么作用？</li>
+</ul>
+<p>要搞清楚这些问题，我们先看几个与此相关的类</p>
+<h3 id="Deployment"><a href="#Deployment" class="headerlink" title="Deployment"></a>Deployment</h3><p>维护一个发布状态，父子状态也是由它维护的。其唯一实现类DeploymentImpl是作为DeploymentManager的私有内部类存在的。这意味着Verticle发布的所有操作都在DeploymentManager内完成。</p>
+<p>其中可能需要解释的点是getVerticles()，这意味着一个Deployment可以有多个Verticle吗？一定程度上是，但仅当一个Verticle需要发布多个实例时，才会存在多个Verticle对象。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201003111022872.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"><br>其中需要重点关注的方法是<code>io.vertx.core.impl.DeploymentManager.DeploymentImpl#doUndeploy</code>和<code>io.vertx.core.impl.DeploymentManager.DeploymentImpl#doUndeployChildren</code>，两个方法递归调用，完成了指定Verticle及其子Verticle的取消。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> Future&lt;Void&gt; <span class="title">doUndeploy</span><span class="params">(ContextInternal undeployingContext)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (status == ST_UNDEPLOYED) &#123;</span><br><span class="line">        <span class="keyword">return</span> Future.failedFuture(<span class="keyword">new</span> IllegalStateException(<span class="string">&quot;Already undeployed&quot;</span>));</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="comment">// 子发布不为空，则先取消子发布，成功后再取消当前发布。</span></span><br><span class="line">    <span class="keyword">if</span> (!children.isEmpty()) &#123;</span><br><span class="line">        status = ST_UNDEPLOYING;</span><br><span class="line">        <span class="keyword">return</span> doUndeployChildren(undeployingContext).compose(v -&gt; doUndeploy(undeployingContext));</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 子发布为空、或取消子发布完成，现在来取消当前发布</span></span><br><span class="line">        status = ST_UNDEPLOYED;</span><br><span class="line">        List&lt;Future&gt; undeployFutures = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">        <span class="keyword">if</span> (parent != <span class="keyword">null</span>) &#123;</span><br><span class="line">            parent.removeChild(<span class="keyword">this</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 为当前发布的每个Verticle实例执行此操作</span></span><br><span class="line">        <span class="keyword">for</span> (VerticleHolder verticleHolder: verticles) &#123;</span><br><span class="line">            ContextImpl context = verticleHolder.context;</span><br><span class="line">            Promise p = Promise.promise();</span><br><span class="line">            undeployFutures.add(p.future());</span><br><span class="line">            <span class="comment">// 该context是Verticle发布时就存好的，调用它保证了Verticle的stop和start方法在同一个线程运行。</span></span><br><span class="line">            context.runOnContext(v -&gt; &#123;</span><br><span class="line">                Promise&lt;Void&gt; stopPromise = Promise.promise();</span><br><span class="line">                Future&lt;Void&gt; stopFuture = stopPromise.future();</span><br><span class="line">                stopFuture.setHandler(ar -&gt; &#123;</span><br><span class="line">                    <span class="comment">// 从deployments映射中移除</span></span><br><span class="line">                    deployments.remove(deploymentID);</span><br><span class="line">                    VertxMetrics metrics = vertx.metricsSPI();</span><br><span class="line">                    <span class="keyword">if</span> (metrics != <span class="keyword">null</span>) &#123;</span><br><span class="line">                        metrics.verticleUndeployed(verticleHolder.verticle);</span><br><span class="line">                    &#125;</span><br><span class="line">                    context.runCloseHooks(ar2 -&gt; &#123;</span><br><span class="line">                        <span class="keyword">if</span> (ar2.failed()) &#123;</span><br><span class="line">                            <span class="comment">// Log error but we report success anyway</span></span><br><span class="line">                            log.error(<span class="string">&quot;Failed to run close hook&quot;</span>, ar2.cause());</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="keyword">if</span> (ar.succeeded()) &#123;</span><br><span class="line">                            p.complete();</span><br><span class="line">                        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (ar.failed()) &#123;</span><br><span class="line">                            p.fail(ar.cause());</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125;);</span><br><span class="line">                &#125;);</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    <span class="comment">// 执行Verticle的stop方法</span></span><br><span class="line">                    verticleHolder.verticle.stop(stopPromise);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (!stopPromise.tryFail(t)) &#123;</span><br><span class="line">                        undeployingContext.reportException(t);</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">        Promise&lt;Void&gt; resolvingPromise = undeployingContext.promise();</span><br><span class="line">        CompositeFuture.all(undeployFutures).&lt;Void&gt;mapEmpty().setHandler(resolvingPromise);</span><br><span class="line">        <span class="keyword">return</span> resolvingPromise.future();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">synchronized</span> Future&lt;Void&gt; <span class="title">doUndeployChildren</span><span class="params">(ContextInternal undeployingContext)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (!children.isEmpty()) &#123;</span><br><span class="line">        List&lt;Future&gt; childFuts = <span class="keyword">new</span> ArrayList&lt;&gt;();</span><br><span class="line">        <span class="comment">// 对每个子发布执行doUndeploy方法</span></span><br><span class="line">        <span class="keyword">for</span> (Deployment childDeployment: <span class="keyword">new</span> HashSet&lt;&gt;(children)) &#123;</span><br><span class="line">            Promise&lt;Void&gt; p = Promise.promise();</span><br><span class="line">            childFuts.add(p.future());</span><br><span class="line">            childDeployment.doUndeploy(undeployingContext, ar -&gt; &#123;</span><br><span class="line">                children.remove(childDeployment);</span><br><span class="line">                p.handle(ar);</span><br><span class="line">            &#125;);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> CompositeFuture.all(childFuts).mapEmpty();</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="keyword">return</span> Future.succeededFuture();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>总结如下</p>
+<ul>
+<li>一个Verticle被取消，则其所有子Verticle都会被取消</li>
+<li>VerticleHolder中存储了Verticle对应的Context，因此能够保证Verticle的所有生命周期方法都在同一个Context中执行。</li>
+</ul>
+<h3 id="DeploymentManager"><a href="#DeploymentManager" class="headerlink" title="DeploymentManager"></a>DeploymentManager</h3><p>DeploymentManager专门用于Verticle发布。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201003111046409.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"></p>
+<p>重点方法在如下几个</p>
+<ul>
+<li><code>DeploymentManager#doDeploy(DeploymentOptions, Function&lt;Verticle,String&gt;, ContextInternal, ContextInternal,ClassLoader, Callable&lt;io.vertx.core.Verticle&gt;)</code></li>
+<li><code>DeploymentManager#undeployVerticle(String)</code></li>
+</ul>
+<h4 id="发布"><a href="#发布" class="headerlink" title="发布"></a>发布</h4><p>发布代码如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> Future&lt;Deployment&gt; <span class="title">doDeploy</span><span class="params">(String identifier,</span></span></span><br><span class="line"><span class="params"><span class="function">                                    DeploymentOptions options,</span></span></span><br><span class="line"><span class="params"><span class="function">                                    ContextInternal parentContext,</span></span></span><br><span class="line"><span class="params"><span class="function">                                    ContextInternal callingContext,</span></span></span><br><span class="line"><span class="params"><span class="function">                                    ClassLoader tccl, Verticle... verticles)</span> </span>&#123;</span><br><span class="line">    Promise&lt;Deployment&gt; promise = callingContext.promise();</span><br><span class="line">    String poolName = options.getWorkerPoolName();</span><br><span class="line"></span><br><span class="line">    Deployment parent = parentContext.getDeployment();</span><br><span class="line">    <span class="comment">// 生成发布ID</span></span><br><span class="line">    String deploymentID = generateDeploymentID();</span><br><span class="line">    <span class="comment">// 创建Deployment对象，上面有说过它是干啥的</span></span><br><span class="line">    DeploymentImpl deployment = <span class="keyword">new</span> DeploymentImpl(parent, deploymentID, identifier, options);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 发布计数</span></span><br><span class="line">    AtomicInteger deployCount = <span class="keyword">new</span> AtomicInteger();</span><br><span class="line">    <span class="comment">// 失败标示</span></span><br><span class="line">    AtomicBoolean failureReported = <span class="keyword">new</span> AtomicBoolean();</span><br><span class="line">    <span class="comment">// 如果一个Verticle发布多个实例，则会有多个verticle对象</span></span><br><span class="line">    <span class="keyword">for</span> (Verticle verticle: verticles) &#123;</span><br><span class="line">        <span class="comment">// Verticle可以被要求发布到Worker线程池还是EventLoop线程池，在这里做区分</span></span><br><span class="line">        WorkerExecutorInternal workerExec = poolName != <span class="keyword">null</span> ? vertx.createSharedWorkerExecutor(poolName, options.getWorkerPoolSize(), options.getMaxWorkerExecuteTime(), options.getMaxWorkerExecuteTimeUnit()) : <span class="keyword">null</span>;</span><br><span class="line">        WorkerPool pool = workerExec != <span class="keyword">null</span> ? workerExec.getPool() : <span class="keyword">null</span>;</span><br><span class="line">        <span class="comment">// 为每个Verticle都创建一个新的Context</span></span><br><span class="line">        ContextImpl context = (ContextImpl) (options.isWorker() ? vertx.createWorkerContext(deployment, pool, tccl) :</span><br><span class="line">                                             vertx.createEventLoopContext(deployment, pool, tccl));</span><br><span class="line">        <span class="keyword">if</span> (workerExec != <span class="keyword">null</span>) &#123;</span><br><span class="line">            context.addCloseHook(workerExec);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 向Deployment加入Verticle对象</span></span><br><span class="line">        deployment.addVerticle(<span class="keyword">new</span> VerticleHolder(verticle, context));</span><br><span class="line">        <span class="comment">// 在新创建的Context上执行Verticle生命周期</span></span><br><span class="line">        context.runOnContext(v -&gt; &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                <span class="comment">// 执行init方法</span></span><br><span class="line">                verticle.init(vertx, context);</span><br><span class="line">                Promise&lt;Void&gt; startPromise = context.promise();</span><br><span class="line">                Future&lt;Void&gt; startFuture = startPromise.future();</span><br><span class="line">                <span class="comment">// 执行start方法</span></span><br><span class="line">                verticle.start(startPromise);</span><br><span class="line">                startFuture.setHandler(ar -&gt; &#123;</span><br><span class="line">                    <span class="keyword">if</span> (ar.succeeded()) &#123;</span><br><span class="line">                        <span class="keyword">if</span> (parent != <span class="keyword">null</span>) &#123;</span><br><span class="line">                            <span class="comment">// 发布成功，加入父节点</span></span><br><span class="line">                            <span class="keyword">if</span> (parent.addChild(deployment)) &#123;</span><br><span class="line">                                deployment.child = <span class="keyword">true</span>;</span><br><span class="line">                            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                                <span class="comment">// Orphan</span></span><br><span class="line">                                deployment.undeploy(event -&gt; promise.fail(<span class="string">&quot;Verticle deployment failed.Could not be added as child of parent verticle&quot;</span>));</span><br><span class="line">                                <span class="keyword">return</span>;</span><br><span class="line">                            &#125;</span><br><span class="line">                        &#125;</span><br><span class="line">                        <span class="comment">// 加入发布完成的map</span></span><br><span class="line">                        deployments.put(deploymentID, deployment);</span><br><span class="line">                        <span class="comment">// 发布的数量和待发布的数量匹配，说明发布完成，成功结束</span></span><br><span class="line">                        <span class="keyword">if</span> (deployCount.incrementAndGet() == verticles.length) &#123;</span><br><span class="line">                            promise.complete(deployment);</span><br><span class="line">                        &#125;</span><br><span class="line">                    &#125; <span class="keyword">else</span> <span class="keyword">if</span> (failureReported.compareAndSet(<span class="keyword">false</span>, <span class="keyword">true</span>)) &#123;</span><br><span class="line">                        <span class="comment">// 发布失败的回滚</span></span><br><span class="line">                        deployment.rollback(callingContext, promise, context, ar.cause());</span><br><span class="line">                    &#125;</span><br><span class="line">                &#125;);</span><br><span class="line">            &#125; <span class="keyword">catch</span> (Throwable t) &#123;</span><br><span class="line">                <span class="keyword">if</span> (failureReported.compareAndSet(<span class="keyword">false</span>, <span class="keyword">true</span>))</span><br><span class="line">                    deployment.rollback(callingContext, promise, context, t);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> promise.future();</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>总结如下</p>
+<ul>
+<li>对每个verticle，vertx都会创建一个新的Context，因此每个verticle之间是相互独立的(一个Context代表了一个EventLoop线程。)</li>
+<li>传入init和start方法的vertx实例，是DeploymentManager中维护的，它是在Vertx.vertx()创建时赋予的，整个应用一个。</li>
+<li>整个verticle的内容都通过Context.runOnContext注册运行，所以它们才会始终都在一个线程上执行，并且执行顺序从上到下，不存在多线程竞争问题。</li>
+<li>发布完成的Deployment会被加入DeploymentManager维护的deployments映射中，方便进行查找和之后的使用。</li>
+</ul>
+<h4 id="取消发布"><a href="#取消发布" class="headerlink" title="取消发布"></a>取消发布</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Future&lt;Void&gt; <span class="title">undeployVerticle</span><span class="params">(String deploymentID)</span> </span>&#123;</span><br><span class="line">    <span class="comment">// 从deployments中获取Deployment对象</span></span><br><span class="line">    Deployment deployment = deployments.get(deploymentID);</span><br><span class="line">    <span class="comment">// 获取当前上下文</span></span><br><span class="line">    Context currentContext = vertx.getOrCreateContext();</span><br><span class="line">    <span class="keyword">if</span> (deployment == <span class="keyword">null</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> ((ContextInternal) currentContext).failedFuture(<span class="keyword">new</span> IllegalStateException(<span class="string">&quot;Unknown deployment&quot;</span>));</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 调用deployment的undeploy()</span></span><br><span class="line">        <span class="keyword">return</span> deployment.undeploy();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>Deployment.undeploy()在上面介绍Deployment时已介绍。</p>
+<h3 id="VerticleManager"><a href="#VerticleManager" class="headerlink" title="VerticleManager"></a>VerticleManager</h3><p>DeploymentManager专注于发布，VerticleManager则主要专注于Verticle的创建。其内部持有一个DeploymentManager对象，用于执行实际的发布操作。</p>
+<p><img src="https://img-blog.csdnimg.cn/20201003111106890.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3pvdTg5NDQ=,size_16,color_FFFFFF,t_70#pic_center" alt="在这里插入图片描述"><br>该类中有两个主要逻辑</p>
+<ul>
+<li>VerticleFactory的注册、取消、查找等。可以实现自定义的VerticleFactory，这里不深入。</li>
+<li>Verticle的发布和创建的逻辑：调用VerticleFactory创建Verticle实例，在调用DeploymentManager.deploy()发布，代码过长，不给出。</li>
+</ul>
+<h3 id="所以Verticle是如何工作的？"><a href="#所以Verticle是如何工作的？" class="headerlink" title="所以Verticle是如何工作的？"></a>所以Verticle是如何工作的？</h3><p>这里回答最初提出的四个问题，就能解释Verticle是如何工作的。</p>
+<ul>
+<li><p>deployVerticle时发生了什么？</p>
+<p>创建Verticle对象 -&gt; 创建Context并和Verticle对象绑定 -&gt; 构建Deployment并存起来 -&gt; 执行init() -&gt; 执行start() -&gt; 完成</p>
+</li>
+<li><p>start()和stop()方法什么时候被调用？</p>
+<p>start(): 发布时，在新创建的Context上执行。</p>
+<p>stop(): 取消发布时，在与该Verticle绑定的Context上执行。</p>
+</li>
+<li><p>如何保证一个Verticle下的所有操作都在一个EventLoop线程上执行？</p>
+<p>通过将Context和Verticle绑定，调用start()和stop()时均在该Context下执行；而在start()和stop()中调用vertx的大多数操作，均是在调用代码块的当前Context下执行，而一个Context始终对应同一个EventLoop线程，如此即能保证一个Verticle下的所有操作都在同一个EventLoop线程上执行。</p>
+</li>
+<li><p>父子层级关系如何维持？有什么作用？</p>
+<p>通过Deployment对象记录并维持。作用在于关闭一个Verticle时，其子Verticle也会被依次关闭。</p>
+</li>
+</ul>
+<p>如此一来，Verticle几乎有了除容错机制外的所有的Actor模型的特性。</p>
+<h2 id="数据共享机制"><a href="#数据共享机制" class="headerlink" title="数据共享机制"></a><strong>数据共享机制</strong></h2><p>Vertx提供了SharedData组件，用于为整个应用范围内提供共享组件，一个共享Map的使用大概如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Verticle1</span> : <span class="type">AbstractVerticle</span></span>() &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">start</span><span class="params">()</span></span> &#123;</span><br><span class="line">        println(<span class="string">&quot;Verticle 1 started&quot;</span>)</span><br><span class="line">        vertx.sharedData().getLocalAsyncMap&lt;String, String&gt;(<span class="string">&quot;myMap&quot;</span>).setHandler &#123; ar -&gt;</span><br><span class="line">                                                                                 ar.result().put(<span class="string">&quot;你好&quot;</span>, <span class="string">&quot;我是Verticle1&quot;</span>)</span><br><span class="line">                                                                                &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">Verticle2</span> : <span class="type">AbstractVerticle</span></span>() &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">start</span><span class="params">()</span></span> &#123;</span><br><span class="line">        println(<span class="string">&quot;Verticle 2 started&quot;</span>)</span><br><span class="line">        vertx.sharedData().getLocalAsyncMap&lt;String, String&gt;(<span class="string">&quot;myMap&quot;</span>).setHandler &#123; ar -&gt;</span><br><span class="line">                                                                                 <span class="keyword">val</span> value = ar.result().<span class="keyword">get</span>(<span class="string">&quot;你好&quot;</span>).result()</span><br><span class="line">                                                                                 println(value)</span><br><span class="line">                                                                                &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> vertx = Vertx.vertx();</span><br><span class="line">    vertx.deployVerticle(Verticle1::<span class="keyword">class</span>.java.canonicalName)</span><br><span class="line">    Thread.sleep(<span class="number">1000</span>)</span><br><span class="line">    vertx.deployVerticle(Verticle2::<span class="keyword">class</span>.java.canonicalName)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所有关于共享数据的内容都在io.vertx.core.shareddata包下，核心类是SharedDataImpl。</p>
+<p>提供如下三种数据结构</p>
+<ul>
+<li><p>io.vertx.core.shareddata.impl.LocalAsyncLocks</p>
+<p>异步排他锁，在集群内部有效的锁。其实现的思路如下</p>
+<ul>
+<li>维护一个ConcurrentMap，存储锁名和等待该锁的Handler列表</li>
+<li>每次新来一个获取锁的请求，向等待列表中加入。并启动定时器开始计算超时，超时后直接回调锁等待超时。</li>
+</ul>
+<p>至此加入等待列表的逻辑完成。然后是锁流转逻辑。采用被动的逻辑，非常节省复杂度。</p>
+<ul>
+<li>当等待列表为空时，来一个请求就将锁给它；列表不为空时，仅加入等待列表，不做尝试获取锁的操作。</li>
+<li>当一个锁被释放时，再主动将锁给等待列表的下一个请求。这样几乎从来不会出现竞争的情况。</li>
+</ul>
+</li>
+<li><p>io.vertx.core.shareddata.impl.AsynchronousCounter</p>
+<p>计数器，增减都是原子操作</p>
+</li>
+<li><p>io.vertx.core.shareddata.impl.LocalMapImpl</p>
+<p>本地Map，用于单个实例中共享数据。仅是对ConcurrentMap的包装，没有其它特别之处。他的所有操作都是同步的。</p>
+</li>
+<li><p>io.vertx.core.shareddata.impl.LocalAsyncMapImpl</p>
+<p>异步Map，同样是对ConcurrentMap的包装。不同之处在于其value是Holder类，它封装了TTL，实现原理是调用vertx.setTimer设置一个TTL长度的定时器，过期移除。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">put</span><span class="params">(K k, V v, <span class="keyword">long</span> timeout, Handler&lt;AsyncResult&lt;Void&gt;&gt; completionHandler)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">long</span> timestamp = System.nanoTime();</span><br><span class="line">    <span class="keyword">long</span> timerId = vertx.setTimer(timeout, l -&gt; removeIfExpired(k));</span><br><span class="line">    Holder&lt;V&gt; previous = map.put(k, <span class="keyword">new</span> Holder&lt;&gt;(v, timerId, timeout, timestamp));</span><br><span class="line">    <span class="keyword">if</span> (previous != <span class="keyword">null</span> &amp;&amp; previous.expires()) &#123;</span><br><span class="line">        vertx.cancelTimer(previous.timerId);</span><br><span class="line">    &#125;</span><br><span class="line">    completionHandler.handle(Future.succeededFuture());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>可能有顾虑设置太多定时器不好，但vertx其实是将定时任务加入eventLoop线程去执行，因此并不会增加额外成本</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">setTimer</span><span class="params">(<span class="keyword">long</span> delay, Handler&lt;Long&gt; handler)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">return</span> scheduleTimeout(getOrCreateContext(), handler, delay, <span class="keyword">false</span>);</span><br><span class="line">&#125;</span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">long</span> <span class="title">scheduleTimeout</span><span class="params">(ContextImpl context, Handler&lt;Long&gt; handler, <span class="keyword">long</span> delay, <span class="keyword">boolean</span> periodic)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">if</span> (delay &lt; <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> IllegalArgumentException(<span class="string">&quot;Cannot schedule a timer with delay &lt; 1 ms&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">long</span> timerId = timeoutCounter.getAndIncrement();</span><br><span class="line">    InternalTimerHandler task = <span class="keyword">new</span> InternalTimerHandler(timerId, handler, periodic, delay, context);</span><br><span class="line">    timeouts.put(timerId, task);</span><br><span class="line">    context.addCloseHook(task);</span><br><span class="line">    <span class="keyword">return</span> timerId;</span><br><span class="line">&#125;</span><br><span class="line">InternalTimerHandler(<span class="keyword">long</span> timerID, Handler&lt;Long&gt; runnable, <span class="keyword">boolean</span> periodic, <span class="keyword">long</span> delay, ContextImpl context) &#123;</span><br><span class="line">    <span class="keyword">this</span>.context = context;</span><br><span class="line">    <span class="keyword">this</span>.timerID = timerID;</span><br><span class="line">    <span class="keyword">this</span>.handler = runnable;</span><br><span class="line">    <span class="keyword">this</span>.periodic = periodic;</span><br><span class="line">    EventLoop el = context.nettyEventLoop();</span><br><span class="line">    <span class="keyword">if</span> (periodic) &#123;</span><br><span class="line">        future = el.scheduleAtFixedRate(<span class="keyword">this</span>, delay, delay, TimeUnit.MILLISECONDS);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        future = el.schedule(<span class="keyword">this</span>, delay, TimeUnit.MILLISECONDS);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (metrics != <span class="keyword">null</span>) &#123;</span><br><span class="line">        metrics.timerCreated(timerID);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="框图"><a href="#框图" class="headerlink" title="框图"></a><strong>框图</strong></h2><p>有待为每个工作原理都加上框图</p>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a><strong>总结</strong></h2><p>Vertx核心为EventBus、EventLoop，以及Verticle。这里通过先展示核心类的能力和实现原理，让读者有一个具象的认识，了解每个核心类大概有能干什么。然后通过EventBus的简单收发分析，展示了EventBus的工作原理及EventLoop参与代码执行的方式；通过Verticle的发布，展示了Verticle是如何运转的，以及Verticle的线程安全特性得到保障的原因；最后展示了SharedData进行应用范围内数据共享的实现原理。让读者对Vert.x核心部分有了较为深入的认识。</p>
+<p>当然，Vert.x的能力远不止于此，这里仅介绍了单机版运行原理，它还支持集群和高可用特性，都是本文没有覆盖到的；此外，核心部分的文件系统、网络编程相关内容也均未介绍，这些留待之后再说。</p>
+<p>最后，总结一波一些核心组件相互之间的关系。</p>
+<ul>
+<li>一般来说，一个应用只有一个Vertx，在整个应用中传来传去的vertx实例，都是一个，除非我们想要拥有完全隔离的EventBus。</li>
+<li>一个Vertx实例只持有一个EventBus和一个用于日常调度的EventLoopGroup(用于网络服务监听的不算)。</li>
+<li>一个Vertx实例持有多个线程池，我们最常解除的只有EventLoopGroup和WorkerPool。</li>
+<li>一个Context只持有一个EventLoop，即只对应一个线程。通过runOnContext()将任务调度到该EventLoop上执行。</li>
+<li>一个VerticleManager持有多个VerticleFactory。</li>
+<li>一个DeployManager持有多个Deployment，Deployment之间的父子关系由Deployment自己维护。</li>
+<li>一个Deployment可以持有多个Verticle实例，但仅能持有一个Verticle类型</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Vert-x/" rel="tag"># Vert.x</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/10/03/%E4%BD%BF%E7%94%A8JSON%20Schema%E9%AA%8C%E8%AF%81API%E5%93%8D%E5%BA%94-shi-yong-jsonschema-yan-zheng-api-xiang-ying/" rel="prev" title="使用JSON Schema验证API响应">
+      <i class="fa fa-chevron-left"></i> 使用JSON Schema验证API响应
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/11/03/Vertx%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90%20-%20Web%EF%BC%88%E4%B8%8A%EF%BC%89-vertx-yuan-ma-jie-xi--web-shang-/" rel="next" title="Vertx源码解析 - Web（上）">
+      Vertx源码解析 - Web（上） <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%BF%B0"><span class="nav-number">1.</span> <span class="nav-text">概述</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A0%B8%E5%BF%83%E7%B1%BB"><span class="nav-number">2.</span> <span class="nav-text">核心类</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Vertx"><span class="nav-number">2.1.</span> <span class="nav-text">Vertx</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9C%8B%E7%BB%A7%E6%89%BF%E5%85%B3%E7%B3%BB"><span class="nav-number">2.1.1.</span> <span class="nav-text">看继承关系</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9C%8BVertx%E6%8E%A5%E5%8F%A3%E7%9A%84%E5%8A%9F%E8%83%BD"><span class="nav-number">2.1.2.</span> <span class="nav-text">看Vertx接口的功能</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9C%8BVertxImpl%E6%9E%84%E9%80%A0%E6%96%B9%E6%B3%95"><span class="nav-number">2.1.3.</span> <span class="nav-text">看VertxImpl构造方法</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#EventBus"><span class="nav-number">2.2.</span> <span class="nav-text">EventBus</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#EventLoop"><span class="nav-number">2.3.</span> <span class="nav-text">EventLoop</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Context"><span class="nav-number">2.4.</span> <span class="nav-text">Context</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Verticle"><span class="nav-number">2.5.</span> <span class="nav-text">Verticle</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%8EEventBus%E7%9C%8BVertx%E5%B7%A5%E4%BD%9C%E5%8E%9F%E7%90%86"><span class="nav-number">3.</span> <span class="nav-text">从EventBus看Vertx工作原理</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#consumer%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">3.1.</span> <span class="nav-text">consumer做了什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#send%E5%81%9A%E4%BA%86%E4%BB%80%E4%B9%88"><span class="nav-number">3.2.</span> <span class="nav-text">send做了什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%92%8CEventLoop%E7%9A%84%E5%85%B3%E7%B3%BB%E5%9C%A8%E5%93%AA%EF%BC%9F"><span class="nav-number">3.3.</span> <span class="nav-text">和EventLoop的关系在哪？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Verticle%E5%B7%A5%E4%BD%9C%E6%9C%BA%E5%88%B6"><span class="nav-number">4.</span> <span class="nav-text">Verticle工作机制</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Deployment"><span class="nav-number">4.1.</span> <span class="nav-text">Deployment</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#DeploymentManager"><span class="nav-number">4.2.</span> <span class="nav-text">DeploymentManager</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%91%E5%B8%83"><span class="nav-number">4.2.1.</span> <span class="nav-text">发布</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8F%96%E6%B6%88%E5%8F%91%E5%B8%83"><span class="nav-number">4.2.2.</span> <span class="nav-text">取消发布</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#VerticleManager"><span class="nav-number">4.3.</span> <span class="nav-text">VerticleManager</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%89%80%E4%BB%A5Verticle%E6%98%AF%E5%A6%82%E4%BD%95%E5%B7%A5%E4%BD%9C%E7%9A%84%EF%BC%9F"><span class="nav-number">4.4.</span> <span class="nav-text">所以Verticle是如何工作的？</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%95%B0%E6%8D%AE%E5%85%B1%E4%BA%AB%E6%9C%BA%E5%88%B6"><span class="nav-number">5.</span> <span class="nav-text">数据共享机制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A1%86%E5%9B%BE"><span class="nav-number">6.</span> <span class="nav-text">框图</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">81</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>

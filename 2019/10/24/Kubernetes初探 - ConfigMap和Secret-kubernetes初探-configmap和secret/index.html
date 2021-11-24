@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="根据应用的开发进程，应用的配置一般会经历先嵌在应用本身，或通过命令行参数的形式传入。到测试生产阶段随着配置的增多会抽取为一个或多个配置文件。对于容器化应用，我们还可以为容器设置环境变量，应用中读取该变量即可。而对于K8S，还可以使用gitRepo卷作为配置文件的载体。但这些都还是太笨重了，K8S提供了更加简单的方法：ConfigMap，用于提供普通配置；Secret用于提供需要加密的配置。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes初探 - ConfigMap和Secret">
+<meta property="og:url" content="https://zou8944.com/2019/10/24/Kubernetes%E5%88%9D%E6%8E%A2%20-%20ConfigMap%E5%92%8CSecret-kubernetes%E5%88%9D%E6%8E%A2-configmap%E5%92%8Csecret/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="根据应用的开发进程，应用的配置一般会经历先嵌在应用本身，或通过命令行参数的形式传入。到测试生产阶段随着配置的增多会抽取为一个或多个配置文件。对于容器化应用，我们还可以为容器设置环境变量，应用中读取该变量即可。而对于K8S，还可以使用gitRepo卷作为配置文件的载体。但这些都还是太笨重了，K8S提供了更加简单的方法：ConfigMap，用于提供普通配置；Secret用于提供需要加密的配置。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/Kubernetes%20-%20ConfigMap%E5%92%8CSecret/image-20191024202924093.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/Kubernetes%20-%20ConfigMap%E5%92%8CSecret/image-20191024210340290.png">
+<meta property="article:published_time" content="2019-10-24T13:12:48.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:24:57.593Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="kubernetes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/Kubernetes%20-%20ConfigMap%E5%92%8CSecret/image-20191024202924093.png">
+
+<link rel="canonical" href="https://zou8944.com/2019/10/24/Kubernetes%E5%88%9D%E6%8E%A2%20-%20ConfigMap%E5%92%8CSecret-kubernetes%E5%88%9D%E6%8E%A2-configmap%E5%92%8Csecret/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Kubernetes初探 - ConfigMap和Secret | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">81</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2019/10/24/Kubernetes%E5%88%9D%E6%8E%A2%20-%20ConfigMap%E5%92%8CSecret-kubernetes%E5%88%9D%E6%8E%A2-configmap%E5%92%8Csecret/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kubernetes初探 - ConfigMap和Secret
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2019-10-24 21:12:48" itemprop="dateCreated datePublished" datetime="2019-10-24T21:12:48+08:00">2019-10-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-02-16 23:24:57" itemprop="dateModified" datetime="2021-02-16T23:24:57+08:00">2021-02-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%90%E7%BB%B4/" itemprop="url" rel="index"><span itemprop="name">运维</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2019/10/24/Kubernetes%E5%88%9D%E6%8E%A2%20-%20ConfigMap%E5%92%8CSecret-kubernetes%E5%88%9D%E6%8E%A2-configmap%E5%92%8Csecret/" class="post-meta-item leancloud_visitors" data-flag-title="Kubernetes初探 - ConfigMap和Secret" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>根据应用的开发进程，应用的配置一般会经历先嵌在应用本身，或通过命令行参数的形式传入。到测试生产阶段随着配置的增多会抽取为一个或多个配置文件。对于容器化应用，我们还可以为容器设置环境变量，应用中读取该变量即可。而对于K8S，还可以使用gitRepo卷作为配置文件的载体。但这些都还是太笨重了，K8S提供了更加简单的方法：ConfigMap，用于提供普通配置；Secret用于提供需要加密的配置。</p>
+<span id="more"></span>
+<h2 id="容器化应用的配置"><a href="#容器化应用的配置" class="headerlink" title="容器化应用的配置"></a>容器化应用的配置</h2><p>我们先来看容器本身可执行的配置方法</p>
+<h3 id="使用命令行和参数"><a href="#使用命令行和参数" class="headerlink" title="使用命令行和参数"></a>使用命令行和参数</h3><h4 id="Docker的方式"><a href="#Docker的方式" class="headerlink" title="Docker的方式"></a>Docker的方式</h4><figure class="highlight dockerfile"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">FROM</span> ubuntu</span><br><span class="line"><span class="keyword">RUN</span><span class="bash"> apt-get update ; apt-get -y install fortune</span></span><br><span class="line"><span class="keyword">ADD</span><span class="bash"> fortuneloop.sh /bin/fortuneloop.sh</span></span><br><span class="line"><span class="keyword">ENTRYPOINT</span><span class="bash"> [<span class="string">&quot;/bin/fortuneloop.sh&quot;</span>]</span></span><br><span class="line"><span class="keyword">CMD</span><span class="bash"> [<span class="string">&quot;10&quot;</span>]</span></span><br></pre></td></tr></table></figure>
+
+<p>上面的dockerfile定义了一个镜像，基于ubuntu，安装下载fortune，并将本地的fortuneloop脚本复制到镜像中，然后定义ENTRYPOINT运行，并且给该脚本一个参数：10。注意ENTRYPOINT有两种方式</p>
+<ul>
+<li>ENGTYPOINT[“/bin/fortuneloop.sh”]: exec形式，在shell环境下运行该脚本。即首先启动shell进程，再在该进程下运行这个脚本</li>
+<li>ENTRYPOINT /bin/fortuneloop.sh: shell形式，直接运行该脚本</li>
+</ul>
+<p>一般采用exec形式。</p>
+<p>上面定义后，可以在运行docker时传递一个参数覆盖CMD参数</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">docker run -it &lt;docker name&gt; 15 # 15会覆盖上面的10</span><br></pre></td></tr></table></figure>
+
+<h4 id="K8S的方式"><a href="#K8S的方式" class="headerlink" title="K8S的方式"></a>K8S的方式</h4><p>上面用ENTRYPOINT和CMD共同决定了容器的运行命令。在POD声明时可以覆盖这二者。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">......</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">zou8944/kubia</span></span><br><span class="line">      <span class="attr">command:</span> [<span class="string">&quot;node hello.js&quot;</span>]  <span class="comment"># 覆盖dockerfile中的ENTRYPOINT</span></span><br><span class="line">      <span class="attr">args:</span> [<span class="string">&quot;10&quot;</span>]   <span class="comment"># 覆盖dockerfile中的CMD</span></span><br><span class="line"><span class="string">......</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="使用环境变量"><a href="#使用环境变量" class="headerlink" title="使用环境变量"></a>使用环境变量</h3><p>容器之间相互隔离，因此可为每个容器设置各自的环境变量。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">......</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">zou8944/kubia</span></span><br><span class="line">      <span class="attr">env:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">ENVNAME</span>  <span class="comment"># 设置了一个名为ENVNAME，值为lalal的环境变量</span></span><br><span class="line">          <span class="attr">value:</span> <span class="string">&quot;lalal&quot;</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">ENVNAME2</span></span><br><span class="line">          <span class="attr">value:</span> <span class="string">&quot;$&#123;ENVNAME&#125; dd&quot;</span>  <span class="comment"># 设置名为ENVNAME2，值为lalal dd的环境变量，这里有引用其它变量名</span></span><br><span class="line"><span class="string">......</span></span><br></pre></td></tr></table></figure>
+
+<p>但是，使用上面的方式会将配置和pod耦合起来，很明显不科学。</p>
+<h2 id="ConfigMap"><a href="#ConfigMap" class="headerlink" title="ConfigMap"></a>ConfigMap</h2><p>和其它对象一样，ConfigMap也是一种资源，其本质上是一个键值对，值可以是字面量，也可以是配置文件。应用不用直接读取ConfigMap的内容，因此不会感知到它的存在。</p>
+<h3 id="创建（命令行）"><a href="#创建（命令行）" class="headerlink" title="创建（命令行）"></a>创建（命令行）</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 创建了一个含有两个key-value的configmap。</span></span><br><span class="line"><span class="string">kubectl</span> <span class="string">create</span> <span class="string">configmap</span> <span class="string">my-config</span> </span><br><span class="line">  <span class="string">--from-literal=interval=5</span>  <span class="comment"># 从字面量创建</span></span><br><span class="line">  <span class="string">--from-file=myfile.conf</span>  <span class="comment"># 将整个配置文件中的内容导入为配置</span></span><br><span class="line">  <span class="string">--from-file=mykey=myfile.conf</span>  <span class="comment"># 导入一个key为mykey,value为myfile.config的键值对配置</span></span><br><span class="line">  <span class="string">--from-file=/path/dir</span>    <span class="comment"># 导入一个文件夹，将其中所有命名符合要求的文件名作为key，文件内容作为value</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="创建（yaml）"><a href="#创建（yaml）" class="headerlink" title="创建（yaml）"></a>创建（yaml）</h3><figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ConfigMap</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">myConfig</span></span><br><span class="line"><span class="attr">data:</span></span><br><span class="line">  <span class="attr">key1:</span> <span class="string">&quot;value1&quot;</span></span><br><span class="line">  <span class="attr">key2:</span> <span class="string">&quot;value2&quot;</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="使用"><a href="#使用" class="headerlink" title="使用"></a>使用</h3><ul>
+<li><p>单独引用配置中的一个条目</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">......</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">zou8944/kubia</span></span><br><span class="line">      <span class="attr">env:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">ENVNAME</span>  </span><br><span class="line">          <span class="attr">valueFrom:</span></span><br><span class="line">            <span class="attr">configMapKeyRef:</span></span><br><span class="line">              <span class="attr">name:</span> <span class="string">myconfig</span>  <span class="comment"># ConfigMap的名称</span></span><br><span class="line">              <span class="attr">key:</span> <span class="string">interval</span>  <span class="comment"># 键名</span></span><br><span class="line">              <span class="attr">optional:</span> <span class="literal">true</span> <span class="comment"># 就算该ConfigMap或key不存在也照常启动。不设置时不会启动</span></span><br><span class="line"><span class="string">......</span></span><br></pre></td></tr></table></figure></li>
+<li><p>将整个配置文件全部引入</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">......</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">zou8944/kubia</span></span><br><span class="line">      <span class="attr">envFrom:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">prefix:</span> <span class="string">CONFIG_</span>  <span class="comment"># 在每个键前加上前缀</span></span><br><span class="line">          <span class="attr">configMapRef:</span></span><br><span class="line">            <span class="attr">name:</span> <span class="string">myconfig</span></span><br><span class="line"><span class="string">......</span></span><br></pre></td></tr></table></figure></li>
+<li><p>将ConfigMap条目暴露为文件</p>
+<p>假设有如configmap-files文件夹，其中包含两个文件，my-nginx-config.conf和sleep-internal</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/Kubernetes%20-%20ConfigMap%E5%92%8CSecret/image-20191024202924093.png" alt="image-20191024202924093"></p>
+<p>通过<code>kubectl create configmap myconfig --from-file=configmap-files</code>创建一个ConfigMap，可通过如下配置将其暴露为卷。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 挂在整个文件， 此时就相当于将configmap-files中的两个文件放到了nginx的配置文件夹/etc/nginx/conf.d中</span></span><br><span class="line"><span class="string">......</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">nginx.alpine</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">web-server</span></span><br><span class="line">      <span class="attr">volumeMounts:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">          <span class="attr">mountPath:</span> <span class="string">/etc/nginx/conf.d</span></span><br><span class="line">          <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">volumes:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">      <span class="attr">configMap:</span>  <span class="comment"># 将configMap暴露为卷</span></span><br><span class="line">        <span class="attr">name:</span> <span class="string">myconfig</span></span><br><span class="line"><span class="string">......</span></span><br><span class="line"></span><br><span class="line"><span class="comment"># 挂在单个条目， 此时就相当于/etc/nginx/conf.d中只有一个文件gzip.conf，该文件的内容是my-nginx-config.conf中的内容</span></span><br><span class="line"><span class="string">......</span></span><br><span class="line">  <span class="attr">volumes:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">      <span class="attr">configMap:</span>  </span><br><span class="line">        <span class="attr">name:</span> <span class="string">myconfig</span></span><br><span class="line">        <span class="attr">defaultMode:</span> <span class="string">&quot;6600&quot;</span>  <span class="comment"># 为文件设置默认权限</span></span><br><span class="line">        <span class="attr">items:</span></span><br><span class="line">          <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">my-nginx-config.conf</span></span><br><span class="line">            <span class="attr">path:</span> <span class="string">gzip.conf</span></span><br><span class="line"><span class="string">......</span></span><br></pre></td></tr></table></figure></li>
+<li><p>注意事项</p>
+<p>如果将ConfigMap挂载在某个特定的文件夹下，则该文件夹下已存在的文件会被隐藏。所以推荐挂载在文件，或新建一个文件夹。</p>
+</li>
+</ul>
+<h3 id="热更新ConfigMap"><a href="#热更新ConfigMap" class="headerlink" title="热更新ConfigMap"></a>热更新ConfigMap</h3><p>ConfigMap修改后，挂载它的卷中的文件也会被更新。其原理是使用符号链接，ConfigMap卷中的文件其实是一个符号链接，指向实际的文件，更新后，k8s创建新的文件，然后将链接指向新文件，然后就生效了。</p>
+<p>需要注意的一点是更新ConfigMap是有延迟的，如果有多个POD，则可能会出现某个时段不一致的情况。</p>
+<h2 id="Secret"><a href="#Secret" class="headerlink" title="Secret"></a>Secret</h2><p>Secret的使用方法和ConfigMap一毛一样。其保证安全性的方法是：</p>
+<ul>
+<li>仅将Secret分发到需要的pod所在的机器节点</li>
+<li>Secret只存在内存中，不保存在磁盘上</li>
+</ul>
+<h3 id="创建"><a href="#创建" class="headerlink" title="创建"></a>创建</h3><p>有两种创建方式，命令行和yaml，由于Secret中字段值会被Base64处理，因此使用命令行直接处理比较好。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 证书文件都是事先生成好的</span></span><br><span class="line">kubectl create secret generic myhttps --from-file=https.key --from-file=https.cert</span><br></pre></td></tr></table></figure>
+
+<p>查看创建好的secret如下，可以看到都变成加密的了。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/hexo/Kubernetes%20-%20ConfigMap%E5%92%8CSecret/image-20191024210340290.png" alt="image-20191024210340290"></p>
+<p>尽管这里看是加密的，但当其被设置为环境变量或Secret卷时填充的却是解码后的内容。</p>
+<h3 id="使用-1"><a href="#使用-1" class="headerlink" title="使用"></a>使用</h3><p>还是以nginx配置为例</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="string">...</span> <span class="string">...</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">nginx.alpine</span></span><br><span class="line">      <span class="attr">name:</span> <span class="string">web-server</span></span><br><span class="line">      <span class="attr">volumeMounts:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">          <span class="attr">mountPath:</span> <span class="string">/etc/nginx/conf.d</span></span><br><span class="line">          <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">certs</span></span><br><span class="line">          <span class="attr">mountPath:</span> <span class="string">/etc/nginx/certs/</span>	<span class="comment"># 将文件挂在到certs文件夹下，再在Nginx中配置即可使用https</span></span><br><span class="line">          <span class="attr">readOnly:</span> <span class="literal">true</span></span><br><span class="line">  <span class="attr">volumes:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">config</span></span><br><span class="line">      <span class="attr">configMap:</span>  <span class="comment"># 将configMap暴露为卷</span></span><br><span class="line">        <span class="attr">name:</span> <span class="string">myconfig</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name: certs:</span></span><br><span class="line">      <span class="attr">secret:</span></span><br><span class="line">        <span class="attr">secretName:</span> <span class="string">myhttps</span></span><br><span class="line"><span class="string">......</span></span><br></pre></td></tr></table></figure>
+
+<p>将Secret设置为环境变量的方式和ConfigMap一致，不再赘述。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/kubernetes/" rel="tag"># kubernetes</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2019/10/22/Kubernetes%E5%88%9D%E6%8E%A2%20-%20%E5%8D%B7-kubernetes%E5%88%9D%E6%8E%A2-%E5%8D%B7/" rel="prev" title="Kubernetes初探 - 卷">
+      <i class="fa fa-chevron-left"></i> Kubernetes初探 - 卷
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2019/10/26/Kubernetes%E5%88%9D%E6%8E%A2%20-%20%E8%AE%BF%E9%97%AEpod%E5%85%83%E6%95%B0%E6%8D%AE%E5%8F%8A%E5%85%B6%E5%AE%83%E8%B5%84%E6%BA%90-kubernetes%E5%88%9D%E6%8E%A2-%E8%AE%BF%E9%97%AEpod%E5%85%83%E6%95%B0%E6%8D%AE%E5%8F%8A%E5%85%B6%E5%AE%83%E8%B5%84%E6%BA%90/" rel="next" title="Kubernetes初探 - 访问pod元数据及其它资源">
+      Kubernetes初探 - 访问pod元数据及其它资源 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%B9%E5%99%A8%E5%8C%96%E5%BA%94%E7%94%A8%E7%9A%84%E9%85%8D%E7%BD%AE"><span class="nav-number">1.</span> <span class="nav-text">容器化应用的配置</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E5%91%BD%E4%BB%A4%E8%A1%8C%E5%92%8C%E5%8F%82%E6%95%B0"><span class="nav-number">1.1.</span> <span class="nav-text">使用命令行和参数</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#Docker%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="nav-number">1.1.1.</span> <span class="nav-text">Docker的方式</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#K8S%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="nav-number">1.1.2.</span> <span class="nav-text">K8S的方式</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F"><span class="nav-number">1.2.</span> <span class="nav-text">使用环境变量</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#ConfigMap"><span class="nav-number">2.</span> <span class="nav-text">ConfigMap</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%EF%BC%88%E5%91%BD%E4%BB%A4%E8%A1%8C%EF%BC%89"><span class="nav-number">2.1.</span> <span class="nav-text">创建（命令行）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%EF%BC%88yaml%EF%BC%89"><span class="nav-number">2.2.</span> <span class="nav-text">创建（yaml）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8"><span class="nav-number">2.3.</span> <span class="nav-text">使用</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%83%AD%E6%9B%B4%E6%96%B0ConfigMap"><span class="nav-number">2.4.</span> <span class="nav-text">热更新ConfigMap</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Secret"><span class="nav-number">3.</span> <span class="nav-text">Secret</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA"><span class="nav-number">3.1.</span> <span class="nav-text">创建</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8-1"><span class="nav-number">3.2.</span> <span class="nav-text">使用</span></a></li></ol></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">81</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>

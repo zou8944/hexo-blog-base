@@ -1,0 +1,1044 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="本文介绍PostgreSQL中如何管理用户和权限，这些是正确管理PostgreSQL权限必备的前置知识。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="PostgreSQL权限管理">
+<meta property="og:url" content="https://zou8944.com/2021/11/24/PostgreSQL%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="本文介绍PostgreSQL中如何管理用户和权限，这些是正确管理PostgreSQL权限必备的前置知识。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211124192250160.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211124192304590.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211124193136549.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211124193049403.png">
+<meta property="article:published_time" content="2021-11-24T15:59:46.000Z">
+<meta property="article:modified_time" content="2021-11-24T16:03:08.608Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="果冻 博客">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211124192250160.png">
+
+<link rel="canonical" href="https://zou8944.com/2021/11/24/PostgreSQL%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>PostgreSQL权限管理 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">81</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/11/24/PostgreSQL%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          PostgreSQL权限管理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-11-24 23:59:46" itemprop="dateCreated datePublished" datetime="2021-11-24T23:59:46+08:00">2021-11-24</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-11-25 00:03:08" itemprop="dateModified" datetime="2021-11-25T00:03:08+08:00">2021-11-25</time>
+              </span>
+
+          
+            <span id="/2021/11/24/PostgreSQL%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/" class="post-meta-item leancloud_visitors" data-flag-title="PostgreSQL权限管理" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>本文介绍<code>PostgreSQL</code>中如何管理用户和权限，这些是正确管理<code>PostgreSQL</code>权限必备的前置知识。</p>
+<span id="more"></span>
+
+<h2 id="角色-ROLE"><a href="#角色-ROLE" class="headerlink" title="角色 - ROLE"></a>角色 - <a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/13/user-manag.html">ROLE</a></h2><p>PG中，围绕角色进行权限的管理。它可以被看做是一个user，或一组user。区分role、user、group。user和group是PG 8.1之前的两个实体，role是那之后唯一存在的实体，现在user和role，等价。</p>
+<h3 id="初始角色"><a href="#初始角色" class="headerlink" title="初始角色"></a>初始角色</h3><p>数据库刚创建时，会自动创建一个超级用户的角色：postgres。任何操作都是从该用户开始的。</p>
+<h3 id="创建角色"><a href="#创建角色" class="headerlink" title="创建角色"></a>创建角色</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">CRAETE ROLE &#123;角色名&#125; [LOGIN] [SUPERUSER] [CREATEDB] [CREATEROLE] [REPLICATION] [INHERIT] [<span class="keyword">WITH</span> ENCRYPTED PASSWORD <span class="string">&#x27;密码&#x27;</span>]</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><code>LOGIN</code>：允许登录</li>
+<li><code>SUPERUSER</code>：拥有超级用户权限</li>
+<li><code>CREATEDB</code>：允许创建database</li>
+<li><code>CREATEROLE</code>：允许创建角色</li>
+<li><code>REPLICATION</code>：允许备份</li>
+<li><code>INHERIT</code>：是否继承权限，权限来是其它角色，通过<code>GRANT</code>将其它角色赋予该角色</li>
+<li><code>PASSWORD</code>：指定密码</li>
+</ul>
+<blockquote>
+<p>注意事项1：如下两句话等价</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">CREATE</span> ROLE &#123;角色名&#125; LOGIN</span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">USER</span> &#123;角色名&#125;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<blockquote>
+<p>注意事项2：不要使用超级用户，而是创建一个具有<code>CREATEDB</code>、<code>CREATEROLE</code>的角色进行日常管理，以避免误操作带来的危险。</p>
+</blockquote>
+<blockquote>
+<p>注意事项3：创建database、创建角色算是特殊的权限，要与后文介绍的可授予的权限区分开来</p>
+</blockquote>
+<h3 id="建立角色关系"><a href="#建立角色关系" class="headerlink" title="建立角色关系"></a>建立角色关系</h3><p>PG中并没有组的概念，各个角色之间都是平级的，但并不妨碍他们组成逻辑上的组，这通过<code>GRANT</code>语句达成。它能够将角色A赋予角色B，使得角色B成为角色A的成员，此后，赋予角色A的权限，角色B也将得到。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">GRANT</span> rolea <span class="keyword">TO</span> roleb;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>创建角色时有指定<code>INHERIT</code>参数，如果有，则角色B将会自动继承来自角色A的权限；如果没有，则只有将角色B手动切换到角色A时，才具有其权限</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 切换到角色A</span></span><br><span class="line"><span class="keyword">SET</span> ROLE rolea;</span><br><span class="line"><span class="comment">-- 充值角色到它自己，即回到角色B</span></span><br><span class="line">RESET ROLE；</span><br></pre></td></tr></table></figure>
+</blockquote>
+<h3 id="默认角色"><a href="#默认角色" class="headerlink" title="默认角色"></a>默认角色</h3><p>下面这些角色是预创建的，相当于一堆权限集合，可以将其赋予我们的角色，达到快速授权的目的。</p>
+<table>
+<thead>
+<tr>
+<th>Role</th>
+<th>Allowed Access</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>pg_read_all_settings</td>
+<td>Read all configuration variables, even those normally visible only to superusers.</td>
+</tr>
+<tr>
+<td>pg_read_all_stats</td>
+<td>Read all pg_stat_* views and use various statistics related extensions, even those normally visible only to superusers.</td>
+</tr>
+<tr>
+<td>pg_stat_scan_tables</td>
+<td>Execute monitoring functions that may take <code>ACCESS SHARE</code> locks on tables, potentially for a long time.</td>
+</tr>
+<tr>
+<td>pg_monitor</td>
+<td>Read/execute various monitoring views and functions. This role is a member of <code>pg_read_all_settings</code>, <code>pg_read_all_stats</code> and <code>pg_stat_scan_tables</code>.</td>
+</tr>
+<tr>
+<td>pg_signal_backend</td>
+<td>Signal another backend to cancel a query or terminate its session.</td>
+</tr>
+<tr>
+<td>pg_read_server_files</td>
+<td>Allow reading files from any location the database can access on the server with COPY and other file-access functions.</td>
+</tr>
+<tr>
+<td>pg_write_server_files</td>
+<td>Allow writing to files in any location the database can access on the server with COPY and other file-access functions.</td>
+</tr>
+<tr>
+<td>pg_execute_server_program</td>
+<td>Allow executing programs on the database server as the user the database runs as with COPY and other functions which allow executing a server-side program.</td>
+</tr>
+</tbody></table>
+<h3 id="关于ROLE的命令"><a href="#关于ROLE的命令" class="headerlink" title="关于ROLE的命令"></a>关于ROLE的命令</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建ROLE</span></span><br><span class="line"><span class="keyword">CREATE</span> ROLE bosslist LOGIN INHERIT;</span><br><span class="line">createuser bosslist;</span><br><span class="line"><span class="comment">-- 删除ROLE</span></span><br><span class="line"><span class="keyword">DROP</span> ROLE bosslist;</span><br><span class="line">dropuser bosslist;</span><br><span class="line"><span class="comment">-- 查看现有的角色</span></span><br><span class="line"><span class="keyword">SELECT</span> <span class="operator">*</span> <span class="keyword">from</span> pg_roles;</span><br><span class="line">\du</span><br></pre></td></tr></table></figure>
+
+<p>对于查看角色，从<code>pg_roles</code>中查询和<code>\du</code>得到的结果一样，只不过呈现方式不同。</p>
+<p><code>\du</code>将角色的属性以字符串的形式展现</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211124192250160.png" alt="image-20211124192250160"></p>
+<p><code>pg_roles</code>查询结果如下，将每个属性都列出，可以使用SQL的形式查询、排序等。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211124192304590.png" alt="image-20211124192304590"></p>
+<h2 id="权限-PRIVILEGES"><a href="#权限-PRIVILEGES" class="headerlink" title="权限 - PRIVILEGES"></a>权限 - <a href="">PRIVILEGES</a></h2><p>角色有了，决定角色能够执行哪些数据库操作，则需要权限进行管理。PG将权限分为了两部分。这里所说的权限，主要指第二部分</p>
+<ul>
+<li>能否登录、创建database、创建role，这类重要权限，在创建role时指定；在<code>pg_roles</code>表中可查看</li>
+<li>对数据库对象的各类操作的权限，通过<code>GRANT</code>手动授予；在<code>information_schema.xxx_privileges</code>表中可查看，比如<code>information_schema.table_privileges</code></li>
+</ul>
+<h3 id="权限的组成"><a href="#权限的组成" class="headerlink" title="权限的组成"></a>权限的组成</h3><p>一个完整的权限描述：角色A对表table1具有<code>SELECT</code>权限，有三部分组成</p>
+<ul>
+<li>角色：A</li>
+<li>授权目标：table1</li>
+<li>权限：<code>SELECT</code></li>
+</ul>
+<h3 id="权限列举"><a href="#权限列举" class="headerlink" title="权限列举"></a>权限列举</h3><table>
+<thead>
+<tr>
+<th>权限</th>
+<th>授权目标</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SELECT</code></td>
+<td>表和视图的所有列、指定的列；序列</td>
+<td>读取</td>
+</tr>
+<tr>
+<td><code>INSERT</code></td>
+<td>表和视图的所有列、指定的列</td>
+<td>插入，指定列时，插入语句只能出现指定的列</td>
+</tr>
+<tr>
+<td><code>UPDATE</code></td>
+<td>表和视图的所有列、指定的列；序列</td>
+<td>更新，指定列时，更新语句只能出现指定的列<br />依赖SELECT权限定位</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td>表和视图的所有列，即一整行</td>
+<td>删除<br />依赖SELECT权限定位</td>
+</tr>
+<tr>
+<td><code>TRUNCATE</code></td>
+<td>表</td>
+<td>清空整张表</td>
+</tr>
+<tr>
+<td><code>REFERENCES</code></td>
+<td>表的所有列、指定的列</td>
+<td>创建外键</td>
+</tr>
+<tr>
+<td><code>TRIGGER</code></td>
+<td>表、视图</td>
+<td>在表或视图上创建触发器</td>
+</tr>
+<tr>
+<td><code>CREATE</code></td>
+<td>database<br />schema<br />tablespace</td>
+<td>database: 允许创建schema、publications、安装插件<br />schema: 创建新的对象；如果要修改已有对象，你必须是该对象的owner，并且拥有schema的CREATE权限<br />tablespace: 允许创建表、索引、临时文件；允许创建默认表空间为该表空间子的database</td>
+</tr>
+<tr>
+<td><code>CONNECT</code></td>
+<td>database</td>
+<td>允许连接指定的database，这是pg_hba.conf之后，额外的检查</td>
+</tr>
+<tr>
+<td><code>TEMPORARY</code></td>
+<td>临时表</td>
+<td>允许创建临时表</td>
+</tr>
+<tr>
+<td><code>EXECUTE</code></td>
+<td>函数、存储过程</td>
+<td>允许执行函数或存储过程</td>
+</tr>
+<tr>
+<td><code>USAGE</code></td>
+<td>schema<br />序列<br />类型</td>
+<td>schema：允许使用该schema内的对象<br />序列：允许使用<code>currval</code>和<code>nextval</code>函数<br />类型：允许使用该类型</td>
+</tr>
+</tbody></table>
+<h3 id="特殊的权限"><a href="#特殊的权限" class="headerlink" title="特殊的权限"></a>特殊的权限</h3><ul>
+<li><p>owner拥有特权</p>
+<p>当一个数据库对象被创建后，它会被自动分配一个owner，一般来说是执行创建语句的那个角色。大多数情况下，owner及其成员能够对该对象做任何事，如果其他人想要操作它，则需要<code>GRANT</code>授权。</p>
+<p>可修改owner，超级用户、对象原本的owner、owner的成员都能够调整对象的owner</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">alter</span> <span class="keyword">table</span> table_name owner <span class="keyword">to</span> new_owner;</span><br></pre></td></tr></table></figure></li>
+<li><p><code>PUBLIC</code></p>
+<p><code>PUBLIC</code>并不是一个真正的角色，确切地说，它应该算一个关键字，当授权的目标是它时，表示：授予系统中的所有角色，包括今后定义的角色。</p>
+<p><code>PUBLIC</code>默认是拥有以下权限</p>
+<ul>
+<li>本地登录</li>
+<li>对public的<code>USAGE</code>权限</li>
+<li>对public的<code>CREATE</code>权限</li>
+</ul>
+<p>字面意思理解，相当于将该权限公开。</p>
+</li>
+</ul>
+<h2 id="授权-GRANT"><a href="#授权-GRANT" class="headerlink" title="授权 - GRANT"></a>授权 - <a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/13/sql-grant.html">GRANT</a></h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 授予权限</span></span><br><span class="line"><span class="keyword">GRANT</span> &#123;权限&#125; <span class="keyword">ON</span> &#123;授权目标&#125; <span class="keyword">TO</span> &#123;被授权角色&#125; [<span class="keyword">WITH</span> <span class="keyword">GRANT</span> OPTION]</span><br><span class="line"><span class="comment">-- 授予角色</span></span><br><span class="line">GRATE &#123;角色&#125; <span class="keyword">TO</span> &#123;被授权角色&#125; [<span class="keyword">WITH</span> ADMIN OPTION] [GRANTED <span class="keyword">BY</span> 角色]</span><br></pre></td></tr></table></figure>
+
+<h3 id="权限"><a href="#权限" class="headerlink" title="权限"></a>权限</h3><table>
+<thead>
+<tr>
+<th>权限</th>
+<th>缩写</th>
+<th>授权目标类型</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>SELECT</code></td>
+<td><code>r</code> (“read”)</td>
+<td><code>LARGE OBJECT</code>, <code>SEQUENCE</code>, <code>TABLE</code> (and table-like objects), table column</td>
+</tr>
+<tr>
+<td><code>INSERT</code></td>
+<td><code>a</code> (“append”)</td>
+<td><code>TABLE</code>, table column</td>
+</tr>
+<tr>
+<td><code>UPDATE</code></td>
+<td><code>w</code> (“write”)</td>
+<td><code>LARGE OBJECT</code>, <code>SEQUENCE</code>, <code>TABLE</code>, table column</td>
+</tr>
+<tr>
+<td><code>DELETE</code></td>
+<td><code>d</code></td>
+<td><code>TABLE</code></td>
+</tr>
+<tr>
+<td><code>TRUNCATE</code></td>
+<td><code>D</code></td>
+<td><code>TABLE</code></td>
+</tr>
+<tr>
+<td><code>REFERENCES</code></td>
+<td><code>x</code></td>
+<td><code>TABLE</code>, table column</td>
+</tr>
+<tr>
+<td><code>TRIGGER</code></td>
+<td><code>t</code></td>
+<td><code>TABLE</code></td>
+</tr>
+<tr>
+<td><code>CREATE</code></td>
+<td><code>C</code></td>
+<td><code>DATABASE</code>, <code>SCHEMA</code>, <code>TABLESPACE</code></td>
+</tr>
+<tr>
+<td><code>CONNECT</code></td>
+<td><code>c</code></td>
+<td><code>DATABASE</code></td>
+</tr>
+<tr>
+<td><code>TEMPORARY</code></td>
+<td><code>T</code></td>
+<td><code>DATABASE</code></td>
+</tr>
+<tr>
+<td><code>EXECUTE</code></td>
+<td><code>X</code></td>
+<td><code>FUNCTION</code>, <code>PROCEDURE</code></td>
+</tr>
+<tr>
+<td><code>USAGE</code></td>
+<td><code>U</code></td>
+<td><code>DOMAIN</code>, <code>FOREIGN DATA WRAPPER</code>, <code>FOREIGN SERVER</code>, <code>LANGUAGE</code>, <code>SCHEMA</code>, <code>SEQUENCE</code>, <code>TYPE</code></td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>这里指定的缩写，在执行<code>\dp 表名</code>时会有用。</p>
+</blockquote>
+<p>除上面指定的，还有如下权限体</p>
+<ul>
+<li><code>ALL PRELEGES</code>：它是针对一个授权目标的所有权限的总和，不同目标有不同的权限，参见下面那张表。</li>
+</ul>
+<h3 id="授权目标"><a href="#授权目标" class="headerlink" title="授权目标"></a>授权目标</h3><table>
+<thead>
+<tr>
+<th>对象类型</th>
+<th>All Privileges包含</th>
+<th>Default <code>PUBLIC</code> Privileges</th>
+<th>psql Command</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>DATABASE</code></td>
+<td><code>CTc</code></td>
+<td><code>Tc</code></td>
+<td><code>\l</code></td>
+</tr>
+<tr>
+<td><code>DOMAIN</code></td>
+<td><code>U</code></td>
+<td><code>U</code></td>
+<td><code>\dD+</code></td>
+</tr>
+<tr>
+<td><code>FUNCTION</code> or <code>PROCEDURE</code></td>
+<td><code>X</code></td>
+<td><code>X</code></td>
+<td><code>\df+</code></td>
+</tr>
+<tr>
+<td><code>FOREIGN DATA WRAPPER</code></td>
+<td><code>U</code></td>
+<td>none</td>
+<td><code>\dew+</code></td>
+</tr>
+<tr>
+<td><code>FOREIGN SERVER</code></td>
+<td><code>U</code></td>
+<td>none</td>
+<td><code>\des+</code></td>
+</tr>
+<tr>
+<td><code>LANGUAGE</code></td>
+<td><code>U</code></td>
+<td><code>U</code></td>
+<td><code>\dL+</code></td>
+</tr>
+<tr>
+<td><code>LARGE OBJECT</code></td>
+<td><code>rw</code></td>
+<td>none</td>
+<td></td>
+</tr>
+<tr>
+<td><code>SCHEMA</code></td>
+<td><code>UC</code></td>
+<td>none</td>
+<td><code>\dn+</code></td>
+</tr>
+<tr>
+<td><code>SEQUENCE</code></td>
+<td><code>rwU</code></td>
+<td>none</td>
+<td><code>\dp</code></td>
+</tr>
+<tr>
+<td><code>TABLE</code> (and table-like objects)</td>
+<td><code>arwdDxt</code></td>
+<td>none</td>
+<td><code>\dp</code></td>
+</tr>
+<tr>
+<td>Table column</td>
+<td><code>arwx</code></td>
+<td>none</td>
+<td><code>\dp</code></td>
+</tr>
+<tr>
+<td><code>TABLESPACE</code></td>
+<td><code>C</code></td>
+<td>none</td>
+<td><code>\db+</code></td>
+</tr>
+<tr>
+<td><code>TYPE</code></td>
+<td><code>U</code></td>
+<td><code>U</code></td>
+<td><code>\dT+</code></td>
+</tr>
+</tbody></table>
+<h3 id="被授权人"><a href="#被授权人" class="headerlink" title="被授权人"></a>被授权人</h3><table>
+<thead>
+<tr>
+<th>被授权人</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>PUBLIC</code></td>
+<td>授予系统中的所有角色，包括今后定义的角色</td>
+</tr>
+<tr>
+<td><code>role_name</code></td>
+<td>授予指定的角色，角色中的所有成员将会继承该权限</td>
+</tr>
+<tr>
+<td><code>CURRENT_USER</code></td>
+<td>当前用户</td>
+</tr>
+</tbody></table>
+<h3 id="WITH-GRANT-OPTION"><a href="#WITH-GRANT-OPTION" class="headerlink" title="WITH GRANT OPTION"></a>WITH GRANT OPTION</h3><p>表示被授权人能够将该权限授予其他人，不能对PUBLIC使用该选项。</p>
+<h3 id="授予角色而不是权限"><a href="#授予角色而不是权限" class="headerlink" title="授予角色而不是权限"></a>授予角色而不是权限</h3><p>第二条语句是将一个角色授予另一个角色，作用是将一个角色的成员授予其它角色。前文“建立角色关系”已描述过了。</p>
+<p><code>WITH ADMIN OPTION</code>：授权传递，被授权的角色，可以传递授权</p>
+<h3 id="关于授权的命令"><a href="#关于授权的命令" class="headerlink" title="关于授权的命令"></a>关于授权的命令</h3><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 授予database的所有操作给一个角色</span></span><br><span class="line"><span class="keyword">GRANT</span> <span class="keyword">ALL</span> PRIVILEGES <span class="keyword">ON</span> DATABASE bosslist <span class="keyword">TO</span> bosslist;</span><br><span class="line"><span class="comment">-- 授权当前database的指定schema的所有表的只读权限给一个角色</span></span><br><span class="line"><span class="keyword">GRANT</span> <span class="keyword">SELECT</span> <span class="keyword">ON</span> <span class="keyword">ALL</span> TABLES <span class="keyword">IN</span> SCHEMA public <span class="keyword">TO</span> bosslist;</span><br><span class="line"><span class="comment">-- 将mytable.col1的SELECT、UPDATE赋予miriam_rw</span></span><br><span class="line"><span class="keyword">GRANT</span> <span class="keyword">SELECT</span> (col1), UPDATE (col1) <span class="keyword">ON</span> mytable <span class="keyword">TO</span> miriam_rw;</span><br><span class="line"><span class="comment">-- 查看一个表的权限详情</span></span><br><span class="line">\dp <span class="operator">&lt;</span>表名<span class="operator">&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>比如，如下查询结果表示：resource表，mylog用户拥有所有权限；mylogs_r拥有SELECT权限，都是mylog用户授予的。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211124193136549.png" alt="image-20211124193136549"></p>
+<p>如果这里看到的<code>Access privileges</code>为空，则该表适用于如下权限</p>
+<ul>
+<li>其owner对该表有完整的权限</li>
+<li>如果针对<code>PUBLIC</code>角色有设置关于该表的权限，则会予以应用</li>
+</ul>
+<h2 id="默认权限-DEFAULT-PRIVILEGES"><a href="#默认权限-DEFAULT-PRIVILEGES" class="headerlink" title="默认权限 - DEFAULT PRIVILEGES"></a>默认权限 - <a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/13/sql-alterdefaultprivileges.html">DEFAULT PRIVILEGES</a></h2><p>当一个数据库对象刚被创建时，满足条件的默认权限会自动应用。</p>
+<p>通过<code>\ddp</code>可以查看适用当前schema的默认权限（默认啥都没有）。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">DEFAULT</span> PRIVILEGES [<span class="keyword">FOR</span> &#123;目标角色&#125;] [<span class="keyword">IN</span> SCHEMA &#123;schemaname&#125;] &#123;<span class="keyword">GRANT</span>或<span class="keyword">REVOKE</span>语句&#125;</span><br></pre></td></tr></table></figure>
+
+<p>举几个例子</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">ALTER</span> <span class="keyword">DEFAULT</span> PRIVILEGES <span class="keyword">IN</span> SCHEMA myschema <span class="keyword">GRANT</span> <span class="keyword">SELECT</span> <span class="keyword">ON</span> TABLES <span class="keyword">TO</span> PUBLIC;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">DEFAULT</span> PRIVILEGES <span class="keyword">IN</span> SCHEMA myschema <span class="keyword">GRANT</span> <span class="keyword">INSERT</span> <span class="keyword">ON</span> TABLES <span class="keyword">TO</span> webuser;</span><br></pre></td></tr></table></figure>
+
+<p><code>\ddp</code>的例子</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211124193049403.png" alt="image-20211124193049403"></p>
+<h2 id="撤权-REVOKE"><a href="#撤权-REVOKE" class="headerlink" title="撤权 - REVOKE"></a>撤权 - <a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/13/sql-revoke.html">REVOKE</a></h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 取消权限</span></span><br><span class="line"><span class="keyword">REVOKE</span> [<span class="keyword">GRANT</span> OPTION <span class="keyword">FOR</span>] &#123;权限&#125; <span class="keyword">ON</span> &#123;授权目标&#125; <span class="keyword">FROM</span> &#123;被授权人&#125; [CASCADE <span class="operator">|</span> RESTRICT]</span><br><span class="line"><span class="comment">-- 取消角色</span></span><br><span class="line"><span class="keyword">REVOKE</span> [ADMIN OPTION <span class="keyword">FOR</span>] &#123;角色&#125; <span class="keyword">FROM</span> &#123;被授权角色&#125; [CASCADE <span class="operator">|</span> RESTRICT]</span><br></pre></td></tr></table></figure>
+
+<p>各部分和GRANT一样，区别在于</p>
+<ul>
+<li><code>GRANT OPTION FOR</code>：取消权限的授予权限，而不是权限本身；没有这一项就同时取消权限和授权权限</li>
+<li><code>CASCADE</code>：递归取消，适用于带有授权选项的用户将权限授予了其它用户，带上它则会将这些权限递归取消</li>
+<li><code>RESTRICT</code>：区别于<code>CASCADE</code>，不会递归取消，<strong>这是默认选项</strong></li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p><code>PostgreSQL</code>中，权限有两种，一种是创建角色时指定的那几个大类；一种就是所谓的<code>PRIVILEGES</code>，搞清楚这一点，一切都好办很多。</p>
+<h3 id="自问自答"><a href="#自问自答" class="headerlink" title="自问自答"></a>自问自答</h3><ul>
+<li><p>谁能发起<code>GRANT </code>?</p>
+<p><code>GRANT</code>本身并不是一种权限，任何角色都能<code>GRANT</code>，但要分为两种情况</p>
+<ul>
+<li>角色的某个权限是别的角色授权过来的，如果对方授权时未指定<code>WITH GRANT OPTION</code>，则它无权将该权限授权给其它角色</li>
+<li>角色是某个对象的owner，则该角色能将该对象的权限授予其它角色</li>
+</ul>
+<p>只要我们堵死这两条路，一个角色就无法授权给别人。前面那条路好说，后面这条路，就要求角色不能拥有创建对象的能力，我们可以通过<code>ALTER USER SET default_transaction_read_only=on</code>达成。</p>
+</li>
+<li><p>新创建的角色拥有什么样的权限 ?</p>
+<p>依据角色创建语句决定它是否拥有创建角色或database的权限；<code>PRIVILEGES</code>则包含所有授予<code>PUBLIC</code>的角色。</p>
+</li>
+<li><p>如何查看<code>PUBLIC</code>拥有哪些权限？</p>
+<p>目前没找到查看的方式</p>
+</li>
+<li><p>如何查看某个角色是否对schema具有<code>CREATE</code>权限？其它类推？</p>
+<p>待查</p>
+</li>
+</ul>
+<h2 id="彩蛋-客户端鉴权"><a href="#彩蛋-客户端鉴权" class="headerlink" title="彩蛋 - 客户端鉴权"></a>彩蛋 - 客户端鉴权</h2><p>角色创建后好，并不能直接通过网络连接到PG服务端，<code>pg_hba.conf</code>文件要配置一下。一个典型的配置如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> Allow any user on the <span class="built_in">local</span> system to connect to any database with</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> any database user name using Unix-domain sockets (the default <span class="keyword">for</span> <span class="built_in">local</span></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> connections).</span></span><br><span class="line"><span class="meta">#</span><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># TYPE  DATABASE        USER            ADDRESS                 METHOD</span></span></span><br><span class="line">local   all             all                                     trust</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> The same using <span class="built_in">local</span> loopback TCP/IP connections.</span></span><br><span class="line"><span class="meta">#</span><span class="bash"></span></span><br><span class="line"><span class="bash"><span class="comment"># TYPE  DATABASE        USER            ADDRESS                 METHOD</span></span></span><br><span class="line">host    all             all             127.0.0.1/32            trust</span><br></pre></td></tr></table></figure>
+
+<p>组成部分</p>
+<ul>
+<li><p><code>TYPE</code></p>
+<ul>
+<li>local：本地连接</li>
+<li>host：使用TCP/IP连接</li>
+</ul>
+</li>
+<li><p><code>DATABASE</code></p>
+<p>允许连接的database</p>
+</li>
+<li><p><code>USER</code></p>
+<p>允许连接的角色</p>
+</li>
+<li><p><code>ADDRESS</code></p>
+<p>允许的客户端地址，<code>0.0.0.0/0</code>表示允许所以客户端连接</p>
+</li>
+<li><p><code>METHOD</code></p>
+<p>鉴权方式</p>
+<ul>
+<li><code>trust</code>：无条件允许连接</li>
+<li><code>reject</code>：无条件拒绝</li>
+<li><code>password</code>：要求客户端提供未加密的密码进行身份验证，密码在网络上以明文形式传输，如果使用SSL，可以加密传输</li>
+<li><code>scram-sha-256</code>：执行 SCRAM-SHA-256 身份验证，这是一种质询响应机制，这是目前最安全的方式，不过有的数据库客户端可能不支持。</li>
+<li><code>md5</code>：也是一种质询响应机制</li>
+<li><code>peer</code>：获取客户端操作系统的用户名，如果和请求连接的用户名一样。这只有在本地连接时才有用。</li>
+<li><code>xxx</code>：都是其它的鉴权方式，参考<a target="_blank" rel="noopener" href="https://www.postgresql.org/docs/13/auth-pg-hba-conf.html">官方文档</a></li>
+</ul>
+</li>
+</ul>
+<h2 id="最佳实践1-创建只读用户"><a href="#最佳实践1-创建只读用户" class="headerlink" title="最佳实践1 - 创建只读用户"></a>最佳实践1 - 创建只读用户</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 创建用户doki</span></span><br><span class="line"><span class="keyword">CREATE</span> <span class="keyword">USER</span> doki PASSWORD <span class="string">&#x27;password&#x27;</span>;</span><br><span class="line"><span class="comment">-- 更新用户的默认事务为只读的（这意味着它只能执行读操作，不能CUD）</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">USER</span> doki <span class="keyword">set</span> default_transaction_read_only<span class="operator">=</span><span class="keyword">on</span>;</span><br><span class="line"><span class="comment">-- 授权连接</span></span><br><span class="line"><span class="keyword">GRANT</span> <span class="keyword">CONNECT</span> <span class="keyword">ON</span> DATABASE doki_database <span class="keyword">TO</span> doki;</span><br><span class="line"><span class="comment">-- 授权public的使用</span></span><br><span class="line"><span class="keyword">GRANT</span> USAGE <span class="keyword">ON</span> SCHEMA PUBLIC <span class="keyword">TO</span> doki;</span><br><span class="line"><span class="comment">-- 切换到doki_database</span></span><br><span class="line">\c doki_database</span><br><span class="line"><span class="comment">-- 授予doki_database下public下所有表、序列、函数</span></span><br><span class="line"><span class="keyword">GRANT</span> <span class="keyword">SELECT</span> <span class="keyword">ON</span> <span class="keyword">ALL</span> TABLES <span class="keyword">IN</span> SCHEMA public <span class="keyword">TO</span> doki;</span><br><span class="line"><span class="keyword">GRANT</span> <span class="keyword">SELECT</span> <span class="keyword">ON</span> <span class="keyword">ALL</span> SEQUENCES <span class="keyword">IN</span> SCHEMA public <span class="keyword">TO</span> doki;</span><br><span class="line"><span class="keyword">GRANT</span> <span class="keyword">EXECUTE</span> <span class="keyword">ON</span> <span class="keyword">ALL</span> FUNCTIONS <span class="keyword">IN</span> SCHEMA public <span class="keyword">TO</span> doki;</span><br><span class="line"><span class="comment">-- 对于新建的对象，也授予上面三个权限</span></span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">DEFAULT</span> PRIVILEGES <span class="keyword">FOR</span> ddl_user <span class="keyword">IN</span> SCHEMA public <span class="keyword">GRANT</span> <span class="keyword">SELECT</span> <span class="keyword">ON</span> TABLES <span class="keyword">TO</span> doki;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">DEFAULT</span> PRIVILEGES <span class="keyword">FOR</span> ddl_user <span class="keyword">IN</span> SCHEMA public <span class="keyword">GRANT</span> <span class="keyword">SELECT</span> <span class="keyword">ON</span> SEQUENCES <span class="keyword">TO</span> doki;</span><br><span class="line"><span class="keyword">ALTER</span> <span class="keyword">DEFAULT</span> PRIVILEGES <span class="keyword">FOR</span> ddl_user <span class="keyword">IN</span> SCHEMA public <span class="keyword">GRANT</span> <span class="keyword">EXECUTE</span> <span class="keyword">ON</span> FUNCTIONS <span class="keyword">TO</span> doki;</span><br></pre></td></tr></table></figure>
+
+<p>修改<code>pg_hba.conf</code>，添加如下一行（注意这是危险的，因为0.0.0.0/0），如果已经有符合要求的行，也可以不添加。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">host all all 0.0.0.0/0 md5</span><br></pre></td></tr></table></figure>
+
+<p>使用psql从远端测试访问</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">psql -h &lt;数据库地址&gt; -p &lt;数据库端口，默认5432&gt; -U doki -d doki_database</span><br></pre></td></tr></table></figure>
+
+<h2 id="最佳实践2-重新为用户授权"><a href="#最佳实践2-重新为用户授权" class="headerlink" title="最佳实践2 - 重新为用户授权"></a>最佳实践2 - 重新为用户授权</h2><figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">-- 切换到doki_database下</span></span><br><span class="line">\c doki_database</span><br><span class="line"><span class="comment">-- 收回用户在public下所有表的所有权限</span></span><br><span class="line"><span class="keyword">REVOKE</span> <span class="keyword">ALL</span> PRIVILEGES <span class="keyword">ON</span> <span class="keyword">ALL</span> TABLES <span class="keyword">IN</span> SCHEMA public <span class="keyword">FROM</span> doki</span><br><span class="line"><span class="comment">-- 为doki赋予doki_database下的所有权限</span></span><br><span class="line"><span class="keyword">GRANT</span> <span class="keyword">ALL</span> PRIVILEGES <span class="keyword">ON</span> <span class="keyword">ALL</span> TABLES <span class="keyword">IN</span> SCHEMA public <span class="keyword">TO</span> doki;</span><br><span class="line"><span class="keyword">GRANT</span> <span class="keyword">ALL</span> PRIVILEGES <span class="keyword">ON</span> <span class="keyword">ALL</span> SEQUENCES <span class="keyword">IN</span> SCHEMA public <span class="keyword">TO</span> doki;</span><br></pre></td></tr></table></figure>
+
+<p>注意，如果我们要收回某个database下所有权限，是无法通过如下语句达成的，参考“授权目标”那张表，对于<code>DATABASE</code>,<code>ALL PRIVILEGES</code>代表<code>CTc</code>，即<code>CREATE TEMPORY CONNECT</code>，即创建<code>schema</code>、安装插件、创建临时文件、连接，收回的也只是这几个权限而已，要收回全部权限，还是得一个一个目标地做。</p>
+<figure class="highlight sql"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">REVOKE</span> <span class="keyword">ALL</span> PRIVILEGES <span class="keyword">ON</span> DATABASE doki_database <span class="keyword">FROM</span> doki;</span><br></pre></td></tr></table></figure>
+
+<h2 id="好文推荐"><a href="#好文推荐" class="headerlink" title="好文推荐"></a>好文推荐</h2><ul>
+<li><a target="_blank" rel="noopener" href="https://wiki.postgresql.org/images/d/d1/Managing_rights_in_postgresql.pdf">Managing rights in postgresql</a></li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/11/23/%E5%88%BB%E6%84%8F%E7%BB%83%E4%B9%A0/" rel="prev" title="刻意练习">
+      <i class="fa fa-chevron-left"></i> 刻意练习
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A7%92%E8%89%B2-ROLE"><span class="nav-number">1.</span> <span class="nav-text">角色 - ROLE</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9D%E5%A7%8B%E8%A7%92%E8%89%B2"><span class="nav-number">1.1.</span> <span class="nav-text">初始角色</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E8%A7%92%E8%89%B2"><span class="nav-number">1.2.</span> <span class="nav-text">创建角色</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BB%BA%E7%AB%8B%E8%A7%92%E8%89%B2%E5%85%B3%E7%B3%BB"><span class="nav-number">1.3.</span> <span class="nav-text">建立角色关系</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%BB%98%E8%AE%A4%E8%A7%92%E8%89%B2"><span class="nav-number">1.4.</span> <span class="nav-text">默认角色</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E4%BA%8EROLE%E7%9A%84%E5%91%BD%E4%BB%A4"><span class="nav-number">1.5.</span> <span class="nav-text">关于ROLE的命令</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9D%83%E9%99%90-PRIVILEGES"><span class="nav-number">2.</span> <span class="nav-text">权限 - PRIVILEGES</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9D%83%E9%99%90%E7%9A%84%E7%BB%84%E6%88%90"><span class="nav-number">2.1.</span> <span class="nav-text">权限的组成</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9D%83%E9%99%90%E5%88%97%E4%B8%BE"><span class="nav-number">2.2.</span> <span class="nav-text">权限列举</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%89%B9%E6%AE%8A%E7%9A%84%E6%9D%83%E9%99%90"><span class="nav-number">2.3.</span> <span class="nav-text">特殊的权限</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8E%88%E6%9D%83-GRANT"><span class="nav-number">3.</span> <span class="nav-text">授权 - GRANT</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9D%83%E9%99%90"><span class="nav-number">3.1.</span> <span class="nav-text">权限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%88%E6%9D%83%E7%9B%AE%E6%A0%87"><span class="nav-number">3.2.</span> <span class="nav-text">授权目标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%A2%AB%E6%8E%88%E6%9D%83%E4%BA%BA"><span class="nav-number">3.3.</span> <span class="nav-text">被授权人</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#WITH-GRANT-OPTION"><span class="nav-number">3.4.</span> <span class="nav-text">WITH GRANT OPTION</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%88%E4%BA%88%E8%A7%92%E8%89%B2%E8%80%8C%E4%B8%8D%E6%98%AF%E6%9D%83%E9%99%90"><span class="nav-number">3.5.</span> <span class="nav-text">授予角色而不是权限</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%85%B3%E4%BA%8E%E6%8E%88%E6%9D%83%E7%9A%84%E5%91%BD%E4%BB%A4"><span class="nav-number">3.6.</span> <span class="nav-text">关于授权的命令</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%BB%98%E8%AE%A4%E6%9D%83%E9%99%90-DEFAULT-PRIVILEGES"><span class="nav-number">4.</span> <span class="nav-text">默认权限 - DEFAULT PRIVILEGES</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%92%A4%E6%9D%83-REVOKE"><span class="nav-number">5.</span> <span class="nav-text">撤权 - REVOKE</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%87%AA%E9%97%AE%E8%87%AA%E7%AD%94"><span class="nav-number">6.1.</span> <span class="nav-text">自问自答</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%BD%A9%E8%9B%8B-%E5%AE%A2%E6%88%B7%E7%AB%AF%E9%89%B4%E6%9D%83"><span class="nav-number">7.</span> <span class="nav-text">彩蛋 - 客户端鉴权</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B51-%E5%88%9B%E5%BB%BA%E5%8F%AA%E8%AF%BB%E7%94%A8%E6%88%B7"><span class="nav-number">8.</span> <span class="nav-text">最佳实践1 - 创建只读用户</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B52-%E9%87%8D%E6%96%B0%E4%B8%BA%E7%94%A8%E6%88%B7%E6%8E%88%E6%9D%83"><span class="nav-number">9.</span> <span class="nav-text">最佳实践2 - 重新为用户授权</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A5%BD%E6%96%87%E6%8E%A8%E8%8D%90"><span class="nav-number">10.</span> <span class="nav-text">好文推荐</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">81</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>

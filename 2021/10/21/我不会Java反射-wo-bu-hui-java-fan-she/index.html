@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="我会写Java反射，我知道反射是用来获取、改变程序运行时状态的方式，通过反射API我们能够获取类对象、类的方法、成员变量、注解等。 我不会写Java反射，我不知道Type和Class有啥关系，ParameteredType、TypeVariable呢？ 我会Java反射吗？不，我不会。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="我不会Java反射">
+<meta property="og:url" content="https://zou8944.com/2021/10/21/%E6%88%91%E4%B8%8D%E4%BC%9AJava%E5%8F%8D%E5%B0%84-wo-bu-hui-java-fan-she/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="我会写Java反射，我知道反射是用来获取、改变程序运行时状态的方式，通过反射API我们能够获取类对象、类的方法、成员变量、注解等。 我不会写Java反射，我不知道Type和Class有啥关系，ParameteredType、TypeVariable呢？ 我会Java反射吗？不，我不会。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021122902091.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021125002864.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021125118611.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021140853046.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/%E6%88%AA%E5%B1%8F2021-10-21%20%E4%B8%8B%E5%8D%882.12.58.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/%E6%88%AA%E5%B1%8F2021-10-21%20%E4%B8%8B%E5%8D%882.15.52.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/%E6%88%AA%E5%B1%8F2021-10-21%20%E4%B8%8B%E5%8D%885.17.34.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/%E6%88%AA%E5%B1%8F2021-10-21%20%E4%B8%8B%E5%8D%885.23.19.png">
+<meta property="article:published_time" content="2021-10-21T10:09:05.370Z">
+<meta property="article:modified_time" content="2021-10-21T10:09:05.370Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="Java">
+<meta property="article:tag" content="反射">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021122902091.png">
+
+<link rel="canonical" href="https://zou8944.com/2021/10/21/%E6%88%91%E4%B8%8D%E4%BC%9AJava%E5%8F%8D%E5%B0%84-wo-bu-hui-java-fan-she/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>我不会Java反射 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">81</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/10/21/%E6%88%91%E4%B8%8D%E4%BC%9AJava%E5%8F%8D%E5%B0%84-wo-bu-hui-java-fan-she/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          我不会Java反射
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-10-21 18:09:05" itemprop="dateCreated datePublished" datetime="2021-10-21T18:09:05+08:00">2021-10-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/%E7%BC%96%E7%A8%8B%E8%AF%AD%E8%A8%80/" itemprop="url" rel="index"><span itemprop="name">编程语言</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/10/21/%E6%88%91%E4%B8%8D%E4%BC%9AJava%E5%8F%8D%E5%B0%84-wo-bu-hui-java-fan-she/" class="post-meta-item leancloud_visitors" data-flag-title="我不会Java反射" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>我会写Java反射，我知道反射是用来获取、改变程序运行时状态的方式，通过反射API我们能够获取类对象、类的方法、成员变量、注解等。</p>
+<p>我不会写Java反射，我不知道Type和Class有啥关系，ParameteredType、TypeVariable呢？</p>
+<p>我会Java反射吗？不，我不会。</p>
+<span id="more"></span>
+
+<h2 id="反射是什么？"><a href="#反射是什么？" class="headerlink" title="反射是什么？"></a>反射是什么？</h2><p>反射是什么，镜子里看自己。往小了说，就是Java提供的一组能够在运行时查看和修改对象信息的API；往大了说，从计算机专业来看，是编程语言提供的运行时动态更新自身状态的能力，Java的反射只是其中的一种。Go、C#、JS等都实现了自己的反射机制。</p>
+<p>吐槽”反射“这个翻译，英文”Reflection“、”Reflective“。说这个翻译名不好吧，它是直译，且一定程度能够反应其含义：程序能够看到本身；但说他准确也并不能让人信服，翻译成内省个人认为会更好一点，但无奈Java中内省是另外一套API。</p>
+<p>照我的意思，就别翻译了，就Reflection和Instropection就好，英文原意，哪怕你不能完全理解，总比被翻译曲解来得好。</p>
+<h2 id="理解其组成"><a href="#理解其组成" class="headerlink" title="理解其组成"></a>理解其组成</h2><p>就API能力来说，反射无非是让我们获取类对象的各个组成部分，并提供对类对应的实例相应部分的修改。因此，首先要理解类的各个组成部分和反射API接口之间的对应关系，用一张思维导图说明。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021122902091.png"></p>
+<p>可以看到，Java中的每种元素，都有对应的反射抽象对应</p>
+<ul>
+<li>所有类型，包括类、接口、抽象类、注解、枚举等，由Class类进行抽象。在一个完全面向对象的语言中，运行时查看和修改的也肯定是对象的信息，因此它也是反射的入口。</li>
+<li>对类中的成员，有构造方法、普通方法、字段，分别由Constructor、Mehtod、Field抽象</li>
+<li>对特殊的数组类型，有Array抽象</li>
+<li>对泛型，根据情况有TypeVariable、GenericArrayType、ParameterizedType、WildcardType分别进行抽象</li>
+</ul>
+<p>所有这些抽象的目的，都是为了能够让我们通过某条路径获取到确定的那个元素，如字段声明<code>List&lt;String&gt; str</code>，为了获取到List中的泛型String，需要通过如下路径调用</p>
+<ol>
+<li>获取字段所属类的Class对象clazz</li>
+<li><code>clazz.getDeclaredFiled(&quot;str&quot;)</code>获取到该Field</li>
+<li><code>field.getGenericType()</code>获取泛型类型ft，并强转为ParameterizedType</li>
+<li><code>ft.getActualTypeArguments()[0]</code>获取该泛型的具体参数String</li>
+</ol>
+<p>Java反射用的好不好，就看反射的API用的熟不熟。</p>
+<h2 id="几个抽象树"><a href="#几个抽象树" class="headerlink" title="几个抽象树"></a>几个抽象树</h2><p>针对不同元素的特性，反射API从不同维度进行了抽象，下面依次看一下。</p>
+<h3 id="Type"><a href="#Type" class="headerlink" title="Type"></a>Type</h3><p>Java 1.5之前，反射只有Class对象，并没有各种Type，但1.5之后引入了泛型，考虑到兼容性，Class对象并没有修改，而是将新的泛型表示抽象了出来。Class自然也是Type的子类，但由于其方法过多，我们没有画出来</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021125002864.png" alt="image-20211021125002864"></p>
+<p>Type的上述几个类型，都是泛型的各种形态。</p>
+<h3 id="AnnotatedElement"><a href="#AnnotatedElement" class="headerlink" title="AnnotatedElement"></a>AnnotatedElement</h3><p>表示可被注解的元素，可以看到，包括了包、Module、参数、类对象、可访问对象（方法、构造方法、字段）、各种泛型类型</p>
+<p>一个可被注解的元素，能够获取到自己上面的所有注解。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021125118611.png" alt="image-20211021125118611"></p>
+<h3 id="GenericDeclaration"><a href="#GenericDeclaration" class="headerlink" title="GenericDeclaration"></a>GenericDeclaration</h3><p>可声明泛型变量的元素，有类、构造方法、方法。泛型变量指的是T这样的东西。</p>
+<p>一个可生命泛型变量的元素，能够获取到该元素的所有类型变量，即TypeVariable数组。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211021140853046.png" alt="image-20211021140853046"></p>
+<h3 id="AccessibleObject"><a href="#AccessibleObject" class="headerlink" title="AccessibleObject"></a>AccessibleObject</h3><p>可访问对象，有方法、构造函数、字段。访问他们需要权限。<code>xxx.setAccessible(true)</code>我们一定很熟悉。</p>
+<p>一个可访问对象，实现了Java的访问控制策略，能够限制用户对自己的访问。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/%E6%88%AA%E5%B1%8F2021-10-21%20%E4%B8%8B%E5%8D%882.12.58.png" alt="截屏2021-10-21 下午2.12.58"></p>
+<h3 id="Member"><a href="#Member" class="headerlink" title="Member"></a>Member</h3><p>成员，可作为成员的对象。有方法、构造函数、字段。</p>
+<p>一个成员，能够获取该成员的名称、获取修饰符、获取声明该成员的类对象。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/%E6%88%AA%E5%B1%8F2021-10-21%20%E4%B8%8B%E5%8D%882.15.52.png" alt="截屏2021-10-21 下午2.15.52"></p>
+<h2 id="一个例子"><a href="#一个例子" class="headerlink" title="一个例子"></a>一个例子</h2><p>不展示常用的获取类成员的例子，我们展示一个泛型的例子：在Json反序列化过程中，由于类型擦除，我们无法判定具体值的类型，一般的库如Jackson、Fastjson提供了TypeReference&lt;XXX&gt;帮助我们决定反序列化的类型，Gson中的TypeToken&lt;XXX&gt;也是同样的作用。我们来模仿一下这个过程。</p>
+<p><strong>题目</strong>：给出一个字符串，将其转换成指定的泛型类型</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 实现Comparable，并不是为了比较，而是为了得到泛型T的实际类型</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">TypeReference</span>&lt;<span class="title">T</span>&gt; </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">final</span> Type type;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="title">TypeReference</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        Type superClass = getClass().getGenericSuperclass();</span><br><span class="line">        <span class="keyword">this</span>.type = ((ParameterizedType) superClass).getActualTypeArguments()[<span class="number">0</span>];</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> Type <span class="title">getType</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        <span class="keyword">return</span> type;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ReflectUtils</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 根据给定的类型，将字符串转换为对应实例</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> &lt;R&gt; <span class="function">R <span class="title">convertReflective</span><span class="params">(String source, TypeReference&lt;R&gt; type)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        Type actualType = type.getType();</span><br><span class="line">        <span class="keyword">if</span> (actualType <span class="keyword">instanceof</span> ParameterizedType) &#123;</span><br><span class="line">            <span class="keyword">return</span> convertReflectiveForParameterizedType(source, actualType);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (actualType <span class="keyword">instanceof</span> Class) &#123;</span><br><span class="line">            <span class="keyword">return</span> convertReflectiveForClass(source, actualType);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (actualType <span class="keyword">instanceof</span> GenericArrayType) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> Exception(<span class="string">&quot;尚未实现&quot;</span>);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> Exception(<span class="string">&quot;啥类型都不是呀&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 带泛型的类型</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> &lt;R&gt; <span class="function">R <span class="title">convertReflectiveForParameterizedType</span><span class="params">(String source, Type type)</span> </span>&#123;</span><br><span class="line">        ParameterizedType rType = (ParameterizedType) type;</span><br><span class="line">        Object result = <span class="keyword">null</span>;</span><br><span class="line">        Type rawType = rType.getRawType();</span><br><span class="line">        Type[] actualTypes = rType.getActualTypeArguments();</span><br><span class="line">        <span class="keyword">if</span> (rawType.equals(List.class)) &#123;</span><br><span class="line">            Type actualType = actualTypes[<span class="number">0</span>];</span><br><span class="line">            result = Arrays.stream(source.substring(<span class="number">1</span>, source.length() - <span class="number">1</span>).split(<span class="string">&quot;,&quot;</span>))</span><br><span class="line">                .map(String::trim)</span><br><span class="line">                .map((String it) -&gt; convertReflectiveForClass(it, actualType))</span><br><span class="line">                .collect(Collectors.toList());</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;暂不支持&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> (R) result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 非泛型的普通类型</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">static</span> &lt;R&gt; <span class="function">R <span class="title">convertReflectiveForClass</span><span class="params">(String source, Type type)</span> </span>&#123;</span><br><span class="line">        Object result = <span class="number">0</span>;</span><br><span class="line">        <span class="keyword">if</span> (String.class.equals(type)) &#123;</span><br><span class="line">            result = source;</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (Integer.class.equals(type)) &#123;</span><br><span class="line">            result = Integer.valueOf(source);</span><br><span class="line">        &#125; <span class="keyword">else</span> <span class="keyword">if</span> (Long.class.equals(type)) &#123;</span><br><span class="line">            result = Long.valueOf(source);</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            result = source;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">return</span> (R) result;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Demo</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        <span class="comment">// 字符串转字符串</span></span><br><span class="line">        String s = ReflectUtils.convertReflective(<span class="string">&quot;这是普通字符串&quot;</span>, <span class="keyword">new</span> TypeReference&lt;String&gt;() &#123;&#125;);</span><br><span class="line">        System.out.println(s);</span><br><span class="line">        <span class="comment">// 字符串转列表</span></span><br><span class="line">        List&lt;String&gt; list = ReflectUtils.convertReflective(<span class="string">&quot;[1,2,字符串]&quot;</span>, <span class="keyword">new</span> TypeReference&lt;List&lt;String&gt;&gt;() &#123;&#125;);</span><br><span class="line">        list.forEach(System.out::println);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>输出</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">这是普通字符串</span><br><span class="line">1</span><br><span class="line">2</span><br><span class="line">字符串</span><br></pre></td></tr></table></figure>
+
+<p>简单讲解</p>
+<ul>
+<li><p>定义<code>TypeReference&lt;T&gt;</code>泛型抽象类，使用时候构建的是它的匿名子类，如<code>new TypeReference&lt;List&lt;String&gt;&gt;() &#123;&#125;</code></p>
+<p>为什么要构建子类呢？因为<code>TypeReference&lt;T&gt;</code>的泛型在反射系统中永远是T，这是其类定义决定的，运行时给定的类型，统统会被擦除，因此是无法只使用<code>TypeReference&lt;T&gt;</code>就获取到指定的类型的；通过构建匿名子类<code>new TypeReference&lt;List&lt;String&gt;&gt;() &#123;&#125;</code>，对应新的类对象，其泛型就是具体的类型了，此时通过<code>getClass().getGenericSuperclass()</code>就能获取到<code>TypeReference&lt;List&lt;String&gt;&gt;</code>这一<code>ParameterizedType</code>。</p>
+<p>这点很重要，是实现这个功能的关键之一。</p>
+</li>
+<li><p>取得的泛型中的类型，依然可能是带有泛型，因此我们要递归判断。上面简单写，针对几个基本类型和List做了处理</p>
+</li>
+</ul>
+<h2 id="反射工具库"><a href="#反射工具库" class="headerlink" title="反射工具库"></a>反射工具库</h2><p>很多库提供反射工具，比如<a target="_blank" rel="noopener" href="https://www.hutool.cn/docs/#/core/%E5%B7%A5%E5%85%B7%E7%B1%BB/%E5%8F%8D%E5%B0%84%E5%B7%A5%E5%85%B7-ReflectUtil">hutool的ReflectUtil</a>，我们看一下它做了什么。。。。。。它们也没做什么，就是将常用的操作封装到一个静态方法，比如直接获取构造方法，比我们自己做，多了些检查。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">static</span> &lt;T&gt; <span class="function">Constructor&lt;T&gt; <span class="title">getConstructor</span><span class="params">(Class&lt;T&gt; clazz, Class&lt;?&gt;... parameterTypes)</span> </span>&#123;</span><br><span class="line">  <span class="keyword">if</span> (<span class="keyword">null</span> == clazz) &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">final</span> Constructor&lt;?&gt;[] constructors = getConstructors(clazz);</span><br><span class="line">  Class&lt;?&gt;[] pts;</span><br><span class="line">  <span class="keyword">for</span> (Constructor&lt;?&gt; constructor : constructors) &#123;</span><br><span class="line">    pts = constructor.getParameterTypes();</span><br><span class="line">    <span class="keyword">if</span> (ClassUtil.isAllAssignableFrom(pts, parameterTypes)) &#123;</span><br><span class="line">      <span class="comment">// 构造可访问</span></span><br><span class="line">      setAccessible(constructor);</span><br><span class="line">      <span class="keyword">return</span> (Constructor&lt;T&gt;) constructor;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> <span class="keyword">null</span>;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其它的呢，也都差不多。</p>
+<h2 id="反射的实现"><a href="#反射的实现" class="headerlink" title="反射的实现"></a>反射的实现</h2><p>类的描述信息，它就在class文件中，因此在Class对象中可以看到。运行时修改的内容这个，可以去研究一下Java虚拟机实现。</p>
+<h2 id="反射和内省"><a href="#反射和内省" class="headerlink" title="反射和内省"></a>反射和内省</h2><p>内省指的是Introspector，是Java提供的另一个类，对应Java Bean规范，用以运行时查看Java Bean的属性、方法、事件等状态。其实现，也是通过反射。可以理解为使用反射为Java Bean提供了快捷访问方法，此时重点就要落在Java Bean上。如果你操作的是一个Bean，请直接用Introspector，如果你操作的是一个普通的类，那就用反射。</p>
+<p>此外，Java Bean规范，有空的时候，也可以研究一下。看看它，到底是不是自己认识的那个样子。</p>
+<h2 id="反射很慢吗？"><a href="#反射很慢吗？" class="headerlink" title="反射很慢吗？"></a>反射很慢吗？</h2><p>反射很慢吗？哪方面慢？慢多少？</p>
+<p>我们用JMH测试针对自定义对象的某个空方法的调用，对比反射调用100万次、1亿次，和直接调用的差别。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyClass</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testMethod</span><span class="params">()</span> </span>&#123;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@BenchmarkMode(Mode.SingleShotTime)</span></span><br><span class="line"><span class="meta">@Warmup(iterations = 1, time = 10)</span></span><br><span class="line"><span class="meta">@Measurement(iterations = 1, time = 1)</span></span><br><span class="line"><span class="meta">@State(Scope.Thread)</span></span><br><span class="line"><span class="meta">@OutputTimeUnit(TimeUnit.MILLISECONDS)</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">ReflectionBenchmark</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Param(&#123;&quot;1000000&quot;, &quot;100000000&quot;&#125;)</span></span><br><span class="line">    <span class="keyword">int</span> times;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Benchmark</span></span><br><span class="line">    <span class="meta">@Fork(1)</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">invokeReflective</span><span class="params">()</span> <span class="keyword">throws</span> Exception </span>&#123;</span><br><span class="line">        MyClass myClass = <span class="keyword">new</span> MyClass();</span><br><span class="line">        Method method = MyClass.class.getDeclaredMethod(<span class="string">&quot;testMethod&quot;</span>);</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; times; i++) &#123;</span><br><span class="line">            method.invoke(myClass);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Benchmark</span></span><br><span class="line">    <span class="meta">@Fork(1)</span></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">invokeDirect</span><span class="params">()</span> </span>&#123;</span><br><span class="line">        MyClass myClass = <span class="keyword">new</span> MyClass();</span><br><span class="line">        <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; times; i++) &#123;</span><br><span class="line">            myClass.testMethod();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> RunnerException </span>&#123;</span><br><span class="line">        Options options = <span class="keyword">new</span> OptionsBuilder()</span><br><span class="line">            .include(ReflectionBenchmark.class.getSimpleName())</span><br><span class="line">            .build();</span><br><span class="line">        <span class="keyword">new</span> Runner(options).run();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>测试结果如下，可见，反射确实会慢一些。上面的测试是调用空方法，次数非常多，会放大这种速度对比。但这个测试只能说明反射比直接调用慢。慢的程度，呈倍数关系比较合理。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/%E6%88%AA%E5%B1%8F2021-10-21%20%E4%B8%8B%E5%8D%885.17.34.png" alt="截屏2021-10-21 下午5.17.34"></p>
+<p>转换成图表如下，更加直观。<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/%E6%88%AA%E5%B1%8F2021-10-21%20%E4%B8%8B%E5%8D%885.23.19.png" alt="截屏2021-10-21 下午5.23.19"></p>
+<p>相关知乎问答：<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/19826278">Java反射到底慢在哪里</a></p>
+<p>一篇分析反射方法调用的文章（传说中的R大）：<a target="_blank" rel="noopener" href="https://www.iteye.com/blog/rednaxelafx-548536">关于反射调用方法的一个log</a></p>
+<p>一篇针对反射的性能测试（我持保留看法）：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/55075493">Java的反射调用性能很低吗?</a></p>
+<p>总体来说，反射确实会慢一些，对空方法来说，可能会慢个几倍吧，但对正常方法来说，还好。慢的原因，一是多了中间步骤，比如MethodAccessor的创建、参数的包装、一些条件判断等；二就是较为底层的实现了。</p>
+<p>要想完全了解反射调用的原理，还是得从底层出发，需要对虚拟机实现、JIT即时编译实现细节有所了解，这是暂时还没什么时间去做的事情，所以就此打住吧。</p>
+<h2 id="还可以去看的文章"><a href="#还可以去看的文章" class="headerlink" title="还可以去看的文章"></a>还可以去看的文章</h2><ul>
+<li><p><a target="_blank" rel="noopener" href="https://en.wikipedia.org/wiki/Reflective_programming">Reflective programming</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/37628/what-is-reflection-and-why-is-it-useful">What is reflection and why is it useful?</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://www.zhihu.com/question/361153307">为什么c/c++没有反射？</a></p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Java/" rel="tag"># Java</a>
+              <a href="/tags/%E5%8F%8D%E5%B0%84/" rel="tag"># 反射</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/10/20/%E5%B7%A5%E5%85%B7%E5%BF%AB%E6%89%8B%E8%AE%B0%20-%20JMH-%E5%B7%A5%E5%85%B7%E5%BF%AB%E6%89%8B%E8%AE%B0-jmh/" rel="prev" title="工具快手记 - JMH">
+      <i class="fa fa-chevron-left"></i> 工具快手记 - JMH
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2021/11/03/%E7%9E%85%E7%9E%85%E5%8A%A8%E6%80%81%E4%BB%A3%E7%90%86-chou-chou-dong-tai-dai-li/" rel="next" title="瞅瞅动态代理">
+      瞅瞅动态代理 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8D%E5%B0%84%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F"><span class="nav-number">1.</span> <span class="nav-text">反射是什么？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%A7%A3%E5%85%B6%E7%BB%84%E6%88%90"><span class="nav-number">2.</span> <span class="nav-text">理解其组成</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%A0%E4%B8%AA%E6%8A%BD%E8%B1%A1%E6%A0%91"><span class="nav-number">3.</span> <span class="nav-text">几个抽象树</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Type"><span class="nav-number">3.1.</span> <span class="nav-text">Type</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AnnotatedElement"><span class="nav-number">3.2.</span> <span class="nav-text">AnnotatedElement</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#GenericDeclaration"><span class="nav-number">3.3.</span> <span class="nav-text">GenericDeclaration</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#AccessibleObject"><span class="nav-number">3.4.</span> <span class="nav-text">AccessibleObject</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#Member"><span class="nav-number">3.5.</span> <span class="nav-text">Member</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E4%BE%8B%E5%AD%90"><span class="nav-number">4.</span> <span class="nav-text">一个例子</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8D%E5%B0%84%E5%B7%A5%E5%85%B7%E5%BA%93"><span class="nav-number">5.</span> <span class="nav-text">反射工具库</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8D%E5%B0%84%E7%9A%84%E5%AE%9E%E7%8E%B0"><span class="nav-number">6.</span> <span class="nav-text">反射的实现</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8D%E5%B0%84%E5%92%8C%E5%86%85%E7%9C%81"><span class="nav-number">7.</span> <span class="nav-text">反射和内省</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%8D%E5%B0%84%E5%BE%88%E6%85%A2%E5%90%97%EF%BC%9F"><span class="nav-number">8.</span> <span class="nav-text">反射很慢吗？</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%98%E5%8F%AF%E4%BB%A5%E5%8E%BB%E7%9C%8B%E7%9A%84%E6%96%87%E7%AB%A0"><span class="nav-number">9.</span> <span class="nav-text">还可以去看的文章</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">81</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>

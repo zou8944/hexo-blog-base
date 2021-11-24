@@ -1,0 +1,640 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="Vert.x Web API Contract模块在Vert.x Web的基础上进行扩展，支持OpenAPI 3.0规范。 使用上有两种方式  编程方式 预定义HTTPRequestValidationHandler，并在route中传入，就像手册给的那样  配置文件方式 预先定义好接口描述文件，通过OpenAPI3RouterFactory加载并挂载到Router上">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Vert.x - Web API Contract的错误处理">
+<meta property="og:url" content="https://zou8944.com/2020/03/14/Vert.x%20-%20Web%20API%20Contract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86-vertx-webapicontract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="Vert.x Web API Contract模块在Vert.x Web的基础上进行扩展，支持OpenAPI 3.0规范。 使用上有两种方式  编程方式 预定义HTTPRequestValidationHandler，并在route中传入，就像手册给的那样  配置文件方式 预先定义好接口描述文件，通过OpenAPI3RouterFactory加载并挂载到Router上">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://www.tapd.cn/tfl/pictures/202003/tapd_61207716_1584160209_25.png">
+<meta property="og:image" content="https://www.tapd.cn/tfl/pictures/202003/tapd_61207716_1584160224_3.png">
+<meta property="article:published_time" content="2020-03-14T10:43:43.000Z">
+<meta property="article:modified_time" content="2021-02-16T15:22:42.149Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="Vert.x">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://www.tapd.cn/tfl/pictures/202003/tapd_61207716_1584160209_25.png">
+
+<link rel="canonical" href="https://zou8944.com/2020/03/14/Vert.x%20-%20Web%20API%20Contract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86-vertx-webapicontract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Vert.x - Web API Contract的错误处理 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">81</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">26</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2020/03/14/Vert.x%20-%20Web%20API%20Contract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86-vertx-webapicontract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Vert.x - Web API Contract的错误处理
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-03-14 18:43:43" itemprop="dateCreated datePublished" datetime="2020-03-14T18:43:43+08:00">2020-03-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-02-16 23:22:42" itemprop="dateModified" datetime="2021-02-16T23:22:42+08:00">2021-02-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%93%8D%E5%BA%94%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">响应式</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/03/14/Vert.x%20-%20Web%20API%20Contract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86-vertx-webapicontract%E7%9A%84%E9%94%99%E8%AF%AF%E5%A4%84%E7%90%86/" class="post-meta-item leancloud_visitors" data-flag-title="Vert.x - Web API Contract的错误处理" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>Vert.x Web API Contract模块在Vert.x Web的基础上进行扩展，支持OpenAPI 3.0规范。</p>
+<p>使用上有两种方式</p>
+<ul>
+<li><p>编程方式</p>
+<p>预定义<code>HTTPRequestValidationHandler</code>，并在route中传入，就像<a target="_blank" rel="noopener" href="https://vertx.io/docs/vertx-web-api-contract/java/">手册给的那样</a></p>
+</li>
+<li><p>配置文件方式</p>
+<p>预先定义好接口描述文件，通过<code>OpenAPI3RouterFactory</code>加载并挂载到Router上</p>
+<span id="more"></span>
+
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> openAPI3RouterFactoryList = mutableListOf&lt;OpenAPI3RouterFactory&gt;()</span><br><span class="line">listOf(</span><br><span class="line">    <span class="string">&quot;/webroot/swagger/openapi-admin.yaml&quot;</span></span><br><span class="line">).forEach &#123; configPath -&gt;</span><br><span class="line">           awaitResult&lt;OpenAPI3RouterFactory&gt; &#123;</span><br><span class="line">               OpenAPI3RouterFactory.create(vertx, configPath, it)</span><br><span class="line">           &#125;.apply &#123;</span><br><span class="line">               openAPI3RouterFactoryList.add(<span class="keyword">this</span>)</span><br><span class="line">           &#125;</span><br><span class="line">&#125;</span><br><span class="line"><span class="keyword">val</span> mainRouter = Router.router(vertx)</span><br><span class="line">openAPI3RouterFactoryList.forEach &#123; routerFactory -&gt;</span><br><span class="line">      mainRouter.mountSubRouter(<span class="string">&quot;/&quot;</span>, routerFactory.mountServicesFromExtensions()..router)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>通过这种方式加载，Vert.x能够自动解析描述文件，提供自动挂载验证handler和securityHandler的能力，在请求不符合配置文件定义的约束时，能够自动以合适的状态码回绝用户请求。</p>
+</li>
+</ul>
+<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>使用配置文件方式生成Route，不增加额外Handler的情况下，在遇到验证失败或空指针异常之类的情况时，Vert.x处理验证错误和内部错误的方式是直接报400 Bad Request和500 Internal Error，没有任何附加信息，日志上也不会有任何输出，这为问题排查和API使用者都是很不友好的方式。</p>
+<p><img src="https://www.tapd.cn/tfl/pictures/202003/tapd_61207716_1584160209_25.png" alt="image-20200314115204080"></p>
+<h1 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h1><p>通过查看手册和源码跟踪，找到如下处理方式，在Router上挂载一个全局的400和500错误处理器，对错误信息进行详细解析</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">val</span> OpenAPIErrorTypeMap = mapOf(</span><br><span class="line">  Pair(ValidationException.ErrorType.NO_MATCH, <span class="string">&quot;格式错误&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.NOT_FOUND, <span class="string">&quot;缺失&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.UNEXPECTED_ARRAY, <span class="string">&quot;不应为数组&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.UNEXPECTED_SINGLE_STRING, <span class="string">&quot;必须为数组&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.FILE_NOT_FOUND, <span class="string">&quot;文件未找到&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.WRONG_CONTENT_TYPE, <span class="string">&quot;请求头Content-Type错误&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.EMPTY_VALUE, <span class="string">&quot;值不应为空&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.UNEXPECTED_ARRAY_SIZE, <span class="string">&quot;数组容量不匹配&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.DESERIALIZATION_ERROR, <span class="string">&quot;反序列化失败&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.OBJECT_FIELD_NOT_FOUND, <span class="string">&quot;缺失&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.JSON_NOT_PARSABLE, <span class="string">&quot;JSON无法解析&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.JSON_INVALID, <span class="string">&quot;格式错误&quot;</span>),</span><br><span class="line">  Pair(ValidationException.ErrorType.XML_INVALID, <span class="string">&quot;格式错误&quot;</span>)</span><br><span class="line">)</span><br><span class="line"></span><br><span class="line"><span class="comment">// 针对OpenAPI的参数校验错误</span></span><br><span class="line">mainRouter.errorHandler(<span class="number">400</span>) &#123;</span><br><span class="line">    <span class="keyword">if</span> (it.failure() <span class="keyword">is</span> ValidationException) &#123;</span><br><span class="line">        <span class="keyword">val</span> failure = it.failure() <span class="keyword">as</span> ValidationException</span><br><span class="line">        <span class="keyword">val</span> msg = JsonObject()</span><br><span class="line">        .put(<span class="string">&quot;errCode&quot;</span>, <span class="string">&quot;BadRequest&quot;</span>)</span><br><span class="line">        .put(<span class="string">&quot;errMsg&quot;</span>, it.failure().message)</span><br><span class="line">        .put(<span class="string">&quot;userMsg&quot;</span>, <span class="string">&quot;请求参数 <span class="subst">$&#123;failure.parameterName()&#125;</span> <span class="subst">$&#123;OpenAPIErrorTypeMap[failure.type()]&#125;</span>&quot;</span>)</span><br><span class="line">        it.response()</span><br><span class="line">        .setStatusCode(it.statusCode())</span><br><span class="line">        .putHeader(<span class="string">&quot;Content-type&quot;</span>, <span class="string">&quot;application/json&quot;</span>)</span><br><span class="line">        .putHeader(<span class="string">&quot;Content-length&quot;</span>, <span class="string">&quot;<span class="subst">$&#123;msg.toString().toByteArray().size&#125;</span>&quot;</span>)</span><br><span class="line">        .write(msg.toBuffer()).end()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如此，若再发生请求参数验证错误，将给出明确的问题所在，而不是靠猜测。</p>
+<p><img src="https://www.tapd.cn/tfl/pictures/202003/tapd_61207716_1584160224_3.png" alt="image-20200314115352490"></p>
+<h1 id="方案出处"><a href="#方案出处" class="headerlink" title="方案出处"></a>方案出处</h1><p>遇到这个问题时，我个人倾向于Vert.x应该会提供一个打印详细报错信息的开关之类的东西，但在手册中并没有找到，于是通过源码定位到如下报错地点。</p>
+<p><code>io.vertx.ext.web.api.validation.impl.BaseValidationHandler#handle()</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">handle</span><span class="params">(RoutingContext routingContext)</span> </span>&#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      RequestParametersImpl parsedParameters = <span class="keyword">new</span> RequestParametersImpl();</span><br><span class="line"></span><br><span class="line">      parsedParameters.setPathParameters(validatePathParams(routingContext));</span><br><span class="line">      parsedParameters.setQueryParameters(validateQueryParams(routingContext));</span><br><span class="line">      parsedParameters.setHeaderParameters(validateHeaderParams(routingContext));</span><br><span class="line">      parsedParameters.setCookieParameters(validateCookieParams(routingContext));</span><br><span class="line">      </span><br><span class="line">      <span class="comment">// . . . . . .</span></span><br><span class="line">      </span><br><span class="line">      routingContext.next();</span><br><span class="line">    &#125; <span class="keyword">catch</span> (ValidationException e) &#123;</span><br><span class="line">      routingContext.fail(<span class="number">400</span>, e);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到，在验证失败时，它直接将routingContext设置为了400错误，并将异常一并传入，查看routingContext.fail()方法定义，明确说明，如果没有任何错误处理器对该状态码进行处理，将直接向客户端响应状态码对应的默认响应，对于400的默认响应，就是statucode=400和statusmessage=Bad Request</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * Fail the context with the specified throwable and the specified the status code.</span></span><br><span class="line"><span class="comment"> * &lt;p&gt;</span></span><br><span class="line"><span class="comment"> * This will cause the router to route the context to any matching failure handlers for the request. If no failure handlers</span></span><br><span class="line"><span class="comment"> * match It will trigger the error handler matching the status code. You can define such error handler with</span></span><br><span class="line"><span class="comment"> * &#123;<span class="doctag">@link</span> Router#errorHandler(int, Handler)&#125;. If no error handler is not defined, It will send a default failure response with provided status code.</span></span><br><span class="line"><span class="comment"> *</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> statusCode the HTTP status code</span></span><br><span class="line"><span class="comment"> * <span class="doctag">@param</span> throwable a throwable representing the failure</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">void</span> <span class="title">fail</span><span class="params">(<span class="keyword">int</span> statusCode, Throwable throwable)</span></span>;</span><br></pre></td></tr></table></figure>
+
+<p>因此，就此处来讲，定义针对400的处理器是非常有必要的，同时也是<a target="_blank" rel="noopener" href="https://vertx.io/docs/vertx-web-api-contract/java/">官方推荐的处理方式</a>，官方文档中特意提到了错误处理的管理方式，有如下两种，很明显，对于很多path的情况，使用第二种更好。</p>
+<ul>
+<li><p>单独为一个路径增加错误处理器</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">router.get(<span class="string">&quot;/awesome/:pathParam&quot;</span>)</span><br><span class="line">  <span class="comment">// Mount validation handler</span></span><br><span class="line">  .handler(validationHandler)</span><br><span class="line">  <span class="comment">//Mount your handler</span></span><br><span class="line">  .handler((routingContext) -&gt; &#123;</span><br><span class="line">    <span class="comment">// Your logic</span></span><br><span class="line">  &#125;)</span><br><span class="line">  <span class="comment">//Mount your failure handler to manage the validation failure at path level</span></span><br><span class="line">  .failureHandler((routingContext) -&gt; &#123;</span><br><span class="line">    Throwable failure = routingContext.failure();</span><br><span class="line">    <span class="keyword">if</span> (failure <span class="keyword">instanceof</span> ValidationException) &#123;</span><br><span class="line">      <span class="comment">// Something went wrong during validation!</span></span><br><span class="line">      String validationErrorMessage = failure.getMessage();</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br></pre></td></tr></table></figure></li>
+<li><p>为一个状态码增加错误处理器</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// Manage the validation failure for all routes in the router</span></span><br><span class="line">router.errorHandler(<span class="number">400</span>, routingContext -&gt; &#123;</span><br><span class="line">  <span class="keyword">if</span> (routingContext.failure() <span class="keyword">instanceof</span> ValidationException) &#123;</span><br><span class="line">    <span class="comment">// Something went wrong during validation!</span></span><br><span class="line">    String validationErrorMessage = routingContext.failure().getMessage();</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    <span class="comment">// Unknown 400 failure happened</span></span><br><span class="line">    routingContext.response().setStatusCode(<span class="number">400</span>).end();</span><br><span class="line">  &#125;</span><br><span class="line">&#125;);</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h1 id="延伸"><a href="#延伸" class="headerlink" title="延伸"></a>延伸</h1><p>关于在Router上为某个特定的状态码增加错误处理器的处理，不仅在于此处，个人认为是可以通用的，对高频发生的状态码，可以这样增加一个全局处理器，使得不至于丢失错误信息。</p>
+<p>此外，这也衍生出另一个问题，Vert.x的全局错误处理，对于运行中错误的漏网之鱼，要定义合适有效的全局处理器，使得不放过任何错误，这一点要注意。</p>
+<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><ol>
+<li><p><a target="_blank" rel="noopener" href="https://vertx.io/docs/vertx-web-api-contract/java/">Vert.x Web API Contract</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://swagger.io/specification/">Swagger OpenAPI Specification</a></p>
+</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Vert-x/" rel="tag"># Vert.x</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2020/03/07/Python%20-%20%E6%97%A5%E5%BF%97-python-%E6%97%A5%E5%BF%97/" rel="prev" title="Python - 日志">
+      <i class="fa fa-chevron-left"></i> Python - 日志
+    </a></div>
+      <div class="post-nav-item">
+    <a href="/2020/03/21/%E7%94%A8Prometheus%E5%92%8CGrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8-%E7%94%A8prometheus%E5%92%8Cgrafana%E7%9B%91%E6%8E%A7%E4%BD%A0%E7%9A%84%E6%9C%8D%E5%8A%A1%E5%99%A8/" rel="next" title="用Prometheus和Grafana监控你的服务器">
+      用Prometheus和Grafana监控你的服务器 <i class="fa fa-chevron-right"></i>
+    </a></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">问题</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">2.</span> <span class="nav-text">解决方案</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%B9%E6%A1%88%E5%87%BA%E5%A4%84"><span class="nav-number">3.</span> <span class="nav-text">方案出处</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%BB%B6%E4%BC%B8"><span class="nav-number">4.</span> <span class="nav-text">延伸</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83%E6%96%87%E6%A1%A3"><span class="nav-number">5.</span> <span class="nav-text">参考文档</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">81</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">26</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+        
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
