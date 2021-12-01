@@ -256,6 +256,13 @@
               <span class="post-meta-item-text">阅读次数：</span>
               <span class="leancloud-visitors-count"></span>
             </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
 
         </div>
       </header>
@@ -318,7 +325,7 @@
 <li>c_hash: authorizationCode的hash值，用于验证authorizationCode</li>
 <li>email: 用户邮箱</li>
 <li>email_verified: 邮箱是否经过验证，总是为true</li>
-<li>is_private_email:  是否是加密邮箱，即上面说的<a href="mailto:&#120;&#x78;&#120;&#x40;&#x70;&#114;&#105;&#x76;&#x61;&#x74;&#101;&#x72;&#x65;&#x6c;&#x61;&#121;&#x2e;&#x61;&#112;&#112;&#x6c;&#101;&#x69;&#100;&#x2e;&#99;&#111;&#x6d;">&#120;&#x78;&#120;&#x40;&#x70;&#114;&#105;&#x76;&#x61;&#x74;&#101;&#x72;&#x65;&#x6c;&#x61;&#121;&#x2e;&#x61;&#112;&#112;&#x6c;&#101;&#x69;&#100;&#x2e;&#99;&#111;&#x6d;</a></li>
+<li>is_private_email:  是否是加密邮箱，即上面说的<a href="mailto:&#x78;&#x78;&#120;&#64;&#x70;&#114;&#x69;&#118;&#97;&#116;&#x65;&#x72;&#x65;&#x6c;&#97;&#121;&#x2e;&#97;&#112;&#112;&#x6c;&#x65;&#105;&#100;&#46;&#x63;&#x6f;&#109;">&#x78;&#x78;&#120;&#64;&#x70;&#114;&#x69;&#118;&#97;&#116;&#x65;&#x72;&#x65;&#x6c;&#97;&#121;&#x2e;&#97;&#112;&#112;&#x6c;&#x65;&#105;&#100;&#46;&#x63;&#x6f;&#109;</a></li>
 <li>auth_time: 请求授权的时间</li>
 </ul>
 <h2 id="authorization-code"><a href="#authorization-code" class="headerlink" title="authorization code"></a>authorization code</h2><p>authorization code用于和Apple ID服务交互，这里暂时用不到，忽略。</p>
@@ -330,7 +337,7 @@
 <li>对于用户从APP注销，再登录，identifier是不会变的</li>
 <li>可以用于唯一标示用户，即应该用它而不是邮箱嵌入我们的业务数据库</li>
 </ul>
-<h2 id="Private-email"><a href="#Private-email" class="headerlink" title="Private email"></a>Private email</h2><p>授权时，用户可以选择隐藏真是邮箱，于是我们会获取到一个<a href="mailto:&#x78;&#120;&#120;&#64;&#112;&#114;&#x69;&#x76;&#x61;&#116;&#101;&#x72;&#101;&#x6c;&#97;&#x79;&#x2e;&#97;&#x70;&#x70;&#108;&#x65;&#105;&#x64;&#46;&#x63;&#x6f;&#x6d;">&#x78;&#120;&#120;&#64;&#112;&#114;&#x69;&#x76;&#x61;&#116;&#101;&#x72;&#101;&#x6c;&#97;&#x79;&#x2e;&#97;&#x70;&#x70;&#108;&#x65;&#105;&#x64;&#46;&#x63;&#x6f;&#x6d;</a>格式的用户邮箱，该邮箱具有一定限制</p>
+<h2 id="Private-email"><a href="#Private-email" class="headerlink" title="Private email"></a>Private email</h2><p>授权时，用户可以选择隐藏真是邮箱，于是我们会获取到一个<a href="mailto:&#x78;&#120;&#x78;&#x40;&#x70;&#x72;&#105;&#118;&#97;&#116;&#x65;&#114;&#x65;&#108;&#97;&#x79;&#46;&#x61;&#112;&#112;&#x6c;&#101;&#x69;&#100;&#x2e;&#99;&#111;&#109;">&#x78;&#120;&#x78;&#x40;&#x70;&#x72;&#105;&#118;&#97;&#116;&#x65;&#114;&#x65;&#108;&#97;&#x79;&#46;&#x61;&#112;&#112;&#x6c;&#101;&#x69;&#100;&#x2e;&#99;&#111;&#109;</a>格式的用户邮箱，该邮箱具有一定限制</p>
 <ul>
 <li>邮箱具有全局唯一性</li>
 <li>发往该邮箱的信息将会被转发到真实的用户邮箱</li>
@@ -576,7 +583,31 @@
   <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
   </div>
 
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
         
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
 
 
 
