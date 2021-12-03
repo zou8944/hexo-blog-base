@@ -1,12 +1,11 @@
 ---
 title: Spring源码分析 - PostProcessor们
 categories:
-  - null
+  - Spring
 tags:
-  - null
+  - Spring
 date: 2021-11-30 09:42:23
 ---
-
 
 `BeanPostProcessor`是Spring中参与Bean生命周期定制非常重要的一个手段，上文分析过，其执行有两个时机
 
@@ -14,6 +13,8 @@ date: 2021-11-30 09:42:23
 - 一后：自定义方法调用之后
 
 Spring中很多重要的特性利用了`BeanPostProcessor`达成，毕竟，算来算去，Spring中整个Bean的生命周期已经足够复杂了，如果每加一个功能就要在生命周期上做文章，只会增加复杂度，而`BeanPostProcessor`则是Spring提供的一种扩展方式。与其相对的，一般用户用的可能较少的`BeanFactoryPostProcessor`是针对整个容器初始化完成后提供定制化功能的扩展，我们也要观察一下。观察的主要内容是主要实现类及其作用。
+
+<!-- more -->
 
 ## BeanFactoryPostProcessor
 
