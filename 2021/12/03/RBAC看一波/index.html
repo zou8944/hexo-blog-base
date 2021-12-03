@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="前面介绍过Kubernetes的结构组成，其中API Server用于与外界的交互，我们常用的命令行工具kubectl、UI工具lens、云服务商提供的WebUI，最终都是通过Restfule API的形式，走HTTP协议，到达API Server。此时就带来权限控制问题。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes的鉴权">
+<meta property="og:url" content="https://zou8944.com/2021/12/03/RBAC%E7%9C%8B%E4%B8%80%E6%B3%A2/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="前面介绍过Kubernetes的结构组成，其中API Server用于与外界的交互，我们常用的命令行工具kubectl、UI工具lens、云服务商提供的WebUI，最终都是通过Restfule API的形式，走HTTP协议，到达API Server。此时就带来权限控制问题。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203153658776.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203164001619.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203165229100.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203165546184.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203165743823.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203170002236.png">
+<meta property="article:published_time" content="2021-12-03T09:07:58.035Z">
+<meta property="article:modified_time" content="2021-12-03T09:07:58.035Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="kubernetes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203153658776.png">
+
+<link rel="canonical" href="https://zou8944.com/2021/12/03/RBAC%E7%9C%8B%E4%B8%80%E6%B3%A2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Kubernetes的鉴权 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">83</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">27</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">55</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/12/03/RBAC%E7%9C%8B%E4%B8%80%E6%B3%A2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kubernetes的鉴权
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-12-03 17:07:58" itemprop="dateCreated datePublished" datetime="2021-12-03T17:07:58+08:00">2021-12-03</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/kubernetes/" itemprop="url" rel="index"><span itemprop="name">kubernetes</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/12/03/RBAC%E7%9C%8B%E4%B8%80%E6%B3%A2/" class="post-meta-item leancloud_visitors" data-flag-title="Kubernetes的鉴权" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>前面介绍过Kubernetes的结构组成，其中API Server用于与外界的交互，我们常用的命令行工具kubectl、UI工具lens、云服务商提供的WebUI，最终都是通过Restfule API的形式，走HTTP协议，到达API Server。此时就带来权限控制问题。</p>
+<span id="more"></span>
+
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203153658776.png" alt="image-20211203153658776" style="zoom:80%;" />
+
+<p>如上图，对来自外部的请求，Api Server会经过三个组件</p>
+<ul>
+<li>Authentication：认证，验证用户的合法性，并从中提取出用户信息，如用户名、组等</li>
+<li>Authorization：鉴权，鉴定该用户是否有权限访问指定资源</li>
+<li>Admission：准入，它可以修改或拒绝请求</li>
+</ul>
+<h2 id="认证"><a href="#认证" class="headerlink" title="认证"></a>认证</h2><p>与用户相关的概念，有用户、组、ServiceAccount，但只有ServiceAccount才在Kubernetes中以资源的形式存在，用户、组并不会以资源的形式存在，它们只是一个字符串，在使用的地方如RoleBinding时被引用，理解这一点很重要。</p>
+<p>从集群内部，即pod中访问API Server时，需要ServiceAccount来标识身份；从集群外部访问API Server时，则需要走外部验证，包括：客户端证书、密码、普通令牌、引导令牌。</p>
+<h3 id="ServiceAccount"><a href="#ServiceAccount" class="headerlink" title="ServiceAccount"></a>ServiceAccount</h3><p>每个命名空间都会有一个默认的ServiceAccount。一个典型的ServiceAccount如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line">gd % kubectl --kubeconfig ~/.kube/config-test get sa -o yaml</span><br><span class="line">apiVersion: v1</span><br><span class="line">items:</span><br><span class="line">- apiVersion: v1</span><br><span class="line">  imagePullSecrets:</span><br><span class="line">  - name: acr-credential-560b66540f01e51c18524b09ad7f575f</span><br><span class="line">  - name: acr-credential-6731ef77d88edc24b279ebf20860f30f</span><br><span class="line">  - name: acr-credential-5dee66918cdf5d93de4aa5cd90247f73</span><br><span class="line">  - name: acr-credential-be55512166dd26eda658d0706de5a06a</span><br><span class="line">  - name: acr-credential-bab42ef118a2913b05cd8cdb95441d70</span><br><span class="line">  kind: ServiceAccount</span><br><span class="line">  metadata:</span><br><span class="line">    creationTimestamp: &quot;2020-11-10T06:48:55Z&quot;</span><br><span class="line">    name: default</span><br><span class="line">    namespace: default</span><br><span class="line">    resourceVersion: &quot;100598603&quot;</span><br><span class="line">    selfLink: /api/v1/namespaces/default/serviceaccounts/default</span><br><span class="line">    uid: 4ef6a2d3-19ad-47cf-a2de-135f2c9d86b5</span><br><span class="line">  secrets:</span><br><span class="line">  - name: default-token-vrqk9</span><br><span class="line">kind: List</span><br><span class="line">metadata:</span><br><span class="line">  resourceVersion: &quot;&quot;</span><br><span class="line">  selfLink: &quot;&quot;</span><br></pre></td></tr></table></figure>
+
+<p>可以看到它其实包含两部分：secrets、imagePullSecrets，其中，前者会被挂载到pod的容器内，用于在访问API Server时提供信息；后者则用于pod从私有仓库拉取镜像时使用的秘钥。也就是说，ServiceAccount的作用也就是这两部分了。本文重点关注secrets部分。</p>
+<p>当一个pod创建时，它会默认拥有该ServiceAccount，这一点可以通过查看一个已经存在的pod得以验证</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">gd % kubectl --kubeconfig ~/.kube/config-test get pod app-bosslist-backend-67c59b8d94-k75kj -o yaml | grep service</span><br><span class="line">    - mountPath: /var/run/secrets/kubernetes.io/serviceaccount</span><br><span class="line">  serviceAccount: default</span><br><span class="line">  serviceAccountName: default</span><br></pre></td></tr></table></figure>
+
+<p>而该token包含两部分信息：服务端证书、token值的BASE64编码。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">g % kubectl --kubeconfig ~/.kube/config-test get secret default-token-vrqk9 -o yaml</span><br><span class="line">apiVersion: v1</span><br><span class="line">data:</span><br><span class="line">  ca.crt: LS0tLS1CRUdJTiBDRVJUSUZJQ0FURS0tLS0tCk1JSURHakNDQWdLZ0F3SUJBZ0lCQURBTkJna3Foa2lHOXcwQkFRc0ZBREErTVNjd0ZBWURWUVFLRXcxaGJHbGkKWVdKaElHTnNiM1ZrTUE4R0ExVUVDaE1JYUdGdVozcG9iM1V4RXpBUkJnTlZCxxxxx</span><br><span class="line">  namespace: ZGVmYXVsdA==</span><br><span class="line">  token: ZXlKaGJHY2lPaUpTVXpJMU5pSXNJbXRwWkNJNklteEthMkpUUm1GbFVFZFlWRmhsUTBKcE1VTjJkbmd6TVZCRWVtSjNkSFZHUVVWU1RFWXhjak5DTlhjaWZRLmV5SnBjM01pT2lKcmRXSmxjbTVsZEdWekwzTmxjblpwWTJWaFxxxxx</span><br><span class="line">kind: Secret</span><br><span class="line">metadata:</span><br><span class="line">  annotations:</span><br><span class="line">    kubernetes.io/service-account.name: default</span><br><span class="line">    kubernetes.io/service-account.uid: 4ef6a2d3-19ad-47cf-a2de-135f2c9d86b5</span><br><span class="line">  creationTimestamp: &quot;2020-11-10T06:48:55Z&quot;</span><br><span class="line">  name: default-token-vrqk9</span><br><span class="line">  namespace: default</span><br><span class="line">  resourceVersion: &quot;38744013&quot;</span><br><span class="line">  selfLink: /api/v1/namespaces/default/secrets/default-token-vrqk9</span><br><span class="line">  uid: 64ee0b11-9919-47b1-97e9-e055f47f3732</span><br><span class="line">type: kubernetes.io/service-account-token</span><br></pre></td></tr></table></figure>
+
+<p>token值是JWT，解码结果如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  &quot;iss&quot;: &quot;kubernetes/serviceaccount&quot;,</span><br><span class="line">  &quot;kubernetes.io/serviceaccount/namespace&quot;: &quot;default&quot;,</span><br><span class="line">  &quot;kubernetes.io/serviceaccount/secret.name&quot;: &quot;default-token-vrqk9&quot;,</span><br><span class="line">  &quot;kubernetes.io/serviceaccount/service-account.name&quot;: &quot;default&quot;,</span><br><span class="line">  &quot;kubernetes.io/serviceaccount/service-account.uid&quot;: &quot;4ef6a2d3-19ad-47cf-a2de-135f2c9d86b5&quot;,</span><br><span class="line">  &quot;sub&quot;: &quot;system:serviceaccount:default:default&quot;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="普通用户、组"><a href="#普通用户、组" class="headerlink" title="普通用户、组"></a>普通用户、组</h3><p>API Server都是通过客户端自声明的方式得到用户名、组等信息，自己并不会存储。而客户端提供自己身份的方式有几种：客户端证书、密码、普通令牌、引导令牌。具体官方手册有说明：<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/reference/access-authn-authz/authentication/%E3%80%82%E6%88%91%E4%BB%AC%E9%87%8D%E7%82%B9%E5%85%B3%E6%B3%A8%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%AF%81%E4%B9%A6%E7%9A%84%E6%96%B9%E5%BC%8F%E3%80%82">https://kubernetes.io/zh/docs/reference/access-authn-authz/authentication/。我们重点关注客户端证书的方式。</a></p>
+<p>很重要的点是API Server将证书中的CN当做用户名，O当做组名。于是，我们要做的，就是创建自己的key、csr，在让API服务端签发证书，就能使用key+crt的方式以预期的身份合法访问API Server了。</p>
+<p>具体步骤可参见下文“最佳实践 - 创建一个只能操作Deployment的用户”前两步。</p>
+<h2 id="鉴权-RBAC"><a href="#鉴权-RBAC" class="headerlink" title="鉴权 - RBAC"></a>鉴权 - RBAC</h2><p>认证确认了用户的合法身份，鉴权则是根据用户的身份和访问的资源确定是否具有访问的权限。<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/reference/access-authn-authz/authorization/">官方手册在这</a>。从以前到现在，Kubernetes支持如下几种方式:</p>
+<ul>
+<li>Node：节点鉴权，专门对 kubelet 发出的 API 请求进行鉴权</li>
+<li>ABAC：基于属性的鉴权</li>
+<li>RBAC：基于角色的鉴权</li>
+<li>Webhook：即回调自定义的HTTP接口，决定是否可访问</li>
+</ul>
+<p>我们关注RBAC鉴权模式。</p>
+<h3 id="Role和RoleBinding"><a href="#Role和RoleBinding" class="headerlink" title="Role和RoleBinding"></a>Role和RoleBinding</h3><p>Role是角色，是一堆资源操作的权限集合；RoleBinding将Role和用户绑定起来，绑定的对象可以是用户、组、ServiceAccount。看两个例子就一目了然。</p>
+<p>首先是Role的定义，如下表示角色cirole允许对default命名空间下的deployment资源进行get、list、update、patch</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Role</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">cirole</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">verbs:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">get</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">list</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">update</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">patch</span></span><br><span class="line">    <span class="attr">apiGroups:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">apps</span></span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">deployments</span></span><br></pre></td></tr></table></figure>
+
+<p>其次是RoleBinding，如下表示将角色cirole和用户ciuser进行绑定</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">RoleBinding</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">cirolebinding</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">subjects:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">kind:</span> <span class="string">User</span></span><br><span class="line">    <span class="attr">apiGroup:</span> <span class="string">rbac.authorization.k8s.io</span></span><br><span class="line">    <span class="attr">name:</span> <span class="string">ciuser</span></span><br><span class="line"><span class="attr">roleRef:</span></span><br><span class="line">  <span class="attr">apiGroup:</span> <span class="string">rbac.authorization.k8s.io</span></span><br><span class="line">  <span class="attr">kind:</span> <span class="string">Role</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">cirole</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
+
+<p>上述两个声明应用后，就能实现ciuser对default命名空间下的deployment的操作，可以通过kubectl auth can-i命令检测权限</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 检查ciuser是否能够获取deployment</span></span><br><span class="line">gd % kubectl --kubeconfig ~/.kube/config-test auth can-i get deployments --as ciuser</span><br><span class="line">yes</span><br><span class="line"><span class="meta">#</span><span class="bash"> 检查ciuser是否能够获取secrets</span></span><br><span class="line">gd % kubectl --kubeconfig ~/.kube/config-test auth can-i get secrets --as ciuser</span><br><span class="line">no</span><br></pre></td></tr></table></figure>
+
+<h3 id="ClusterRole和ClusterRoleBinding"><a href="#ClusterRole和ClusterRoleBinding" class="headerlink" title="ClusterRole和ClusterRoleBinding"></a>ClusterRole和ClusterRoleBinding</h3><p>Role和RoleBinding是有命名空间限制的，只能限制命名空间内的资源，有下面两个场景其无法满足</p>
+<ul>
+<li>一个用户需要访问多个命名空间下的资源时，按照Role的做法，需要在每个命名空间下定义Role，然后定义多个RoleBinding将用户与角色绑定，太多复杂</li>
+<li>一些并不存在的资源的访问控制，仅仅是一个URL路径，比如/healthz</li>
+<li>一些不属于任何命名空间的资源的访问控制，比如Node、PV等</li>
+</ul>
+<p>此时就需要ClusterRole，话不多说，直接看他们的定义即可</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 这里节选了drain-node的角色定义，可发现其最大的不同就是少了namespace</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">drain-node</span></span><br><span class="line"><span class="attr">rules:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">verbs:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">get</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">list</span></span><br><span class="line">    <span class="attr">apiGroups:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">extensions</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">apps</span></span><br><span class="line">    <span class="attr">resources:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="string">daemonsets</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment"># 节选了system:node的角色绑定</span></span><br><span class="line"><span class="attr">apiVersion:</span> <span class="string">rbac.authorization.k8s.io/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">ClusterRoleBinding</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">system:node</span></span><br><span class="line"><span class="attr">roleRef:</span></span><br><span class="line">  <span class="attr">apiGroup:</span> <span class="string">rbac.authorization.k8s.io</span></span><br><span class="line">  <span class="attr">kind:</span> <span class="string">ClusterRole</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">system:node</span></span><br></pre></td></tr></table></figure>
+
+<h3 id="默认角色"><a href="#默认角色" class="headerlink" title="默认角色"></a>默认角色</h3><p>Kubernetes提供了大量默认角色和角色绑定，都是Cluster级别，我们看几个</p>
+<ul>
+<li>admin：管理员角色</li>
+<li>view：对除了Secrets之外的资源的访问，在授权只读用户时尤其有效</li>
+<li>edit：对除了角色和角色绑定之外的资源的访问和编辑，不能操作角色和角色绑定是防止授权扩张</li>
+</ul>
+<p>这里强烈案例一个Kubernetes可视化管理软件——<a target="_blank" rel="noopener" href="https://k8slens.dev/">lens</a>，用它，去查看默认角色们吧</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203164001619.png" alt="image-20211203164001619"></p>
+<h2 id="kubeconfig文件"><a href="#kubeconfig文件" class="headerlink" title="kubeconfig文件"></a>kubeconfig文件</h2><p>使用kubectl访问API Server时，实际上是需要客户端凭证的，对于Linux系操作系统，它的位置在：~/.kube/config，关于kubeconfig，大致介绍，详细看<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/configuration/organize-cluster-access-kubeconfig/">官方手册</a>。</p>
+<p>一个config文件由四部分组成</p>
+<ul>
+<li>集群地址和集群CA证书，该证书用作HTTPS加密传输时用，可以有多个</li>
+<li>用户凭证，使用证书认证时存的是用户证书和加密key，可以有多个</li>
+<li>上下文，集群地址和用户凭证的绑定，可以有多个</li>
+<li>当前上下文，决定当前处于激活状态下的上下文。即当前以哪个用户连接哪个集群地址</li>
+</ul>
+<p>多个config文件可合并</p>
+<ul>
+<li>如果设置了KUBECONFIG环境变量，指明了多个config文件，则这些文件会以一定的规则合并，这个可以在本地管理时方便使用。</li>
+</ul>
+<h2 id="阿里云RAM与RBAC"><a href="#阿里云RAM与RBAC" class="headerlink" title="阿里云RAM与RBAC"></a>阿里云RAM与RBAC</h2><p>阿里云的RAM，对容器服务只有管理和读取两个权限，对资源的具体权限管理需要使用RBAC，在阿里云容器服务控制台有简单的RBAC配置 —— 授权管理。</p>
+<p>如下，它的最细粒度，能够管理某个子账号对指定集群的指定命名空间的指定角色的绑定管理。其实就是对角色绑定的封装。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203165229100.png" alt="image-20211203165229100"></p>
+<p>你可能会想，子账号对应的集群内用户是什么呢？我们可以从控制台给出的连接信息看出端倪</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203165546184.png" alt="image-20211203165546184" style="zoom:80%;" />
+
+<p>对一个管理员账号的证书进行解析，可以发现它的用户名(CN)就是阿里云子账号的ID，用户组为system:users</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203165743823.png" alt="image-20211203165743823"></p>
+<p>而如果我们对某个用户指定了自定义权限，则会创建多条RoleBinding，命名规则为 <code>&lt;userid&gt;-&lt;namespace&gt;-&lt;role&gt;-rolebinding</code>，比如</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211203170002236.png" alt="image-20211203170002236"></p>
+<h2 id="准入"><a href="#准入" class="headerlink" title="准入"></a>准入</h2><p>这就是一堆前置处理器，称之为准入处理器，忽略，有需要去看<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/reference/access-authn-authz/admission-controllers/">手册</a></p>
+<h2 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h2><h3 id="一些快速的命令"><a href="#一些快速的命令" class="headerlink" title="一些快速的命令"></a>一些快速的命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 快速创建一个pod</span></span><br><span class="line">kubectl run podname --image=luksa/kubectl-proxy -n default</span><br><span class="line"><span class="meta">#</span><span class="bash"> 编辑一个资源的yaml文件</span></span><br><span class="line">kubectl edit pod xxx</span><br><span class="line"><span class="meta">#</span><span class="bash"> 快速创建role</span></span><br><span class="line">kubectl create role service-reader --verb=get --verb=list --resource=services -n bar</span><br><span class="line"><span class="meta">#</span><span class="bash"> 快速创建rolebinding</span></span><br><span class="line">kubectl create rolebinding test --role=service-reader --serviceaccount=foo:default -n foo</span><br><span class="line"><span class="meta">#</span><span class="bash"><span class="comment"># 快速创建clusterrole</span></span></span><br><span class="line">kubectl create clusterrole pv-reader --verb=get,list --resource=persistentvolumes</span><br><span class="line"><span class="meta">#</span><span class="bash"> 快速创建clusterrolebinding</span></span><br><span class="line">kubectl create clusterrolebinding pv-test --clusterrole=pv-reader --serviceaccount=foo:default</span><br><span class="line"><span class="meta">#</span><span class="bash"> 快速检测权限：我能在default命名空间创建deployment吗？</span></span><br><span class="line">kubectl auth can-i create deployment -n default</span><br><span class="line"><span class="meta">#</span><span class="bash"> 快速检测权限：我能在default命名空间以用户<span class="built_in">test</span>来创建deployment吗？</span></span><br><span class="line">kubectl auth can-i create deployment -n default --as test</span><br></pre></td></tr></table></figure>
+
+<h3 id="创建一个只能操作Deployment的用户"><a href="#创建一个只能操作Deployment的用户" class="headerlink" title="创建一个只能操作Deployment的用户"></a>创建一个只能操作Deployment的用户</h3><p>以证书的方式，先在本地创建用户，再在k8s服务器签发，然后创建角色和角色绑定，最后将用户注册到本地config文件，就能访问了</p>
+<ol>
+<li><p>创建用户</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 生成秘钥</span></span><br><span class="line">openssl genrsa -out ciuser.key 2048</span><br><span class="line"><span class="meta">#</span><span class="bash"> 生成csr，注意CN代表用户名；O代表组名</span></span><br><span class="line">openssl req -new -key ciuser.key -out ciuser.csr -subj &quot;/CN=ciuser/O=ci&quot;</span><br><span class="line"><span class="meta">#</span><span class="bash"> 将csr做base64编码</span></span><br><span class="line">cat ciuser.csr | base64 | tr -d &quot;\n&quot;</span><br></pre></td></tr></table></figure></li>
+<li><p>k8s服务器签发证书</p>
+<p>创建csr请求，其中的request是第一步商城的csr做的base64编码</p>
+<p>csr.yaml</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">certificates.k8s.io/v1beta1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">CertificateSigningRequest</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">ciuser</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">groups:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">system:authenticated</span></span><br><span class="line">  <span class="attr">request:</span> <span class="string">xxxxxxxxxxxxxxxxxxxxxx</span></span><br><span class="line">  <span class="attr">signerName:</span> <span class="string">kubernetes.io/kube-apiserver-client</span></span><br><span class="line">  <span class="attr">usages:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="string">client</span> <span class="string">auth</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl --kubeconfig ~/.kube/config-test apply -f csr.yaml</span><br></pre></td></tr></table></figure></li>
+<li><p>创建角色和角色绑定</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl --kubeconfig ~/.kube/config-test create role cirole --verb=get --verb=list --verb=update --verb=patch --resource=deployments -n default</span><br><span class="line">kubectl --kubeconfig ~/.kube/config-test create rolebinding cirolebinding --role=cirole --user=ciuser -n default</span><br></pre></td></tr></table></figure></li>
+<li><p>在config文件注册用户和上下文</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 添加用户凭证； --embed-certs=<span class="literal">true</span>表示将证书写入config文件，而不是引用</span></span><br><span class="line">kubectl --kubeconfig ~/.kube/config-test config set-credentials ciuser --client-key=ciuser.key --client-certificate=ciuser.crt --embed-certs=true</span><br><span class="line"><span class="meta">#</span><span class="bash"> 添加上下文</span></span><br><span class="line">kubectl --kubeconfig ~/.kube/config-test config set-context ciuser --cluster=kubernetes --user=ciuser</span><br><span class="line"><span class="meta">#</span><span class="bash"> 切换上下文</span></span><br><span class="line">kubectl --kubeconfig ~/.kube/config-test config use-context ciuser</span><br><span class="line"><span class="meta">#</span><span class="bash"> 接下来，就按照正常操作即可</span></span><br><span class="line">kubectl --kubeconfig ~/.kube/config-test get deployments</span><br></pre></td></tr></table></figure></li>
+</ol>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ol>
+<li><a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/concepts/security/controlling-access/">Kubernetes API访问控制</a></li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/kubernetes/" rel="tag"># kubernetes</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/11/30/Spring%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90-PostProcessor%E4%BB%AC/" rel="prev" title="Spring源码分析 - PostProcessor们">
+      <i class="fa fa-chevron-left"></i> Spring源码分析 - PostProcessor们
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A4%E8%AF%81"><span class="nav-number">1.</span> <span class="nav-text">认证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#ServiceAccount"><span class="nav-number">1.1.</span> <span class="nav-text">ServiceAccount</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%99%AE%E9%80%9A%E7%94%A8%E6%88%B7%E3%80%81%E7%BB%84"><span class="nav-number">1.2.</span> <span class="nav-text">普通用户、组</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%89%B4%E6%9D%83-RBAC"><span class="nav-number">2.</span> <span class="nav-text">鉴权 - RBAC</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#Role%E5%92%8CRoleBinding"><span class="nav-number">2.1.</span> <span class="nav-text">Role和RoleBinding</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ClusterRole%E5%92%8CClusterRoleBinding"><span class="nav-number">2.2.</span> <span class="nav-text">ClusterRole和ClusterRoleBinding</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%BB%98%E8%AE%A4%E8%A7%92%E8%89%B2"><span class="nav-number">2.3.</span> <span class="nav-text">默认角色</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#kubeconfig%E6%96%87%E4%BB%B6"><span class="nav-number">3.</span> <span class="nav-text">kubeconfig文件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%98%BF%E9%87%8C%E4%BA%91RAM%E4%B8%8ERBAC"><span class="nav-number">4.</span> <span class="nav-text">阿里云RAM与RBAC</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%86%E5%85%A5"><span class="nav-number">5.</span> <span class="nav-text">准入</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5"><span class="nav-number">6.</span> <span class="nav-text">最佳实践</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%B8%80%E4%BA%9B%E5%BF%AB%E9%80%9F%E7%9A%84%E5%91%BD%E4%BB%A4"><span class="nav-number">6.1.</span> <span class="nav-text">一些快速的命令</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%88%9B%E5%BB%BA%E4%B8%80%E4%B8%AA%E5%8F%AA%E8%83%BD%E6%93%8D%E4%BD%9CDeployment%E7%9A%84%E7%94%A8%E6%88%B7"><span class="nav-number">6.2.</span> <span class="nav-text">创建一个只能操作Deployment的用户</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">7.</span> <span class="nav-text">参考</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">83</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">27</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">55</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
