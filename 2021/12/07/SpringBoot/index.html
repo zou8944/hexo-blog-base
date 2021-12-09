@@ -28,7 +28,7 @@
 <meta property="og:description" content="在Spring源码剖析的前三篇文章，我们介绍了ApplicationContext、Bean相关内容、BeanPostProcessor的内容；但从普遍反馈和自己事后阅读的体验来看，文章过长，没有重点，条理并不是特别清楚。想必是写作方式出了问题，最突出的莫过于流水账式写法，虽然写作的目的并不一定是写出好的文章，而是主要服务自己，但时间一长，自己也是个普通的读者，同样会看不大懂。 因此，写作方法是">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2021-12-07T13:48:58.000Z">
-<meta property="article:modified_time" content="2021-12-07T13:49:31.507Z">
+<meta property="article:modified_time" content="2021-12-08T03:58:18.357Z">
 <meta property="article:author" content="果冻">
 <meta property="article:tag" content="Spring">
 <meta name="twitter:card" content="summary">
@@ -226,10 +226,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-12-07 21:48:58 / 修改时间：21:49:31" itemprop="dateCreated datePublished" datetime="2021-12-07T21:48:58+08:00">2021-12-07</time>
+              <time title="创建时间：2021-12-07 21:48:58" itemprop="dateCreated datePublished" datetime="2021-12-07T21:48:58+08:00">2021-12-07</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-12-08 11:58:18" itemprop="dateModified" datetime="2021-12-08T11:58:18+08:00">2021-12-08</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -268,8 +274,9 @@
         <blockquote>
 <p>在Spring源码剖析的前三篇文章，我们介绍了ApplicationContext、Bean相关内容、BeanPostProcessor的内容；但从普遍反馈和自己事后阅读的体验来看，文章过长，没有重点，条理并不是特别清楚。想必是写作方式出了问题，最突出的莫过于流水账式写法，虽然写作的目的并不一定是写出好的文章，而是主要服务自己，但时间一长，自己也是个普通的读者，同样会看不大懂。</p>
 <p>因此，写作方法是需要变更了：要突出条理和重点，如需大段源码讲解，可在文章最后增加源码解析一节，读者可选读。也就是说，长度还是那么长，但可读性增强了很多。</p>
-<span id="more"></span>
 </blockquote>
+<span id="more"></span>
+
 <p>本文我们关注SpringBoot启动时做了什么，这是理解自动注解的基础，下一篇文章我们将探索自动注解的实现方式。</p>
 <p>一个最简单的SpringBoot应用，可以是这样</p>
 <figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SpringBootApplication</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyApplication</span></span></span><br><span class="line"></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">main</span><span class="params">(args: <span class="type">Array</span>&lt;<span class="type">String</span>&gt;)</span></span> &#123;</span><br><span class="line">    SpringApplication(MyApplication::<span class="keyword">class</span>.java).run(*args)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
@@ -440,7 +447,10 @@
     <a href="/2021/12/05/Dockerfile/" rel="prev" title="Docker速记 - Dockerfile">
       <i class="fa fa-chevron-left"></i> Docker速记 - Dockerfile
     </a></div>
-      <div class="post-nav-item"></div>
+      <div class="post-nav-item">
+    <a href="/2021/12/09/Kubernetes%E5%88%9D%E6%8E%A2%20-%20%E5%8D%B7-kubernetes%E5%88%9D%E6%8E%A2-%E5%8D%B7/" rel="next" title="Kubernetes初探 - 存储">
+      Kubernetes初探 - 存储 <i class="fa fa-chevron-right"></i>
+    </a></div>
     </div>
       </footer>
     

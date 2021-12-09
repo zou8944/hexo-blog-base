@@ -201,6 +201,90 @@
   
   
   <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/12/09/Kubernetes%E5%88%9D%E6%8E%A2%20-%20%E5%8D%B7-kubernetes%E5%88%9D%E6%8E%A2-%E5%8D%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/12/09/Kubernetes%E5%88%9D%E6%8E%A2%20-%20%E5%8D%B7-kubernetes%E5%88%9D%E6%8E%A2-%E5%8D%B7/" class="post-title-link" itemprop="url">Kubernetes初探 - 存储</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-12-09 20:12:21 / 修改时间：23:25:03" itemprop="dateCreated datePublished" datetime="2021-12-09T20:12:21+08:00">2021-12-09</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%90%E7%BB%B4/" itemprop="url" rel="index"><span itemprop="name">运维</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/12/09/Kubernetes%E5%88%9D%E6%8E%A2%20-%20%E5%8D%B7-kubernetes%E5%88%9D%E6%8E%A2-%E5%8D%B7/" class="post-meta-item leancloud_visitors" data-flag-title="Kubernetes初探 - 存储" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>卷只是一个概念，和Docker中的卷是一个意思，可以理解为一个存储挂载点，将pod内部的文件系统与pod外部的文件系统挂载起来，以便pod数据的持久化。</p>
+<p>与Docker不同的是，Kubernetes支持非常多种类型的卷（超过二十种）</p>
+<p>卷是pod容器的组成部分，并非K8S中的顶级资源，其生命周期和pod一致。可以在pod的文件系统的任何位置挂在卷。如下两张图展示了同一个pod中存在多个容器时，在有卷和没有卷时的区别，可以看到在没有卷时，由于三个容器的文件系统分离，因此都各自操作自己的目录，即使他们在功能上是重复的；有卷时，将同一个卷挂在到两个容器的文件系统中，让他们共享这一块存储，既节省空间，也省去了从一个容器向另一个容器中复制的步骤。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/12/09/Kubernetes%E5%88%9D%E6%8E%A2%20-%20%E5%8D%B7-kubernetes%E5%88%9D%E6%8E%A2-%E5%8D%B7/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
     <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/12/07/SpringBoot/">
 
     <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
@@ -224,10 +308,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2021-12-07 21:48:58 / 修改时间：21:49:31" itemprop="dateCreated datePublished" datetime="2021-12-07T21:48:58+08:00">2021-12-07</time>
+              <time title="创建时间：2021-12-07 21:48:58" itemprop="dateCreated datePublished" datetime="2021-12-07T21:48:58+08:00">2021-12-07</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-12-08 11:58:18" itemprop="dateModified" datetime="2021-12-08T11:58:18+08:00">2021-12-08</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -259,6 +349,7 @@
           <blockquote>
 <p>在Spring源码剖析的前三篇文章，我们介绍了ApplicationContext、Bean相关内容、BeanPostProcessor的内容；但从普遍反馈和自己事后阅读的体验来看，文章过长，没有重点，条理并不是特别清楚。想必是写作方式出了问题，最突出的莫过于流水账式写法，虽然写作的目的并不一定是写出好的文章，而是主要服务自己，但时间一长，自己也是个普通的读者，同样会看不大懂。</p>
 <p>因此，写作方法是需要变更了：要突出条理和重点，如需大段源码讲解，可在文章最后增加源码解析一节，读者可选读。也就是说，长度还是那么长，但可读性增强了很多。</p>
+</blockquote>
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2021/12/07/SpringBoot/#more" rel="contents">
@@ -1361,89 +1452,6 @@
           <!--noindex-->
             <div class="post-button">
               <a class="btn" href="/2021/10/16/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%BA%94%20-%20Gson-xu-lie-hua-tan-suo-zhi-wu--gson/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/10/15/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E5%9B%9B%20-%20Fastjson-xu-lie-hua-tan-suo-zhi-fastjson/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
-      <meta itemprop="name" content="果冻">
-      <meta itemprop="description" content="果冻的碎碎念">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="半中二青年">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/10/15/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E5%9B%9B%20-%20Fastjson-xu-lie-hua-tan-suo-zhi-fastjson/" class="post-title-link" itemprop="url">序列化探索之四 - Fastjson</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-              
-
-              <time title="创建时间：2021-10-15 17:11:21 / 修改时间：17:11:39" itemprop="dateCreated datePublished" datetime="2021-10-15T17:11:21+08:00">2021-10-15</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2021/10/15/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E5%9B%9B%20-%20Fastjson-xu-lie-hua-tan-suo-zhi-fastjson/" class="post-meta-item leancloud_visitors" data-flag-title="序列化探索之四 - Fastjson" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>开局一吐槽，Fastjson的文档，比Jackson还差。Jackson只是位置不明确，如果安下心来看看，还是能够理清楚的。而Fastjson是位置不明确，如果安下心来看看，还会发现，它的文档零零散散，中英文混杂，找不准主线在哪儿。我记得知乎上有个问题，<a target="_blank" rel="noopener" href="https://www.zhihu.com/question/44199956">fastjson这么快老外为啥还是热衷 jackson?</a>，就这文档，让老外用个啥。</p>
-<p>不过看还是要看的，毕竟它是目前主流序列化框架之一。老样子，我们还是从基本使用方法和原理分析两部分着手。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/10/15/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E5%9B%9B%20-%20Fastjson-xu-lie-hua-tan-suo-zhi-fastjson/#more" rel="contents">
                 阅读全文 &raquo;
               </a>
             </div>
