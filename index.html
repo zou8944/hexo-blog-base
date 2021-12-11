@@ -129,7 +129,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">86</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">87</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
@@ -197,6 +197,287 @@
 
           <div class="content index posts-expand">
             
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/12/11/SpringBoot%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/12/11/SpringBoot%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE/" class="post-title-link" itemprop="url">SpringBoot源码剖析 - 配置相关注解及自动配置</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-12-11 15:59:58 / 修改时间：16:06:53" itemprop="dateCreated datePublished" datetime="2021-12-11T15:59:58+08:00">2021-12-11</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring/" itemprop="url" rel="index"><span itemprop="name">Spring</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/12/11/SpringBoot%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE/" class="post-meta-item leancloud_visitors" data-flag-title="SpringBoot源码剖析 - 配置相关注解及自动配置" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <blockquote>
+<p>截止目前，我们已经写了四篇关于Spring源码解析的文章，但它们只关注了Spring和SpringBoot的启动流程，并没有回答我们日常使用中的核心问题——自动配置的实现原理，本文进行探索</p>
+</blockquote>
+<p>在前文“Spring源码剖析 - BeanDefinition”中扫描Bean定义一节中，我们漏掉了一个关键方法调用，其调用路径如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotationConfigApplicationContext</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">AnnotationConfigApplicationContext(java.lang.Class&lt;?&gt;...)</span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotationConfigApplicationContext</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">AnnotationConfigApplicationContext()</span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotatedBeanDefinitionReader</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">AnnotatedBeanDefinitionReader(org.springframework.beans.factory.support.BeanDefinitionRegistry)</span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotatedBeanDefinitionReader</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">AnnotatedBeanDefinitionReader(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.core.env.Environment)</span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotationConfigUtils</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">registerAnnotationConfigProcessors(org.springframework.beans.factory.support.BeanDefinitionRegistry)</span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotationConfigUtils</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">registerAnnotationConfigProcessors(org.springframework.beans.factory.support.BeanDefinitionRegistry, java.lang.Object)</span></span><br></pre></td></tr></table></figure>
+
+<p>即，在<code>AnnotationConfigApplicationContext</code>执行构造方法时，调用<code>AnnotationConfigUtils.registerAnnotationConfigProcessors()</code>，注册了一系列注解处理器，具体来说，有</p>
+<ul>
+<li><p><code>ConfigurationClassPostProcessor</code></p>
+<p>用于处理配置相关的各种注解</p>
+</li>
+<li><p><code>AutowiredAnnotationBeanPostProcessor</code></p>
+<p>用于处理自动注入相关的注解，如<code>@Autowired</code>、<code>@Value</code>、<code>@Inject</code></p>
+</li>
+<li><p><code>CommonAnnotationBeanPostProcessor</code></p>
+<p>用于处理一些通用注解，比如<code>@Lazy</code>、<code>@Primary</code>、<code>PreDestroy</code>等</p>
+</li>
+<li><p><code>PersistenceAnnotationBeanPostProcessor</code></p>
+<p>用于处理JPA相关注解</p>
+</li>
+<li><p><code>EventListenerMethodProcessor</code></p>
+<p>用于处理<code>@EventListener</code>，即把方法注册成监听器</p>
+</li>
+<li><p><code>DefaultEventListenerFactory</code></p>
+<p>结合<code>EventListenerMethodProcessor</code>使用，该工厂输入方法，可创建出一个<code>ApplicationListener</code>类</p>
+</li>
+</ul>
+<p>本文我们重点关注配置相关的注解</p>
+<h2 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h2><p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211210152720643.png" alt="image-20211210152720643"></p>
+<p><code>ConfigurationClassPostProcessor</code>继承结构如上，属于容器构建阶段的处理器，我们再复习一下它的两个父接口的作用</p>
+<ul>
+<li><p><code>BeanFactoryPostProcessor</code>：在容器初始化之后，对容器做一些自定义操作。具体时机是：<code>BeanDefinition</code>加载完成之后，<code>Bean</code>实例化之前。</p>
+</li>
+<li><p><code>BeanDefinitionRegistryPostProcessor</code>：在容器初始化完成之后，<code>BeanFactoryPostProcessor</code>执行之前对容器做一些自定义操作。</p>
+</li>
+</ul>
+<p>而<code>ConfigurationClassPostProcessor</code>在这两个时机分别做了两件事</p>
+<ul>
+<li><p>容器初始化完成后，<code>BeanFactoryPostProcessor</code>调用前，从<code>@Configuration</code>注解的类中加载Bean定义，然后向容器注册。</p>
+<p>这一点是本文的重点 ，逻辑位于<code>org.springframework.context.annotation.ConfigurationClassPostProcessor#processConfigBeanDefinitions</code>，进一步的确切逻辑位于</p>
+<ul>
+<li><p>注解解析：<br> -&gt; <code>org.springframework.context.annotation.ConfigurationClassParser#parse(java.util.Set&lt;org.springframework.beans.factory.config.BeanDefinitionHolder&gt;)</code></p>
+<p>-&gt; <code>org.springframework.context.annotation.ConfigurationClassParser#doProcessConfigurationClass</code></p>
+</li>
+<li><p><code>BeanDefinition</code>注册</p>
+<p>-&gt; <code>org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitions</code>。</p>
+</li>
+<li><p>其它逻辑无助于理解，一概忽略</p>
+</li>
+</ul>
+</li>
+<li><p>容器初始化完成后，对所有<code>@Configuration</code>注解标识的<code>BeanDefinition</code>进行增强</p>
+<p>这一点不是重点，大概描述一下：使用的是CGLib的Enhancer API。添加了如下几个增强回调</p>
+<ul>
+<li><code>BeanMethodInterceptor</code>：拦截所有<code>@Bean</code>注解的方法</li>
+<li><code>BeanFactoryAwareMethodInterceptor</code>：拦截所有实现了<code>BeanFactoryAware</code>的<code>@Configuration</code>类的<code>setBeanFactory()</code>方法，目的是将容器注入</li>
+</ul>
+</li>
+</ul>
+<h2 id="注解解析"><a href="#注解解析" class="headerlink" title="注解解析"></a>注解解析</h2><p>我们从<code>ConfigurationClassParser.doProcessConfigurationClass</code>的解析逻辑中，分析如下几个注解的工作原理。</p>
+<h3 id="Conditional"><a href="#Conditional" class="headerlink" title="@Conditional"></a>@Conditional</h3><p>该注解用于条件配置，即满足条件时才生效，否则被忽略，它的实现由<code>ConditionEvaluator</code>完成。使用的地方包括</p>
+<ul>
+<li><code>ConfigurationClassParser.processConfigurationClass()</code>，对配置类有效。</li>
+<li><code>ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsForBeanMethod</code>，加载Bean时有效，即作用在<code>@Bean</code>注解的方法上</li>
+</ul>
+<p>逻辑落地在<code>ConditionEvaluator.shouldSkip()</code></p>
+<ol>
+<li>如果没有被<code>@Conditional</code>注解，则不应被跳过</li>
+<li>获取<code>@Conditional</code>注解的属性值，即其指定的<code>Condition</code>类，可能有多个</li>
+<li>依次调用这些<code>Condition</code>类的<code>matches()</code>方法，只要有一个匹配，则判定为应该被跳过，可见，多条件是与的关系</li>
+</ol>
+<p>SpringBoot还定义了<code>ConditionalOnClass</code>、<code>ConditionalOnMissingBean</code>之类的注解，其实看一眼他们的定义就知道。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(&#123; ElementType.TYPE, ElementType.METHOD &#125;)</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="meta">@Conditional(OnClassCondition.class)</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> ConditionalOnClass &#123;</span><br><span class="line"></span><br><span class="line">	Class&lt;?&gt;[] value() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">	String[] name() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>比如上面这个注解，它是<code>@Conditional</code>注解加上<code>OnClassCondition</code>这个条件构成的。而在<code>OnClassCondition</code>的匹配方法的逻辑如下（有继承关系，<code>matches()</code>方法在父类，这里只给出核心逻辑）：类加载器能加载出来就匹配，否则就不匹配</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> ConditionOutcome <span class="title">getMatchOutcome</span><span class="params">(ConditionContext context, AnnotatedTypeMetadata metadata)</span> </span>&#123;</span><br><span class="line">  ClassLoader classLoader = context.getClassLoader();</span><br><span class="line">  ConditionMessage matchMessage = ConditionMessage.empty();</span><br><span class="line">  <span class="comment">// 获取ConditionalOnClass指定的那些类名</span></span><br><span class="line">  List&lt;String&gt; onClasses = getCandidates(metadata, ConditionalOnClass.class);</span><br><span class="line">  <span class="keyword">if</span> (onClasses != <span class="keyword">null</span>) &#123;</span><br><span class="line">    <span class="comment">// 用ClassLoader加载指定的类名，加载不出来则说明缺失</span></span><br><span class="line">    List&lt;String&gt; missing = filter(onClasses, ClassNameFilter.MISSING, classLoader);</span><br><span class="line">    <span class="comment">// 缺失就报不匹配</span></span><br><span class="line">    <span class="keyword">if</span> (!missing.isEmpty()) &#123;</span><br><span class="line">      <span class="keyword">return</span> ConditionOutcome.noMatch(ConditionMessage.forCondition(ConditionalOnClass.class)</span><br><span class="line">                                      .didNotFind(<span class="string">&quot;required class&quot;</span>, <span class="string">&quot;required classes&quot;</span>).items(Style.QUOTE, missing));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 否则就是匹配</span></span><br><span class="line">  <span class="keyword">return</span> ConditionOutcome.match(matchMessage);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="PropertySource"><a href="#PropertySource" class="headerlink" title="@PropertySource"></a>@PropertySource</h3><p>该注解能够将指定的properties文件加载到容器的Environment中，<a target="_blank" rel="noopener" href="https://www.baeldung.com/properties-with-spring">使用参考</a>。</p>
+<p>通过源码解读可以看出它的逻辑</p>
+<ul>
+<li>读取<code>@PropertySource</code>的value值，作为配置文件的位置location</li>
+<li>解析<code>location</code>中的占位符，这意味着location中可以存在动态字段</li>
+<li>使用<code>resourceLoader</code>将location解析成<code>Resource</code>对象</li>
+<li>使用<code>PropertySourceFactory</code>创建<code>PropertySource</code>对象，并加入<code>Environment</code></li>
+</ul>
+<p>这里有一个能够自定义的东西：属性源工厂，如果我们指定自己的属性源工厂，则能够按照自己的需求解析，因此我们能够自定义出解析yaml文件的逻辑。默认是<code>DefaultPropertySourceFactory</code>，它创建的是一个<code>ResourcePropertySource</code>。</p>
+<p>我们大致看一下它的核心逻辑</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 解析注解的属性：name、encoding、value、ignoreResourceNotFound、factory</span></span><br><span class="line">String name = propertySource.getString(<span class="string">&quot;name&quot;</span>);</span><br><span class="line">... ...</span><br><span class="line">String encoding = propertySource.getString(<span class="string">&quot;encoding&quot;</span>);</span><br><span class="line">... ...</span><br><span class="line">String[] locations = propertySource.getStringArray(<span class="string">&quot;value&quot;</span>);</span><br><span class="line">... ...</span><br><span class="line"><span class="keyword">boolean</span> ignoreResourceNotFound = propertySource.getBoolean(<span class="string">&quot;ignoreResourceNotFound&quot;</span>);</span><br><span class="line">Class&lt;? extends PropertySourceFactory&gt; factoryClass = propertySource.getClass(<span class="string">&quot;factory&quot;</span>);</span><br><span class="line"><span class="comment">// 如果有指定factory，构建该工厂对象，否则，使用默认的工厂</span></span><br><span class="line">PropertySourceFactory factory = (factoryClass == PropertySourceFactory.class ? DEFAULT_PROPERTY_SOURCE_FACTORY : BeanUtils.instantiateClass(factoryClass));</span><br><span class="line"></span><br><span class="line"><span class="keyword">for</span> (String location : locations) &#123;</span><br><span class="line">  ... ...</span><br><span class="line">  <span class="comment">// 解析location中的占位符</span></span><br><span class="line">  String resolvedLocation = <span class="keyword">this</span>.environment.resolveRequiredPlaceholders(location);</span><br><span class="line">  <span class="comment">// 从文件系统中加载出来</span></span><br><span class="line">  Resource resource = <span class="keyword">this</span>.resourceLoader.getResource(resolvedLocation);</span><br><span class="line">  <span class="comment">// factory创建出属性源，加入environment</span></span><br><span class="line">  addPropertySource(factory.createPropertySource(name, <span class="keyword">new</span> EncodedResource(resource, encoding)));</span><br><span class="line">  ... ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="ComponentScan"><a href="#ComponentScan" class="headerlink" title="@ComponentScan"></a>@ComponentScan</h3><p>该注解用于扫描指定包、类所属的包下的Bean定义，其核心逻辑挂在<code>ComponentScanAnnotationParser.parse()</code>上，如下</p>
+<ul>
+<li><p>构建<code>ClassPathBeanDefinitionScanner</code>扫描器，用于执行Bean定义扫描</p>
+</li>
+<li><p>读取<code>@ComponentScan</code>的各类属性，写入扫描器，属性包括</p>
+<ul>
+<li><code>nameGenerator</code>：Bean名生成器</li>
+<li><code>scopedProxy</code>：scopedProxy的方式：不代理、JDK代理、cglib代理，关于scopedProxy，可以<a target="_blank" rel="noopener" href="https://stackoverflow.com/questions/14371335/spring-scoped-proxy-bean">参考这里</a>。大致来说，就是当scope范围更宽的bean1引用scope范围较小的bean2时，由于他们的作用范围不一致，导致bean1的生存时间大于bean2的生存时间，直接引用会发生问题，此时可以将bean2用一个代理包装起来，由代理负责引用实际的Bean，每当bean2的生命结束时，由代理自动创建新的实例，对bean1做到透明。</li>
+<li><code>scopeResolver</code>：Scope解析器</li>
+<li><code>resourcePattern</code>：扫描目标文件的通配符，如<code>*/**/class</code></li>
+<li><code>includeFilters</code>：过滤器</li>
+<li><code>excludeFilters</code>：过滤器</li>
+<li><code>lazyInit</code>：延迟加载</li>
+<li><code>basePackages</code>：基包</li>
+<li><code>basePackageClasses</code>：基类</li>
+</ul>
+</li>
+<li><p>调用扫描器的扫描方法，这个在前面介绍扫描BeanDefinition时有描述过，这里不再赘述。</p>
+</li>
+</ul>
+<p>源码也简单，只要注意一点：如果没有指定基包或基类，就是用当前配置类所在的包作为扫描位置</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">public</span> Set&lt;BeanDefinitionHolder&gt; <span class="title">parse</span><span class="params">(AnnotationAttributes componentScan, <span class="keyword">final</span> String declaringClass)</span> </span>&#123;</span><br><span class="line">  ClassPathBeanDefinitionScanner scanner = <span class="keyword">new</span> ClassPathBeanDefinitionScanner(<span class="keyword">this</span>.registry, componentScan.getBoolean(<span class="string">&quot;useDefaultFilters&quot;</span>), <span class="keyword">this</span>.environment, <span class="keyword">this</span>.resourceLoader);</span><br><span class="line"></span><br><span class="line">  Class&lt;? extends BeanNameGenerator&gt; generatorClass = componentScan.getClass(<span class="string">&quot;nameGenerator&quot;</span>);</span><br><span class="line">  <span class="keyword">boolean</span> useInheritedGenerator = (BeanNameGenerator.class == generatorClass);</span><br><span class="line">  scanner.setBeanNameGenerator(useInheritedGenerator ? <span class="keyword">this</span>.beanNameGenerator : BeanUtils.instantiateClass(generatorClass));</span><br><span class="line"></span><br><span class="line">  ScopedProxyMode scopedProxyMode = componentScan.getEnum(<span class="string">&quot;scopedProxy&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (scopedProxyMode != ScopedProxyMode.DEFAULT) &#123;</span><br><span class="line">    scanner.setScopedProxyMode(scopedProxyMode);</span><br><span class="line">  &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">    Class&lt;? extends ScopeMetadataResolver&gt; resolverClass = componentScan.getClass(<span class="string">&quot;scopeResolver&quot;</span>);</span><br><span class="line">    scanner.setScopeMetadataResolver(BeanUtils.instantiateClass(resolverClass));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  scanner.setResourcePattern(componentScan.getString(<span class="string">&quot;resourcePattern&quot;</span>));</span><br><span class="line"></span><br><span class="line">  <span class="keyword">for</span> (AnnotationAttributes filter : componentScan.getAnnotationArray(<span class="string">&quot;includeFilters&quot;</span>)) &#123;</span><br><span class="line">    <span class="keyword">for</span> (TypeFilter typeFilter : typeFiltersFor(filter)) &#123;</span><br><span class="line">      scanner.addIncludeFilter(typeFilter);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> (AnnotationAttributes filter : componentScan.getAnnotationArray(<span class="string">&quot;excludeFilters&quot;</span>)) &#123;</span><br><span class="line">    <span class="keyword">for</span> (TypeFilter typeFilter : typeFiltersFor(filter)) &#123;</span><br><span class="line">      scanner.addExcludeFilter(typeFilter);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">boolean</span> lazyInit = componentScan.getBoolean(<span class="string">&quot;lazyInit&quot;</span>);</span><br><span class="line">  <span class="keyword">if</span> (lazyInit) &#123;</span><br><span class="line">    scanner.getBeanDefinitionDefaults().setLazyInit(<span class="keyword">true</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Set&lt;String&gt; basePackages = <span class="keyword">new</span> LinkedHashSet&lt;&gt;();</span><br><span class="line">  String[] basePackagesArray = componentScan.getStringArray(<span class="string">&quot;basePackages&quot;</span>);</span><br><span class="line">  <span class="keyword">for</span> (String pkg : basePackagesArray) &#123;</span><br><span class="line">    String[] tokenized = StringUtils.tokenizeToStringArray(<span class="keyword">this</span>.environment.resolvePlaceholders(pkg),</span><br><span class="line">                                                           ConfigurableApplicationContext.CONFIG_LOCATION_DELIMITERS);</span><br><span class="line">    Collections.addAll(basePackages, tokenized);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> (Class&lt;?&gt; clazz : componentScan.getClassArray(<span class="string">&quot;basePackageClasses&quot;</span>)) &#123;</span><br><span class="line">    basePackages.add(ClassUtils.getPackageName(clazz));</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 如果没有指定基包或基类，就是用当前配置类所在的包作为扫描位置</span></span><br><span class="line">  <span class="keyword">if</span> (basePackages.isEmpty()) &#123;</span><br><span class="line">    basePackages.add(ClassUtils.getPackageName(declaringClass));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  scanner.addExcludeFilter(<span class="keyword">new</span> AbstractTypeHierarchyTraversingFilter(<span class="keyword">false</span>, <span class="keyword">false</span>) &#123;</span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="function"><span class="keyword">protected</span> <span class="keyword">boolean</span> <span class="title">matchClassName</span><span class="params">(String className)</span> </span>&#123;</span><br><span class="line">      <span class="keyword">return</span> declaringClass.equals(className);</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;);</span><br><span class="line">  <span class="keyword">return</span> scanner.doScan(StringUtils.toStringArray(basePackages));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Import"><a href="#Import" class="headerlink" title="@Import"></a>@Import</h3><p>该配置用于导入其它配置，定义如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(ElementType.TYPE)</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> Import &#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">	 * &#123;<span class="doctag">@link</span> Configuration <span class="doctag">@Configuration</span>&#125;, &#123;<span class="doctag">@link</span> ImportSelector&#125;,</span></span><br><span class="line"><span class="comment">	 * &#123;<span class="doctag">@link</span> ImportBeanDefinitionRegistrar&#125;, or regular component classes to import.</span></span><br><span class="line"><span class="comment">	 */</span></span><br><span class="line">  Class&lt;?&gt;[] value();</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如注释所言，支持导入的对象有四种</p>
+<ul>
+<li><p>被<code>@Configuration</code>注解的类，即一个普通的配置类，这是最常用的。对它的处理方式就是，再当做配置类执行一遍<code>processConfigurationClass()</code>方法逻辑</p>
+</li>
+<li><p><code>ImportSelector</code>，顾名思义，导入选择器，这是一个接口，定义了要导入的资源，导入的资源依旧是这四类，但最终会是普通的注解类。</p>
+<p>对于该类对象的处理方式，是找出其选择的导入对象，递归执行导入逻辑</p>
+</li>
+<li><p><code>ImportBeanDefinitionRegistrar</code>，顾名思义，用于导入<code>BeanDefinition</code>注册器，其逻辑是向<code>ConfigurationClassBeanDefinitionReader</code>中注入该注册器，后面在加载<code>BeanDefinition</code>时会用到它。</p>
+</li>
+</ul>
+<h4 id="导入选择器"><a href="#导入选择器" class="headerlink" title="导入选择器"></a>导入选择器</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> (candidate.isAssignable(ImportSelector.class)) &#123;</span><br><span class="line">  <span class="comment">// Candidate class is an ImportSelector -&gt; delegate to it to determine imports</span></span><br><span class="line">  Class&lt;?&gt; candidateClass = candidate.loadClass();</span><br><span class="line">  <span class="comment">// 初始化选择器</span></span><br><span class="line">  ImportSelector selector = ParserStrategyUtils.instantiateClass(candidateClass, ImportSelector.class,</span><br><span class="line">                                                                 <span class="keyword">this</span>.environment, <span class="keyword">this</span>.resourceLoader, <span class="keyword">this</span>.registry);</span><br><span class="line">  <span class="comment">// 排除过滤器</span></span><br><span class="line">  Predicate&lt;String&gt; selectorFilter = selector.getExclusionFilter();</span><br><span class="line">  ... ...</span><br><span class="line">  <span class="comment">// 调用选择器的关键方法selectImports，实际上就是一个类名数组</span></span><br><span class="line">  String[] importClassNames = selector.selectImports(currentSourceClass.getMetadata());</span><br><span class="line">  <span class="comment">// 类名封装一下</span></span><br><span class="line">  Collection&lt;SourceClass&gt; importSourceClasses = asSourceClasses(importClassNames, exclusionFilter);</span><br><span class="line">  <span class="comment">// 递归执行processImports()</span></span><br><span class="line">  processImports(configClass, currentSourceClass, importSourceClasses, exclusionFilter, <span class="keyword">false</span>);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>所以如果导入对象是<code>ImportSelector</code>，它所做的工作其实只有选择待导入的配置对象。</p>
+<h4 id="导入BeanDefinition集合"><a href="#导入BeanDefinition集合" class="headerlink" title="导入BeanDefinition集合"></a>导入BeanDefinition集合</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> <span class="keyword">if</span> (candidate.isAssignable(ImportBeanDefinitionRegistrar.class)) &#123;</span><br><span class="line">  <span class="comment">// Candidate class is an ImportBeanDefinitionRegistrar -&gt;</span></span><br><span class="line">  <span class="comment">// delegate to it to register additional bean definitions</span></span><br><span class="line">  Class&lt;?&gt; candidateClass = candidate.loadClass();</span><br><span class="line">  <span class="comment">// 构建对象</span></span><br><span class="line">  ImportBeanDefinitionRegistrar registrar = </span><br><span class="line">    ParserStrategyUtils.instantiateClass(candidateClass, ImportBeanDefinitionRegistrar.class,</span><br><span class="line">                                         <span class="keyword">this</span>.environment, <span class="keyword">this</span>.resourceLoader, <span class="keyword">this</span>.registry);</span><br><span class="line">  <span class="comment">// 将其当做属性加入配置类</span></span><br><span class="line">  configClass.addImportBeanDefinitionRegistrar(registrar, currentSourceClass.getMetadata());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在读取Bean定期时是有调用的，在<code>ConfigurationClassBeanDefinitionReader</code>中可以看到，它的调用在概览中有描述，在下一节也会描述</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 在类ConfigurationClassBeanDefinitionReader中</span></span><br><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">loadBeanDefinitionsForConfigurationClass</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">  ... ...</span></span></span><br><span class="line"><span class="params"><span class="function">  loadBeanDefinitionsFromImportedResources(configClass.getImportedResources()</span>)</span>;</span><br><span class="line">  loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="导入普通配置"><a href="#导入普通配置" class="headerlink" title="导入普通配置"></a>导入普通配置</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">else</span> &#123;</span><br><span class="line">  <span class="comment">// 递归调用processConfigurationClass()，很好理解</span></span><br><span class="line">  processConfigurationClass(candidate.asConfigClass(configClass), exclusionFilter);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>总的来说，<code>@Import</code>原理上其实非常简单，最终目的是导入其它配置类或<code>BeanDefinition</code>集合。</p>
+<h3 id="ImportResource"><a href="#ImportResource" class="headerlink" title="@ImportResource"></a>@ImportResource</h3><p>该注解用于指定导入源，Spring会将这些源当做配置源进行读取，他们可以是xml、groovy，这是根据资源文件的后缀自动决定的。接口定义如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br><span class="line"><span class="meta">@Target(ElementType.TYPE)</span></span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> ImportResource &#123;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@AliasFor(&quot;locations&quot;)</span></span><br><span class="line">	String[] value() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@AliasFor(&quot;value&quot;)</span></span><br><span class="line">	String[] locations() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">	Class&lt;? extends BeanDefinitionReader&gt; reader() <span class="keyword">default</span> BeanDefinitionReader.class;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>在注解扫描阶段，对它只是进行了读取</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">AnnotationAttributes importResource = AnnotationConfigUtils.attributesFor(sourceClass.getMetadata(), ImportResource.class);</span><br><span class="line"><span class="keyword">if</span> (importResource != <span class="keyword">null</span>) &#123;</span><br><span class="line">  <span class="comment">// 获取位置信息</span></span><br><span class="line">  String[] resources = importResource.getStringArray(<span class="string">&quot;locations&quot;</span>);</span><br><span class="line">  <span class="comment">// 获取读取器</span></span><br><span class="line">  Class&lt;? extends BeanDefinitionReader&gt; readerClass = importResource.getClass(<span class="string">&quot;reader&quot;</span>);</span><br><span class="line">  <span class="keyword">for</span> (String resource : resources) &#123;</span><br><span class="line">    <span class="comment">// 解析位置信息中的占位符</span></span><br><span class="line">    String resolvedResource = <span class="keyword">this</span>.environment.resolveRequiredPlaceholders(resource);</span><br><span class="line">    <span class="comment">// 注册到configClass</span></span><br><span class="line">    configClass.addImportedResource(resolvedResource, readerClass);</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>什么时候执行呢？和前面说的<code>BeanDefinition</code>集合一样，都是在加载阶段，后文详述。</p>
+<h3 id="Bean"><a href="#Bean" class="headerlink" title="@Bean"></a>@Bean</h3><p>该注解用在方法上，将方法的返回值构建成一个新的Bean定义，解析阶段只是向configClass注册了待加载的方法，解析阶段后文详述。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 从类中加载出所有被Bean注解的方法</span></span><br><span class="line">Set&lt;MethodMetadata&gt; beanMethods = retrieveBeanMethodMetadata(sourceClass);</span><br><span class="line"><span class="keyword">for</span> (MethodMetadata methodMetadata : beanMethods) &#123;</span><br><span class="line">  <span class="comment">// 把它们加入configClass</span></span><br><span class="line">  configClass.addBeanMethod(<span class="keyword">new</span> BeanMethod(methodMetadata, configClass));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>此外，如果配置类实现的接口的方法有被<code>@Bean</code>注解，且该配置类实现了该方法，则该方法也会被加载为Bean。</p>
+<h2 id="BeanDefinition注册"><a href="#BeanDefinition注册" class="headerlink" title="BeanDefinition注册"></a>BeanDefinition注册</h2><p>我们从<code>ConfigurationClassBeanDefinitionReader.loadBeanDefinitions</code>大致看一下加载过程中做了什么事情。</p>
+<p>核心逻辑位于：<code>org.springframework.context.annotation.ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsForConfigurationClass</code></p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">loadBeanDefinitionsForConfigurationClass</span><span class="params">(ConfigurationClass configClass, TrackedConditionEvaluator trackedConditionEvaluator)</span> </span>&#123;</span><br><span class="line">	... ...</span><br><span class="line">  <span class="keyword">if</span> (configClass.isImported()) &#123;</span><br><span class="line">    registerBeanDefinitionForImportedConfigurationClass(configClass);</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">for</span> (BeanMethod beanMethod : configClass.getBeanMethods()) &#123;</span><br><span class="line">    loadBeanDefinitionsForBeanMethod(beanMethod);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  loadBeanDefinitionsFromImportedResources(configClass.getImportedResources());</span><br><span class="line">  loadBeanDefinitionsFromRegistrars(configClass.getImportBeanDefinitionRegistrars());</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>如果配置类是被导入的，则先将该配置类注册成为一个Bean定义</li>
+<li>将所有被<code>@Bean</code>注解的方法构建成Bean定义</li>
+<li>从<code>@ImportResource</code>指定的资源中加载Bean定义</li>
+<li>从<code>@Import</code>导入的<code>BeanDefinitionRegistrar</code>中导入Bean定义</li>
+</ul>
+<h3 id="注册配置类本身"><a href="#注册配置类本身" class="headerlink" title="注册配置类本身"></a>注册配置类本身</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">registerBeanDefinitionForImportedConfigurationClass</span><span class="params">(ConfigurationClass configClass)</span> </span>&#123;</span><br><span class="line">  AnnotationMetadata metadata = configClass.getMetadata();</span><br><span class="line">  AnnotatedGenericBeanDefinition configBeanDef = <span class="keyword">new</span> AnnotatedGenericBeanDefinition(metadata);</span><br><span class="line">	<span class="comment">// 解析scope</span></span><br><span class="line">  ScopeMetadata scopeMetadata = scopeMetadataResolver.resolveScopeMetadata(configBeanDef);</span><br><span class="line">  configBeanDef.setScope(scopeMetadata.getScopeName());</span><br><span class="line">  <span class="comment">// 解析beanName</span></span><br><span class="line">  String configBeanName = <span class="keyword">this</span>.importBeanNameGenerator.generateBeanName(configBeanDef, <span class="keyword">this</span>.registry);</span><br><span class="line">  <span class="comment">// 处理通用注解</span></span><br><span class="line">  AnnotationConfigUtils.processCommonDefinitionAnnotations(configBeanDef, metadata);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 搞定收工</span></span><br><span class="line">  BeanDefinitionHolder definitionHolder = <span class="keyword">new</span> BeanDefinitionHolder(configBeanDef, configBeanName);</span><br><span class="line">  definitionHolder = AnnotationConfigUtils.applyScopedProxyMode(scopeMetadata, definitionHolder, <span class="keyword">this</span>.registry);</span><br><span class="line">  <span class="keyword">this</span>.registry.registerBeanDefinition(definitionHolder.getBeanName(), definitionHolder.getBeanDefinition());</span><br><span class="line">  configClass.setBeanName(configBeanName);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如上，比较简单，不过这里有个值得说的点：处理通用注解<code>AnnotationConfigUtils.processCommonDefinitionAnnotations()</code>，它主要用于处理如下注解</p>
+<ul>
+<li><code>Lazy</code></li>
+<li><code>Primary</code></li>
+<li><code>DependsOn</code></li>
+<li><code>Role</code></li>
+<li><code>Description</code></li>
+</ul>
+<p>都不需要怎么解释，看一下代码就能了解</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">void</span> <span class="title">processCommonDefinitionAnnotations</span><span class="params">(AnnotatedBeanDefinition abd, AnnotatedTypeMetadata metadata)</span> </span>&#123;</span><br><span class="line">  AnnotationAttributes lazy = attributesFor(metadata, Lazy.class);</span><br><span class="line">  <span class="keyword">if</span> (lazy != <span class="keyword">null</span>) &#123;</span><br><span class="line">    abd.setLazyInit(lazy.getBoolean(<span class="string">&quot;value&quot;</span>));</span><br><span class="line">  &#125; <span class="keyword">else</span> <span class="keyword">if</span> (abd.getMetadata() != metadata) &#123;</span><br><span class="line">    lazy = attributesFor(abd.getMetadata(), Lazy.class);</span><br><span class="line">    <span class="keyword">if</span> (lazy != <span class="keyword">null</span>) &#123;</span><br><span class="line">      abd.setLazyInit(lazy.getBoolean(<span class="string">&quot;value&quot;</span>));</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">if</span> (metadata.isAnnotated(Primary.class.getName())) &#123;</span><br><span class="line">    abd.setPrimary(<span class="keyword">true</span>);</span><br><span class="line">  &#125;</span><br><span class="line">  AnnotationAttributes dependsOn = attributesFor(metadata, DependsOn.class);</span><br><span class="line">  <span class="keyword">if</span> (dependsOn != <span class="keyword">null</span>) &#123;</span><br><span class="line">    abd.setDependsOn(dependsOn.getStringArray(<span class="string">&quot;value&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  AnnotationAttributes role = attributesFor(metadata, Role.class);</span><br><span class="line">  <span class="keyword">if</span> (role != <span class="keyword">null</span>) &#123;</span><br><span class="line">    abd.setRole(role.getNumber(<span class="string">&quot;value&quot;</span>).intValue());</span><br><span class="line">  &#125;</span><br><span class="line">  AnnotationAttributes description = attributesFor(metadata, Description.class);</span><br><span class="line">  <span class="keyword">if</span> (description != <span class="keyword">null</span>) &#123;</span><br><span class="line">    abd.setDescription(description.getString(<span class="string">&quot;value&quot;</span>));</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="Bean-1"><a href="#Bean-1" class="headerlink" title="@Bean"></a>@Bean</h3><p>关于Bean方法的处理，看起来一长串，其实就两个关键的逻辑</p>
+<ul>
+<li>使用<code>ConfigurationClassBeanDefinition</code>作为Bean定义，它将被注解的方法注册成了Bean定义的工厂方法。这样在Bean创建时走的完全是正常的创建流程</li>
+<li>以代理的方式创建，代理模式为CGLIB</li>
+</ul>
+<p>具体参考<code>ConfigurationClassBeanDefinitionReader#loadBeanDefinitionsForBeanMethod</code>，这里也没必要列出来源码。</p>
+<h3 id="ImportResource-1"><a href="#ImportResource-1" class="headerlink" title="@ImportResource"></a>@ImportResource</h3><p>创建指定的<code>BeanDefinitionReader</code>实例，然后读取指定的location即可。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">loadBeanDefinitionsFromImportedResources</span><span class="params">(Map&lt;String, Class&lt;? extends BeanDefinitionReader&gt;&gt; importedResources)</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  Map&lt;Class&lt;?&gt;, BeanDefinitionReader&gt; readerInstanceCache = <span class="keyword">new</span> HashMap&lt;&gt;();</span><br><span class="line"></span><br><span class="line">  importedResources.forEach((resource, readerClass) -&gt; &#123;</span><br><span class="line">    <span class="comment">// 决定要使用的BeanDefinitionReader</span></span><br><span class="line">    <span class="comment">// Default reader selection necessary?</span></span><br><span class="line">    <span class="keyword">if</span> (BeanDefinitionReader.class == readerClass) &#123;</span><br><span class="line">      <span class="keyword">if</span> (StringUtils.endsWithIgnoreCase(resource, <span class="string">&quot;.groovy&quot;</span>)) &#123;</span><br><span class="line">        <span class="comment">// When clearly asking for Groovy, that&#x27;s what they&#x27;ll get...</span></span><br><span class="line">        readerClass = GroovyBeanDefinitionReader.class;</span><br><span class="line">      &#125; <span class="keyword">else</span> <span class="keyword">if</span> (shouldIgnoreXml) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> UnsupportedOperationException(<span class="string">&quot;XML support disabled&quot;</span>);</span><br><span class="line">      &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// Primarily &quot;.xml&quot; files but for any other extension as well</span></span><br><span class="line">        readerClass = XmlBeanDefinitionReader.class;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    BeanDefinitionReader reader = readerInstanceCache.get(readerClass);</span><br><span class="line">    <span class="comment">// 创建Reader</span></span><br><span class="line">    <span class="keyword">if</span> (reader == <span class="keyword">null</span>) &#123;</span><br><span class="line">      <span class="comment">// Instantiate the specified BeanDefinitionReader</span></span><br><span class="line">      reader = readerClass.getConstructor(BeanDefinitionRegistry.class).newInstance(<span class="keyword">this</span>.registry);</span><br><span class="line">      <span class="comment">// Delegate the current ResourceLoader to it if possible</span></span><br><span class="line">      <span class="keyword">if</span> (reader <span class="keyword">instanceof</span> AbstractBeanDefinitionReader) &#123;</span><br><span class="line">        AbstractBeanDefinitionReader abdr = ((AbstractBeanDefinitionReader) reader);</span><br><span class="line">        abdr.setResourceLoader(<span class="keyword">this</span>.resourceLoader);</span><br><span class="line">        abdr.setEnvironment(<span class="keyword">this</span>.environment);</span><br><span class="line">      &#125;</span><br><span class="line">      readerInstanceCache.put(readerClass, reader);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// reader读，走你</span></span><br><span class="line">    reader.loadBeanDefinitions(resource);</span><br><span class="line">  &#125;);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="BeanDefinitionRegistrar"><a href="#BeanDefinitionRegistrar" class="headerlink" title="BeanDefinitionRegistrar"></a>BeanDefinitionRegistrar</h3><p>更简单，在第一篇Spring源码剖析的文章中我们提到过<code>Registry</code>和<code>Registrar</code>的区别，前者是注册器，用于接收资源的注册并持有；而后者只是一个资源集合，持有一堆资源，一般调用方式是传入<code>Registry</code>，向其中倾泻自己持有的资源。</p>
+<p>这里的<code>BeanDefinitionRegistrar</code>就是如此，持有一堆<code>BeanDefinition</code>集合，在本阶段向注册器中注册</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title">loadBeanDefinitionsFromRegistrars</span><span class="params">(Map&lt;ImportBeanDefinitionRegistrar, AnnotationMetadata&gt; registrars)</span> </span>&#123;</span><br><span class="line">  registrars.forEach((registrar, metadata) -&gt;</span><br><span class="line">                     registrar.registerBeanDefinitions(metadata, <span class="keyword">this</span>.registry, <span class="keyword">this</span>.importBeanNameGenerator));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="自动配置怎么实现"><a href="#自动配置怎么实现" class="headerlink" title="自动配置怎么实现"></a>自动配置怎么实现</h2><p>上一篇介绍SpringBoot启动流程的文章中，我们知道了<code>SpringApplication</code>在快速启动中做了什么，这其中，最最重要的是通过<code>META/spring.factories</code>加载指定类的实现的机制，即<code>SpringFactoriesLoader.loadFactory()</code>方法。但上一篇文章并没有介绍自动配置的原理，因为还缺少<code>@Import</code>注解的说明。</p>
+<p>本文我们补上了这一点，于是可以探索<code>@SpringBootApplication</code>这一SpringBoot的另一核心的原理，其定义如下</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Target(ElementType.TYPE)</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="meta">@Inherited</span></span><br><span class="line"><span class="meta">@SpringBootConfiguration</span></span><br><span class="line"><span class="meta">@EnableAutoConfiguration</span></span><br><span class="line"><span class="meta">@ComponentScan(excludeFilters = &#123; @Filter(type = FilterType.CUSTOM, classes = TypeExcludeFilter.class),</span></span><br><span class="line"><span class="meta">		@Filter(type = FilterType.CUSTOM, classes = AutoConfigurationExcludeFilter.class) &#125;)</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> SpringBootApplication &#123;</span><br><span class="line">  ... ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>层层深入，可以发现它最终落在三个注解上</p>
+<ul>
+<li><code>@Configuration</code>：表明这是一个配置类</li>
+<li><code>@Import(AutoConfigurationImportSelector.class)</code> + <code>@Import(AutoConfigurationPackages.Registrar.class)</code>：导入配置</li>
+<li><code>@ComponentScan</code>：表明从当前类的包的子包下扫描</li>
+</ul>
+<p>进一步，重点落在<code>AutoConfigurationImportSelector</code>和<code>AutoConfigurationPackages.Registrar</code>上，重点看前者，后者与自动配置无关，暂且忽略。</p>
+<h3 id="AutoConfigurationImportSelector"><a href="#AutoConfigurationImportSelector" class="headerlink" title="AutoConfigurationImportSelector"></a>AutoConfigurationImportSelector</h3><p>该选择器，调用了<code>SpringFactoriesLoader.loadFactory()</code>，从spring.factories文件中加载键为<code>org.springframework.boot.autoconfigure.EnableAutoConfiguration</code>所对应的值，核心逻辑追踪如下</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.boot.autoconfigure.AutoConfigurationImportSelector<span class="comment">#selectImports</span></span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.boot.autoconfigure.AutoConfigurationImportSelector<span class="comment">#getAutoConfigurationEntry</span></span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.boot.autoconfigure.AutoConfigurationImportSelector<span class="comment">#getCandidateConfigurations</span></span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.boot.autoconfigure.AutoConfigurationImportSelector<span class="comment">#getSpringFactoriesLoaderFactoryClass</span></span></span><br></pre></td></tr></table></figure>
+
+<p>再看最后这个方法的实现，显而易见了</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> Class&lt;?&gt; getSpringFactoriesLoaderFactoryClass() &#123;</span><br><span class="line">  <span class="keyword">return</span> EnableAutoConfiguration.class;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="看看自动配置"><a href="#看看自动配置" class="headerlink" title="看看自动配置"></a>看看自动配置</h3><p>官方的<code>spring-boot-autoconfigure</code>下的<code>META-INF/spring.factories</code>中，定义了非常多的自动配置类</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"># Auto Configure</span><br><span class="line">org.springframework.boot.autoconfigure.EnableAutoConfiguration=\</span><br><span class="line">org.springframework.boot.autoconfigure.admin.SpringApplicationAdminJmxAutoConfiguration,\</span><br><span class="line">org.springframework.boot.autoconfigure.aop.AopAutoConfiguration,\</span><br><span class="line">org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration,\</span><br><span class="line">org.springframework.boot.autoconfigure.batch.BatchAutoConfiguration,\</span><br><span class="line">org.springframework.boot.autoconfigure.cache.CacheAutoConfiguration,\</span><br><span class="line">org.springframework.boot.autoconfigure.cassandra.CassandraAutoConfiguration,\</span><br><span class="line">... ...</span><br></pre></td></tr></table></figure>
+
+<p>我们选取一个比较熟的<code>org.springframework.boot.autoconfigure.websocket.servlet.WebSocketServletAutoConfiguration</code>，浏览一下其代码。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Configuration(proxyBeanMethods = false)</span></span><br><span class="line"><span class="meta">@ConditionalOnClass(&#123; Servlet.class, ServerContainer.class &#125;)</span></span><br><span class="line"><span class="meta">@ConditionalOnWebApplication(type = Type.SERVLET)</span></span><br><span class="line"><span class="meta">@AutoConfigureBefore(ServletWebServerFactoryAutoConfiguration.class)</span></span><br><span class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">WebSocketServletAutoConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Configuration(proxyBeanMethods = false)</span></span><br><span class="line">	<span class="meta">@ConditionalOnClass(&#123; Tomcat.class, WsSci.class &#125;)</span></span><br><span class="line">	<span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">TomcatWebSocketConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">		<span class="meta">@Bean</span></span><br><span class="line">		<span class="meta">@ConditionalOnMissingBean(name = &quot;websocketServletWebServerCustomizer&quot;)</span></span><br><span class="line">		<span class="function">TomcatWebSocketServletWebServerCustomizer <span class="title">websocketServletWebServerCustomizer</span><span class="params">()</span> </span>&#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="keyword">new</span> TomcatWebSocketServletWebServerCustomizer();</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Configuration(proxyBeanMethods = false)</span></span><br><span class="line">	<span class="meta">@ConditionalOnClass(WebSocketServerContainerInitializer.class)</span></span><br><span class="line">	<span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">JettyWebSocketConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">		<span class="meta">@Bean</span></span><br><span class="line">		<span class="meta">@ConditionalOnMissingBean(name = &quot;websocketServletWebServerCustomizer&quot;)</span></span><br><span class="line">		<span class="function">JettyWebSocketServletWebServerCustomizer <span class="title">websocketServletWebServerCustomizer</span><span class="params">()</span> </span>&#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="keyword">new</span> JettyWebSocketServletWebServerCustomizer();</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	<span class="meta">@Configuration(proxyBeanMethods = false)</span></span><br><span class="line">	<span class="meta">@ConditionalOnClass(io.undertow.websockets.jsr.Bootstrap.class)</span></span><br><span class="line">	<span class="keyword">static</span> <span class="class"><span class="keyword">class</span> <span class="title">UndertowWebSocketConfiguration</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">		<span class="meta">@Bean</span></span><br><span class="line">		<span class="meta">@ConditionalOnMissingBean(name = &quot;websocketServletWebServerCustomizer&quot;)</span></span><br><span class="line">		<span class="function">UndertowWebSocketServletWebServerCustomizer <span class="title">websocketServletWebServerCustomizer</span><span class="params">()</span> </span>&#123;</span><br><span class="line">			<span class="keyword">return</span> <span class="keyword">new</span> UndertowWebSocketServletWebServerCustomizer();</span><br><span class="line">		&#125;</span><br><span class="line"></span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>通过<code>spring.factories</code>机制和<code>@Import + ImportSelector</code>的形式，SpringBoot为实现自动注解提供了最基础的能力，但根据各个具体不同的场景，Spring还在上面提到的基本注解之上构建了非常多具体的注解，比如条件注解就好多。一个个看是不现实的，但我们了解了本文提到的基础知识，再去看就很好理解了。</p>
+
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
       
   
   
@@ -1390,87 +1671,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/10/16/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%BA%94%20-%20Gson-xu-lie-hua-tan-suo-zhi-wu--gson/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
-      <meta itemprop="name" content="果冻">
-      <meta itemprop="description" content="果冻的碎碎念">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="半中二青年">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/10/16/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%BA%94%20-%20Gson-xu-lie-hua-tan-suo-zhi-wu--gson/" class="post-title-link" itemprop="url">序列化探索之五 - Gson</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2021-10-16 12:42:57" itemprop="dateCreated datePublished" datetime="2021-10-16T12:42:57+08:00">2021-10-16</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2021/10/16/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%BA%94%20-%20Gson-xu-lie-hua-tan-suo-zhi-wu--gson/" class="post-meta-item leancloud_visitors" data-flag-title="序列化探索之五 - Gson" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <p>Gson是一个相对简单的库，没有那么多功能，从设计上也并不想让别人去扩展它，它只想安安静静地做一个Json序列化库，简单而实用。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/10/16/%E5%BA%8F%E5%88%97%E5%8C%96%E6%8E%A2%E7%B4%A2%E4%B9%8B%E4%BA%94%20-%20Gson-xu-lie-hua-tan-suo-zhi-wu--gson/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1542,7 +1742,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">86</span>
+          <span class="site-state-item-count">87</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
