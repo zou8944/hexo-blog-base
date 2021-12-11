@@ -20,16 +20,16 @@
     var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="截止目前，我们已经写了四篇关于Spring源码解析的文章，但它们只关注了Spring和SpringBoot的启动流程，并没有回答我们日常使用中的核心问题——自动配置的实现原理，本文进行探索  在前文“Spring源码剖析 - BeanDefinition”中扫描Bean定义一节中，我们漏掉了一个关键方法调用，其调用路径如下 123456789101112-&gt; org.springframe">
+  <meta name="description" content="截止目前，我们已经写了四篇关于Spring源码解析的文章，但它们只关注了Spring和SpringBoot的启动流程，并没有回答我们日常使用中的核心问题——自动配置的实现原理，本文进行探索">
 <meta property="og:type" content="article">
 <meta property="og:title" content="SpringBoot源码剖析 - 配置相关注解及自动配置">
 <meta property="og:url" content="https://zou8944.com/2021/12/11/SpringBoot%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE/index.html">
 <meta property="og:site_name" content="半中二青年">
-<meta property="og:description" content="截止目前，我们已经写了四篇关于Spring源码解析的文章，但它们只关注了Spring和SpringBoot的启动流程，并没有回答我们日常使用中的核心问题——自动配置的实现原理，本文进行探索  在前文“Spring源码剖析 - BeanDefinition”中扫描Bean定义一节中，我们漏掉了一个关键方法调用，其调用路径如下 123456789101112-&gt; org.springframe">
+<meta property="og:description" content="截止目前，我们已经写了四篇关于Spring源码解析的文章，但它们只关注了Spring和SpringBoot的启动流程，并没有回答我们日常使用中的核心问题——自动配置的实现原理，本文进行探索">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211210152720643.png">
 <meta property="article:published_time" content="2021-12-11T07:59:58.000Z">
-<meta property="article:modified_time" content="2021-12-11T08:06:53.041Z">
+<meta property="article:modified_time" content="2021-12-11T08:08:52.529Z">
 <meta property="article:author" content="果冻">
 <meta property="article:tag" content="Spring">
 <meta name="twitter:card" content="summary">
@@ -230,7 +230,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2021-12-11 15:59:58 / 修改时间：16:06:53" itemprop="dateCreated datePublished" datetime="2021-12-11T15:59:58+08:00">2021-12-11</time>
+              <time title="创建时间：2021-12-11 15:59:58 / 修改时间：16:08:52" itemprop="dateCreated datePublished" datetime="2021-12-11T15:59:58+08:00">2021-12-11</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -270,6 +270,8 @@
         <blockquote>
 <p>截止目前，我们已经写了四篇关于Spring源码解析的文章，但它们只关注了Spring和SpringBoot的启动流程，并没有回答我们日常使用中的核心问题——自动配置的实现原理，本文进行探索</p>
 </blockquote>
+<span id="more"></span>
+
 <p>在前文“Spring源码剖析 - BeanDefinition”中扫描Bean定义一节中，我们漏掉了一个关键方法调用，其调用路径如下</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotationConfigApplicationContext</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">AnnotationConfigApplicationContext(java.lang.Class&lt;?&gt;...)</span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotationConfigApplicationContext</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">AnnotationConfigApplicationContext()</span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotatedBeanDefinitionReader</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">AnnotatedBeanDefinitionReader(org.springframework.beans.factory.support.BeanDefinitionRegistry)</span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotatedBeanDefinitionReader</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">AnnotatedBeanDefinitionReader(org.springframework.beans.factory.support.BeanDefinitionRegistry, org.springframework.core.env.Environment)</span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotationConfigUtils</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">registerAnnotationConfigProcessors(org.springframework.beans.factory.support.BeanDefinitionRegistry)</span></span><br><span class="line"><span class="meta">-&gt;</span><span class="bash"> org.springframework.context.annotation.AnnotationConfigUtils</span></span><br><span class="line"><span class="meta">   #</span><span class="bash">registerAnnotationConfigProcessors(org.springframework.beans.factory.support.BeanDefinitionRegistry, java.lang.Object)</span></span><br></pre></td></tr></table></figure>
 
