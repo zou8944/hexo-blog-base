@@ -1,5 +1,5 @@
 ---
-title: Kubernetes初探 - 存储
+title: Kubernetes - 关于存储
 date: 2021-12-09 20:12:21.0
 updated: 2021-12-09 23:25:03.283
 url: https://www.zou8944.com/archives/kubernetes初探-卷
