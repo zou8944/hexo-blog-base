@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="我有一个树莓派3B，1G内存版本，以前用来当做linux主机，随便玩一玩，谢谢python，点个灯。但最近我想搭建一个Kubernetes集群，用来学习，不过集群诶，怎么能只有一台机器呢？于是在咸鱼上又购买了两台树莓派4B，一台4GB内存，一台2GB内存。为什么想用树莓派呢？一来因为还算OK的云服务器贵得离谱，对个人来说实在不划算，二来树莓派可玩性比较高。 然而搭建过程几经波折，浪费了大量的时间，">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes搭建血泪史（上）">
+<meta property="og:url" content="https://zou8944.com/2021/12/18/Kubernetes%E6%90%AD%E5%BB%BA%E8%BE%9B%E9%85%B8%E5%8F%B2/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="我有一个树莓派3B，1G内存版本，以前用来当做linux主机，随便玩一玩，谢谢python，点个灯。但最近我想搭建一个Kubernetes集群，用来学习，不过集群诶，怎么能只有一台机器呢？于是在咸鱼上又购买了两台树莓派4B，一台4GB内存，一台2GB内存。为什么想用树莓派呢？一来因为还算OK的云服务器贵得离谱，对个人来说实在不划算，二来树莓派可玩性比较高。 然而搭建过程几经波折，浪费了大量的时间，">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211218165103556.png">
+<meta property="article:published_time" content="2021-12-18T08:03:49.000Z">
+<meta property="article:modified_time" content="2021-12-18T13:49:28.874Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="kubernetes">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211218165103556.png">
+
+<link rel="canonical" href="https://zou8944.com/2021/12/18/Kubernetes%E6%90%AD%E5%BB%BA%E8%BE%9B%E9%85%B8%E5%8F%B2/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Kubernetes搭建血泪史（上） | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">88</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">28</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">57</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/12/18/Kubernetes%E6%90%AD%E5%BB%BA%E8%BE%9B%E9%85%B8%E5%8F%B2/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kubernetes搭建血泪史（上）
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2021-12-18 16:03:49 / 修改时间：21:49:28" itemprop="dateCreated datePublished" datetime="2021-12-18T16:03:49+08:00">2021-12-18</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%90%E7%BB%B4/" itemprop="url" rel="index"><span itemprop="name">运维</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/12/18/Kubernetes%E6%90%AD%E5%BB%BA%E8%BE%9B%E9%85%B8%E5%8F%B2/" class="post-meta-item leancloud_visitors" data-flag-title="Kubernetes搭建血泪史（上）" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>我有一个树莓派3B，1G内存版本，以前用来当做linux主机，随便玩一玩，谢谢python，点个灯。但最近我想搭建一个Kubernetes集群，用来学习，不过集群诶，怎么能只有一台机器呢？于是在咸鱼上又购买了两台树莓派4B，一台4GB内存，一台2GB内存。为什么想用树莓派呢？一来因为还算OK的云服务器贵得离谱，对个人来说实在不划算，二来树莓派可玩性比较高。</p>
+<p>然而搭建过程几经波折，浪费了大量的时间，想来，最主要的问题有两个：cgroup的开启失败和墙的问题。</p>
+<span id="more"></span>
+
+<h2 id="系统选择"><a href="#系统选择" class="headerlink" title="系统选择"></a>系统选择</h2><p>为尽量满足应用的兼容性，选择64位操作系统；又自己对Ubuntu系操作系统比较熟，于是选择Ubuntu 20.04LTS Server版。为此，到Ubuntu官网下载镜像，通过树莓派官方的Raspberry Pi Imager制作TF卡系统盘。需要严格按照<a target="_blank" rel="noopener" href="https://ubuntu.com/tutorials/how-to-install-ubuntu-on-your-raspberry-pi#4-boot-ubuntu-server">官方教程</a>来，需要注意几个问题</p>
+<ul>
+<li>如果直接网线连接路由器，则网络配置不需要</li>
+<li>如果需要开机自动连接wifi，则需要修改系统盘根目录下network-config文件，在插入树莓派之前用读卡器修改</li>
+<li>默认账号ubuntu，默认密码ubuntu</li>
+<li>开机第一次登录会强制要求修改密码，到时候注意修改</li>
+<li>MacBook Pro m1版能够完美运行Raspberry Pi Imager</li>
+</ul>
+<h2 id="搭建过程"><a href="#搭建过程" class="headerlink" title="搭建过程"></a>搭建过程</h2><p>目前市场上有常规k8s、ubuntu的microk8s、rancher的k3s可供选择，最令人动心的还是microk8s，其功能齐全，还相对轻量，非常适合学习，而k3s则阉割替换了很多东西。</p>
+<h3 id="搭建microk8s"><a href="#搭建microk8s" class="headerlink" title="搭建microk8s"></a>搭建microk8s</h3><p>参考<a target="_blank" rel="noopener" href="https://ubuntu.com/tutorials/how-to-kubernetes-cluster-on-raspberry-pi?&_ga=2.152469631.732019699.1639280743-1880426195.1638801725#1-overview">官方手册</a>，关键点有以下几步：</p>
+<ol>
+<li>开启cgroup，在<code>/boot/firmware/cmdline.txt</code>文件添加<code>cgroup_enable=memory cgroup_memory=1</code>然后重启</li>
+<li>直接snap安装：<code>sudo snap install microk8s --classic</code></li>
+</ol>
+<p>那么问题来了，我的三台机器，按照这种方式，死活无法开启cgroup，microk8s自然也无法正常工作，网上的资料，都指向一个问题</p>
+<ul>
+<li>根据系统的版本，开启cgroup配置的方式可能不在<code>/boot/firmware/cmdline.txt</code>中。但我确认ubuntu 20.04就是在这个文件</li>
+</ul>
+<p>有的人确实是这个问题，有的人却不是，那些不是的，最终也没有得到明确的解决方案。</p>
+<p>于是，我被卡住了，暂时弃坑。</p>
+<h3 id="再次尝试搭建microk8s"><a href="#再次尝试搭建microk8s" class="headerlink" title="再次尝试搭建microk8s"></a>再次尝试搭建microk8s</h3><p>时间来到周末，我有时间来接着搞这个问题，然后尝试了新的方式：<strong>在还没启动系统时直接在TF卡上修改cmdline.txt文件，加上cgroup启动参数</strong>，这次看起来成功了，但由于我重装了系统，需要重新snap安装microk8s，可由于墙的问题，安装过程异常缓慢，尝试了一两个小时，依旧没有安装成功。这加上下面几个原因，动摇了我使用microk8s的信心</p>
+<ul>
+<li>前一次即使安装成功，其命令响应时间还是非常慢</li>
+<li>microk8s都这样，那原版kubernetes还得了？</li>
+<li>看来留给我选择的空间不多了——k3s</li>
+</ul>
+<p>再次弃坑。</p>
+<h3 id="kubeadm-云服务器"><a href="#kubeadm-云服务器" class="headerlink" title="kubeadm+云服务器"></a>kubeadm+云服务器</h3><p>恰逢双十二，腾讯云有一台轻量应用服务器2C4G版只需要74元一年。经过上面两次在树莓派上搭建集群的失败，我开始怀疑自己，搭建kubernetes的目的是为了研究它，而不是为了玩，应该以最短的时间完成它。那么就用kubeadm在这台新购的服务器上搭建它吧——它绝对不会有cgroup的问题。</p>
+<p>对此，也有<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/setup/production-environment/tools/kubeadm/install-kubeadm/">官方手册</a>，步骤看起来不复杂，我做了这么些事</p>
+<h4 id="安装kubadm"><a href="#安装kubadm" class="headerlink" title="安装kubadm"></a>安装kubadm</h4><ul>
+<li><p>允许iptables桥接流量</p>
+</li>
+<li><p>在云服务器安全组打开所有端口</p>
+</li>
+<li><p>安装运行时，我选择了docker，直接<code>sudo apt install docker.io</code>，很方便</p>
+</li>
+<li><p>安装kubeadm、kubectl、kubelet。这里需要添加kubernetes的源，然后它被墙了。。。。。。</p>
+<p>于是参考<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/46341911">这篇文章</a>使用中科大的源</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 添加中科大的源</span></span><br><span class="line">cat &lt;&lt;EOF &gt; /etc/apt/sources.list.d/kubernetes.list</span><br><span class="line">deb http://mirrors.ustc.edu.cn/kubernetes/apt kubernetes-xenial main</span><br><span class="line">EOF</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 执行这一步会报错，提示GPGkey的问题</span></span><br><span class="line">sudo apt update</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 这了解决那个错误，将下面的&lt;publickey&gt;更换为实际报错的key</span></span><br><span class="line">gpg --keyserver keyserver.ubuntu.com --recv-keys &lt;publickey&gt;</span><br><span class="line">gpg --export --armor &lt;publickey&gt; | sudo apt-key add -</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 再次执行</span></span><br><span class="line">sudo apt-get update</span><br><span class="line"><span class="meta">#</span><span class="bash"> 安装</span></span><br><span class="line">sudo apt-get install -y kubelet kubeadm kubectl</span><br><span class="line"><span class="meta">#</span><span class="bash"> 锁定版本</span></span><br><span class="line">sudo apt-mark hold kubelet kubeadm kubectl</span><br></pre></td></tr></table></figure></li>
+<li><p>配置cgroup驱动程序</p>
+<p>这一步我是按照一个视频配置的，但其实应该按照<a target="_blank" rel="noopener" href="https://kubernetes.io/zh/docs/tasks/administer-cluster/kubeadm/configure-cgroup-driver/">官网配置</a></p>
+</li>
+<li><p>关闭swap：<code>sudo swapoff -a</code></p>
+</li>
+</ul>
+<h4 id="kubeadm-init"><a href="#kubeadm-init" class="headerlink" title="kubeadm init"></a>kubeadm init</h4><p>然后执行主节点的初始化工作，这里会遇到问题：kubernetes的所有组件以镜像的形式提供，是从google的容器服务gcr拉取的，然而它又被墙了。。。需要更换国内源，我们使用别人放在阿里云仓库的镜像，按照如下方式做</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 先拉取</span></span><br><span class="line">kubeadm config image pull --image-repository=registry.cn-hangzhou.aliyuncs.com/google_containers</span><br><span class="line"><span class="meta">#</span><span class="bash"> 再启动</span></span><br><span class="line">kubeadm init --image-repository=registry.cn-hangzhou.aliyuncs.com/google_containers</span><br></pre></td></tr></table></figure>
+
+<p>启动成功后会有如下提示，关键信息有三点</p>
+<ol>
+<li>创建~/.kube/config文件，方便kubectl访问</li>
+<li>需要马上安装网络插件</li>
+<li>如果需要加入工作节点，使用这里指定的端点和token</li>
+</ol>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line">Your Kubernetes control-plane has initialized successfully!</span><br><span class="line"></span><br><span class="line">To start using your cluster, you need to run the following as a regular user:</span><br><span class="line"></span><br><span class="line">  mkdir -p $HOME/.kube</span><br><span class="line">  sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config</span><br><span class="line">  sudo chown $(id -u):$(id -g) $HOME/.kube/config</span><br><span class="line"></span><br><span class="line">Alternatively, if you are the root user, you can run:</span><br><span class="line"></span><br><span class="line">  export KUBECONFIG=/etc/kubernetes/admin.conf</span><br><span class="line"></span><br><span class="line">You should now deploy a pod network to the cluster.</span><br><span class="line">Run &quot;kubectl apply -f [podnetwork].yaml&quot; with one of the options listed at:</span><br><span class="line">  https://kubernetes.io/docs/concepts/cluster-administration/addons/</span><br><span class="line"></span><br><span class="line">Then you can join any number of worker nodes by running the following on each as root:</span><br><span class="line"></span><br><span class="line">kubeadm join 10.0.20.5:6443 --token qi250a.gmbet3podjq1bcwg \</span><br><span class="line">        --discovery-token-ca-cert-hash sha256:68147e1e117e54dbeb8fce34be6c83c7d7fb918c1ad2923b404c4d03f439a178</span><br></pre></td></tr></table></figure>
+
+<p>对于网络插件，去它提示的那个网站，进入想要的插件主页，会有提示信息</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20211218165103556.png" alt="image-20211218165103556"></p>
+<p>执行<code>kubectl apply -f https://raw.githubusercontent.com/coreos/flannel/master/Documentation/kube-flannel.yml</code>，安装flannel插件。</p>
+<p>再等十来分钟，主节点应该就能用了，<code>kubectl get ndoes</code>能够查看效果。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@VM-20-5-ubuntu:~$ sudo kubectl get nodes</span><br><span class="line">NAME             STATUS   ROLES                  AGE     VERSION</span><br><span class="line">vm-20-5-ubuntu   Ready    control-plane,master   4h23m   v1.23.1</span><br></pre></td></tr></table></figure>
+
+<h4 id="kubeadm-join"><a href="#kubeadm-join" class="headerlink" title="kubeadm join"></a>kubeadm join</h4><p>我有发现，华为云也有41块钱的1C2G机器可以买，加上我原来UCloud的1C2G的机器，是不是可以构建一个拥有三个不同云服务厂商节点的异构集群🤔。</p>
+<p>要这么做，首先要解决的一个问题是，如何通过外网访问上面搭建的主节点？经验告诉我，找到config配置文件，将集群地址改为该云服务器的公网地址然后放在本地的<code>~/.kube/config</code>就行了，我确实这么做了，但使用kubectl连接时还是报了个错：提示服务器证书不允许外网访问来源。对此的解决办法参考<a target="_blank" rel="noopener" href="https://blog.csdn.net/yy_diego/article/details/109362884">这篇文章</a>，思路是重新生成API Server的证书。算是解决了外网访问的问题。</p>
+<p>理所当然地，我在kubeadm join的命令中也把内网地址替换为公网地址。但最终还是报错了：提示kubeadmin-config这个configmap找不到，而它居然使用了内网地址去访问🤔。这就有点麻烦了，网上搜索了一下，<strong>外网集群搭建起来会涉及到很多网络问题，属实没必要去研究</strong>。性价比太低。</p>
+<p>不行，已经在这个上面耗费太多时间了，就用这个主节点吧。也算有一些成果</p>
+<h3 id="搭建k3s"><a href="#搭建k3s" class="headerlink" title="搭建k3s"></a>搭建k3s</h3><p>树莓派的事情，还是有点不甘心的，明明困扰了好长一段时间的cgroup解决了，却不能安装集群。。。划不来呀。好歹，我得尝试一下k3s呀。</p>
+<p>于是，我参考了<a target="_blank" rel="noopener" href="https://docs.rancher.cn/docs/k3s/installation/install-options/_index">官方文档</a>和<a target="_blank" rel="noopener" href="https://www.yuweizhan.cn/articles/2020/07/18/1595040455803.html">这篇文章</a>。这里的关键是使用官方提供的国内加速地址，用国外地址很可能会安装失败。</p>
+<p>主节点</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 什么都不设置，直接安装，默认是作为主节点的</span></span><br><span class="line">curl -sfL http://rancher-mirror.cnrancher.com/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn sh -</span><br></pre></td></tr></table></figure>
+
+<p>工作节点</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash"> 在主节点上执行:获取主节点的token</span></span><br><span class="line">cat /var/lib/rancher/k3s/server/node-token</span><br><span class="line"><span class="meta"></span></span><br><span class="line"><span class="meta">#</span><span class="bash"> 在从节点上执行</span></span><br><span class="line">export K3S_TOKEN=&lt;上面得到的token&gt;</span><br><span class="line">export K3S_URL=https://&lt;master_ip&gt;:6443</span><br><span class="line">curl -sfL http://rancher-mirror.cnrancher.com/k3s/k3s-install.sh | INSTALL_K3S_MIRROR=cn sh -</span><br></pre></td></tr></table></figure>
+
+<p>在创建工作节点时，遇到过从节点起不来的问题，提示passwd不匹配，参照<a target="_blank" rel="noopener" href="https://cloud.tencent.com/developer/article/1594895">这篇文章</a>解决了。</p>
+<p>然后，就搭建完成了，此时在主节点上可以看到这两个节点</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">root@ubuntu:/home/ubuntu# kubectl get nodes</span><br><span class="line">NAME             STATUS   ROLES                  AGE    VERSION</span><br><span class="line">ubuntu           Ready    control-plane,master   3h8m   v1.21.7+k3s1</span><br><span class="line">raspberry-4c2g   Ready    &lt;none&gt;                 70m    v1.21.7+k3s1</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>这三种kubernetes的搭建方式，其实都不复杂，被卡住的原因都是墙，属实蛋疼。这其中，K3s提供的支持最为友好，不但有中文资料，还有官方国内加速地址，完全不会有其它两种方式的问题。microk8s如果在网络环境允许的情况下，应该也挺简单的，它类似kubeadm，也是通过init、join这样简单的命令去构建集群，可惜的是不明原因导致在我的环境中用起来卡卡的。kubeadm相对而言是最复杂的，kubectl等软件包的软件源需要更换，镜像源也要更换。</p>
+<p>不过一番折腾下来，我好歹是拥有两个kubernetes集群，一个拥有两个节点的树莓派集群和一个拥有一个节点的在腾讯云上的集群，学习用是够了。但为什么这篇文章是（上）呢？因为其它两台外网服务器，我还想要折腾一下，不过不是最近，而是等我kubernetes足够熟练之后。</p>
+<p>总结一下我们遇到的问题</p>
+<ul>
+<li>树莓派cgroup开启失败：在启动系统之前修改cmdline.txt</li>
+<li>kubernetes的apt源无法访问：更换中科大或阿里云的源</li>
+<li>gcr镜像仓库无法访问：更换阿里云的镜像仓库</li>
+<li>k3s安装脚本执行缓慢：使用官方提供的国内专用安装脚本</li>
+<li>k3s从节点启动失败：手动将主节点的/etc/rancher/passwd复制到从节点</li>
+</ul>
+<p>总结一下这次的教训：折腾两三天整这么个玩意儿是很划不来的，最完美的方式，是在一个云服务厂家购买两三台中配的机器，以此搭建，这样既不会遇到cgroup问题，也不会遇到公网访问问题，还是标准的kubernetes环境。而且我们可以只买一两个月，不用了再释放掉，不会花多少钱。长远看是成本最低的一种方式。毕竟，三台树莓派的价格，也上千元了，如果再加上交换机和配件，则更贵。搭建出来的集群，还不是官方原版🤔。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/kubernetes/" rel="tag"># kubernetes</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/12/11/SpringBoot%E8%87%AA%E5%8A%A8%E9%85%8D%E7%BD%AE/" rel="prev" title="SpringBoot源码剖析 - 配置相关注解及自动配置">
+      <i class="fa fa-chevron-left"></i> SpringBoot源码剖析 - 配置相关注解及自动配置
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%B3%BB%E7%BB%9F%E9%80%89%E6%8B%A9"><span class="nav-number">1.</span> <span class="nav-text">系统选择</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%90%AD%E5%BB%BA%E8%BF%87%E7%A8%8B"><span class="nav-number">2.</span> <span class="nav-text">搭建过程</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%90%AD%E5%BB%BAmicrok8s"><span class="nav-number">2.1.</span> <span class="nav-text">搭建microk8s</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%86%8D%E6%AC%A1%E5%B0%9D%E8%AF%95%E6%90%AD%E5%BB%BAmicrok8s"><span class="nav-number">2.2.</span> <span class="nav-text">再次尝试搭建microk8s</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#kubeadm-%E4%BA%91%E6%9C%8D%E5%8A%A1%E5%99%A8"><span class="nav-number">2.3.</span> <span class="nav-text">kubeadm+云服务器</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%AE%89%E8%A3%85kubadm"><span class="nav-number">2.3.1.</span> <span class="nav-text">安装kubadm</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#kubeadm-init"><span class="nav-number">2.3.2.</span> <span class="nav-text">kubeadm init</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#kubeadm-join"><span class="nav-number">2.3.3.</span> <span class="nav-text">kubeadm join</span></a></li></ol></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%90%AD%E5%BB%BAk3s"><span class="nav-number">2.4.</span> <span class="nav-text">搭建k3s</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">3.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">57</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
