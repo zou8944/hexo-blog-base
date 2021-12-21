@@ -129,7 +129,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">88</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">89</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
@@ -139,7 +139,7 @@
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">57</span></a>
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">58</span></a>
 
   </li>
         <li class="menu-item menu-item-about">
@@ -197,6 +197,101 @@
 
           <div class="content index posts-expand">
             
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2020/10/03/%E4%BD%BF%E7%94%A8JSON%20Schema%E9%AA%8C%E8%AF%81API%E5%93%8D%E5%BA%94-shi-yong-jsonschema-yan-zheng-api-xiang-ying/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2020/10/03/%E4%BD%BF%E7%94%A8JSON%20Schema%E9%AA%8C%E8%AF%81API%E5%93%8D%E5%BA%94-shi-yong-jsonschema-yan-zheng-api-xiang-ying/" class="post-title-link" itemprop="url">使用JSON Schema验证API响应</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2020-10-03 23:40:52" itemprop="dateCreated datePublished" datetime="2020-10-03T23:40:52+08:00">2020-10-03</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-11-08 16:25:55" itemprop="dateModified" datetime="2021-11-08T16:25:55+08:00">2021-11-08</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+                  ，
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/%E5%8D%8F%E8%AE%AE/" itemprop="url" rel="index"><span itemprop="name">协议</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2020/10/03/%E4%BD%BF%E7%94%A8JSON%20Schema%E9%AA%8C%E8%AF%81API%E5%93%8D%E5%BA%94-shi-yong-jsonschema-yan-zheng-api-xiang-ying/" class="post-meta-item leancloud_visitors" data-flag-title="使用JSON Schema验证API响应" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h2 id="API的响应需要约束"><a href="#API的响应需要约束" class="headerlink" title="API的响应需要约束"></a>API的响应需要约束</h2><p>目前我们开发Web API的方式是通过定义Open API描述文件来定义请求约束。约束能够保证所有请求参数按照正确的格式和必要性传输，从而规范化输入。这保护了服务端内部的安全——输入约束不变的情况下，输入的值总是合法可期的。</p>
+<p>尽管Open API也提供了对Response Body的定义，允许用户描述响应的消息格式，但由于其不具有强制性——语法上可以不写，写了也不与实际返回内容有深入结合，因此无法验证真实API的响应是否符合预期，这也是从一开始不愿写响应体的原因。</p>
+<p>而关于验证API响应的重要性，是不言而喻的，截止目前，至少有两个时刻让我有了“如果能够在单元测试就验证响应体格式就好了”的想法。</p>
+<p>其一：今年上半年的一次down time，彼时是上线真米视频，其video id要做到可控（手动编写，数位字符串），而原逻辑使用了阿里云生成的video id——32位字符串。使用的方案是将手动生成的video id替换了阿里云video id，结果由于测试上的不周全导致所有视频的video id都被替换，对于那些没有分配手动id的音视频，其video id自然变成了null。而该问题因为机缘巧合对视频无影响，仅对音频产生影响。导致较长时间才发现。回首该问题，出在video id字段的格式上，如果有对响应体做约束——要求video id必须有值，且长度为32位，则该问题能够在单元测试就发现。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2020/10/03/%E4%BD%BF%E7%94%A8JSON%20Schema%E9%AA%8C%E8%AF%81API%E5%93%8D%E5%BA%94-shi-yong-jsonschema-yan-zheng-api-xiang-ying/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
       
   
   
@@ -1476,95 +1571,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2020/02/27/Vert.x%20%E2%80%94%20%E4%BB%8E%E7%BC%93%E5%AD%98Future%E8%AF%B4%E8%B5%B7-vertx%E4%BB%8E%E7%BC%93%E5%AD%98future%E8%AF%B4%E8%B5%B7/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
-      <meta itemprop="name" content="果冻">
-      <meta itemprop="description" content="果冻的碎碎念">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="半中二青年">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2020/02/27/Vert.x%20%E2%80%94%20%E4%BB%8E%E7%BC%93%E5%AD%98Future%E8%AF%B4%E8%B5%B7-vertx%E4%BB%8E%E7%BC%93%E5%AD%98future%E8%AF%B4%E8%B5%B7/" class="post-title-link" itemprop="url">Vert.x — 从缓存Future说起</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2020-02-27 21:58:08" itemprop="dateCreated datePublished" datetime="2020-02-27T21:58:08+08:00">2020-02-27</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-02-16 23:23:17" itemprop="dateModified" datetime="2021-02-16T23:23:17+08:00">2021-02-16</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E5%93%8D%E5%BA%94%E5%BC%8F/" itemprop="url" rel="index"><span itemprop="name">响应式</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2020/02/27/Vert.x%20%E2%80%94%20%E4%BB%8E%E7%BC%93%E5%AD%98Future%E8%AF%B4%E8%B5%B7-vertx%E4%BB%8E%E7%BC%93%E5%AD%98future%E8%AF%B4%E8%B5%B7/" class="post-meta-item leancloud_visitors" data-flag-title="Vert.x — 从缓存Future说起" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <h1 id="引子"><a href="#引子" class="headerlink" title="引子"></a>引子</h1><p>这是一个晴朗的午后，我沐浴着窗口洒落的阳光，懒洋洋地敲着代码，喝着并不存在的咖啡，听着窗外并不存在的熙熙攘攘。这是一个疫情中的午后，深圳二月份的天气算是比较厚道，一件薄外套已经让我微微出汗。我，又遇到bug了，调了一上午的bug，自己写的bug，查了半天的bug，甚至让我分不清此刻的汗水是气温还是bug导致的。</p>
-<p>随着时间的流逝，bug终究会解决，我们要做的，就是静静地等着。不知不觉已经到了晚上，果然，bug解决了。往往一个bug的持续时间决定了它是否值得被记录。解决完这个bug时，我惊喜地意识到又可以水一篇博文了。呵呵。</p>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2020/02/27/Vert.x%20%E2%80%94%20%E4%BB%8E%E7%BC%93%E5%AD%98Future%E8%AF%B4%E8%B5%B7-vertx%E4%BB%8E%E7%BC%93%E5%AD%98future%E8%AF%B4%E8%B5%B7/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1636,7 +1642,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">88</span>
+          <span class="site-state-item-count">89</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1649,7 +1655,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">57</span>
+        <span class="site-state-item-count">58</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
