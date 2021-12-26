@@ -1,0 +1,1049 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="OpenID Connect 1.0是建立在OAuth 2.0上的一个身份验证机制，它允许客户端通过授权服务对用户进行认证并获取简单的用户信息。  前置知识：读者需要了解OAuth2.0的授权码模式和隐藏模式两种工作流程，要了解JWT、JWE、JWS等概念。这在我的前两篇文章都有详细讲解">
+<meta property="og:type" content="article">
+<meta property="og:title" content="OpenID Connect 1.0详解">
+<meta property="og:url" content="https://zou8944.com/2021/12/23/OpenID/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="OpenID Connect 1.0是建立在OAuth 2.0上的一个身份验证机制，它允许客户端通过授权服务对用户进行认证并获取简单的用户信息。  前置知识：读者需要了解OAuth2.0的授权码模式和隐藏模式两种工作流程，要了解JWT、JWE、JWS等概念。这在我的前两篇文章都有详细讲解">
+<meta property="og:locale" content="zh_CN">
+<meta property="article:published_time" content="2021-12-23T12:52:58.000Z">
+<meta property="article:modified_time" content="2021-12-26T03:37:19.244Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="OpenID Connect">
+<meta name="twitter:card" content="summary">
+
+<link rel="canonical" href="https://zou8944.com/2021/12/23/OpenID/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>OpenID Connect 1.0详解 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">91</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">28</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">60</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/12/23/OpenID/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          OpenID Connect 1.0详解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-12-23 20:52:58" itemprop="dateCreated datePublished" datetime="2021-12-23T20:52:58+08:00">2021-12-23</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-12-26 11:37:19" itemprop="dateModified" datetime="2021-12-26T11:37:19+08:00">2021-12-26</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/12/23/OpenID/" class="post-meta-item leancloud_visitors" data-flag-title="OpenID Connect 1.0详解" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <p>OpenID Connect 1.0是建立在OAuth 2.0上的一个身份验证机制，它允许客户端通过授权服务对用户进行认证并获取简单的用户信息。</p>
+<blockquote>
+<p>前置知识：读者需要了解OAuth2.0的授权码模式和隐藏模式两种工作流程，要了解JWT、JWE、JWS等概念。这在我的前两篇文章都有详细讲解</p>
+</blockquote>
+<span id="more"></span>
+
+<h2 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h2><h3 id="名词解释"><a href="#名词解释" class="headerlink" title="名词解释"></a>名词解释</h3><ul>
+<li><p>OP：OpenID Provider，即OAuth2.0中的授权服务，用于对用户鉴权</p>
+</li>
+<li><p>RP：Relying Part，依赖方，即OAuth2.0中的客户端，它从OP除获取对用户的鉴权和用户信息</p>
+</li>
+<li><p>ID Token：是一个JWT，包含本次授权的基本信息。具体包含字段如下</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>必须？</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>iss</td>
+<td>是</td>
+<td>发布者，一个https开头的地址</td>
+</tr>
+<tr>
+<td>sub</td>
+<td>是</td>
+<td>主体，OP对用户的唯一标识，不超过255个ASCII字符</td>
+</tr>
+<tr>
+<td>aud</td>
+<td>是</td>
+<td>客户，即使用者。值为OAuth2.0协议中客户端注册的client_id</td>
+</tr>
+<tr>
+<td>exp</td>
+<td>是</td>
+<td>过期时间，遵从RFC 3339协议，即epoch seconds</td>
+</tr>
+<tr>
+<td>iat</td>
+<td>是</td>
+<td>签发时间，同上</td>
+</tr>
+<tr>
+<td>auth_time</td>
+<td>可选</td>
+<td>鉴权时间</td>
+</tr>
+<tr>
+<td>nonce</td>
+<td></td>
+<td>随机值。两个作用<br />一是RP发送时带上，OP响应时带上，用于RP对比<br />二是防重放攻击</td>
+</tr>
+<tr>
+<td>acr</td>
+<td>可选</td>
+<td>Authentication Context Class Reference，暂不知义，忽略</td>
+</tr>
+<tr>
+<td>amr</td>
+<td>可选</td>
+<td>Authentication Methods References，暂不知义，忽略</td>
+</tr>
+<tr>
+<td>azp</td>
+<td>可选</td>
+<td>Authorized party，暂不知义，忽略</td>
+</tr>
+</tbody></table>
+</li>
+</ul>
+<h3 id="总体流程"><a href="#总体流程" class="headerlink" title="总体流程"></a>总体流程</h3><p>类似OAuth2.0，有一个总体流程和若干细分模式的流程，OpenID Connect协议总体流程为：RP发起请求 -&gt; OP对用户鉴权并获取授权 -&gt; OP响应RP并带上ID Token和Access Token -&gt; RP通过访问凭证向OP请求用户信息 -&gt; OP返回用户信息给RP</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line">+--------+                                   +--------+</span><br><span class="line">|        |                                   |        |</span><br><span class="line">|        |---------(1) AuthN Request--------&gt;|        |</span><br><span class="line">|        |                                   |        |</span><br><span class="line">|        |  +--------+                       |        |</span><br><span class="line">|        |  |        |                       |        |</span><br><span class="line">|        |  |  End-  |&lt;--(2) AuthN &amp; AuthZ--&gt;|        |</span><br><span class="line">|        |  |  User  |                       |        |</span><br><span class="line">|   RP   |  |        |                       |   OP   |</span><br><span class="line">|        |  +--------+                       |        |</span><br><span class="line">|        |                                   |        |</span><br><span class="line">|        |&lt;--------(3) AuthN Response--------|        |</span><br><span class="line">|        |                                   |        |</span><br><span class="line">|        |---------(4) UserInfo Request-----&gt;|        |</span><br><span class="line">|        |                                   |        |</span><br><span class="line">|        |&lt;--------(5) UserInfo Response-----|        |</span><br><span class="line">|        |                                   |        |</span><br><span class="line">+--------+                                   +--------+</span><br></pre></td></tr></table></figure>
+
+<h2 id="客户鉴权"><a href="#客户鉴权" class="headerlink" title="客户鉴权"></a>客户鉴权</h2><p>客户鉴权即OP对客户端进行鉴权，然后将鉴权结果返回给RP。鉴权流程有三种方式：授权码模式、隐藏模式、混合模式。如果了解OAuth2.0，对前两个模式一定不会模式，OpenID流程类似，而混合模式则是前两种模式的结合。具体OP采用什么模式，取决于RP请求时<code>response_type</code>给的值。</p>
+<table>
+<thead>
+<tr>
+<th>response_type</th>
+<th>采用的模式</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>code</td>
+<td>授权码模式</td>
+</tr>
+<tr>
+<td>id_token</td>
+<td>隐藏模式</td>
+</tr>
+<tr>
+<td>Id_token token</td>
+<td>隐藏模式</td>
+</tr>
+<tr>
+<td>code id_token</td>
+<td>混合模式</td>
+</tr>
+<tr>
+<td>code token</td>
+<td>混合模式</td>
+</tr>
+<tr>
+<td>code id_token token</td>
+<td>混合模式</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>规律：id_token和token等同：只有id_token或/和token的使用隐藏模式，只有code的使用授权码模式i，同时存在他们的则使用混合模式</p>
+</blockquote>
+<h3 id="授权码模式"><a href="#授权码模式" class="headerlink" title="授权码模式"></a>授权码模式</h3><p>总计八个步骤</p>
+<ol>
+<li>RP准备用于鉴权请求的参数</li>
+<li>RP发送请求，给OP</li>
+<li>OP对用户鉴权</li>
+<li>OP手机用户的鉴权信息和授权信息</li>
+<li>OP发送授权码给RP</li>
+<li>RP使用授权码向一个端点换取访问凭证。协议称之为Token端点，但没说这个端点是不是由OP提供的。不过一般来说是</li>
+<li>RP收到访问凭证，包含ID Token、Access Token</li>
+<li>客户端验证ID Token，并从中提取用户的唯一标识。前面说过这是一个JWT，唯一标识就是subject identifier</li>
+</ol>
+<p><strong>授权码的请求与响应</strong></p>
+<p>其中RP准备的请求参数包含OAuth2.0规定的所有字段，也包含一些额外的字段</p>
+<table>
+<thead>
+<tr>
+<th>参数</th>
+<th>必须？</th>
+<th>来自OAuth2.0？</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>scope</td>
+<td>是</td>
+<td>是</td>
+<td>写死，openid</td>
+</tr>
+<tr>
+<td>response_type</td>
+<td>是</td>
+<td>是</td>
+<td>写死，code</td>
+</tr>
+<tr>
+<td>client_id</td>
+<td>是</td>
+<td>是</td>
+<td>RP在OP处注册得到的唯一标识</td>
+</tr>
+<tr>
+<td>redirect_uri</td>
+<td>是</td>
+<td>是</td>
+<td>用于OP鉴权成功后的回调地址，RP在OP处注册时提供</td>
+</tr>
+<tr>
+<td>state</td>
+<td>推荐</td>
+<td>是</td>
+<td>请求来回中包含的不透明值，用户防范CSRF攻击</td>
+</tr>
+<tr>
+<td>response_mode</td>
+<td>否</td>
+<td>是</td>
+<td>OP返回数据的模式</td>
+</tr>
+<tr>
+<td>nonce</td>
+<td>否</td>
+<td>否</td>
+<td>会被放在ID Token的nonce字段，用于防重放攻击</td>
+</tr>
+<tr>
+<td>display</td>
+<td>否</td>
+<td>否</td>
+<td>定义OP通过什么方式展示用户鉴权界面<br />page：完整的网页<br />popup：弹窗<br />touch：触摸设备<br />wap：”feature phone” type display</td>
+</tr>
+<tr>
+<td>prompt</td>
+<td>否</td>
+<td>否</td>
+<td>定义OP通过什么方式对用户二次鉴权<br />none：不进行二次鉴权<br />login：重新登录<br />consent：获取用户同意使用上次采集到的结果即可<br />select_account：选择用户账户</td>
+</tr>
+<tr>
+<td>max_age</td>
+<td>否</td>
+<td>否</td>
+<td>本次鉴权的有效期。超过该时间后，OP必须对用户再次进行鉴权</td>
+</tr>
+<tr>
+<td>ui_locales</td>
+<td>否</td>
+<td>否</td>
+<td>用户使用的区域信息</td>
+</tr>
+<tr>
+<td>Id_token_hint</td>
+<td>否</td>
+<td>否</td>
+<td>忽略</td>
+</tr>
+<tr>
+<td>login_hint</td>
+<td>否</td>
+<td>否</td>
+<td>忽略</td>
+</tr>
+<tr>
+<td>acr_values</td>
+<td>否</td>
+<td>否</td>
+<td>忽略</td>
+</tr>
+</tbody></table>
+<p>如果授权成功，得到的返回会包含code、state等参数，举个例子</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 302 Found</span><br><span class="line">Location: https://client.example.org/cb?code=SplxlOBeZQQYbYS6WxSbIA&amp;state=af0ifjsldkj</span><br></pre></td></tr></table></figure>
+
+<p>如果授权失败，也会有相应的错误码，具体<a target="_blank" rel="noopener" href="https://openid.net/specs/openid-connect-core-1_0.html#toc">参考手册</a>的3.1.2.6</p>
+<p><strong>凭证的请求与响应</strong></p>
+<p>这个就完全和OAuth2.0一样了。</p>
+<p>请求上主要包含：<code>grant_type</code>写死<code>authorization_code</code>、<code>code</code>填上一步获取的授权码、<code>redirect_uri</code>填上一步的重定向地址，举个例子</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">POST /token HTTP/1.1</span><br><span class="line">Host: server.example.com</span><br><span class="line">Content-Type: application/x-www-form-urlencoded</span><br><span class="line"><span class="meta">#</span><span class="bash"> 你可能注意到这里有个Basic鉴权，这是因为Client也是需要被验证的</span></span><br><span class="line">Authorization: Basic czZCaGRSa3F0MzpnWDFmQmF0M2JW</span><br><span class="line"></span><br><span class="line">grant_type=authorization_code&amp;code=SplxlOBeZQQYbYS6WxSbIA&amp;redirect_uri=https%3A%2F%2Fclient.example.org%2Fcb</span><br></pre></td></tr></table></figure>
+
+<p>响应上多出一个<code>id_token</code>字段，举例如下</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line">HTTP/<span class="number">1.1</span> <span class="number">200</span> OK</span><br><span class="line">Content-Type: application/json</span><br><span class="line">Cache-Control: no-store</span><br><span class="line">Pragma: no-cache</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;access_token&quot;</span>: <span class="string">&quot;SlAV32hkKG&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;token_type&quot;</span>: <span class="string">&quot;Bearer&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;refresh_token&quot;</span>: <span class="string">&quot;8xLOxBtZp8&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;expires_in&quot;</span>: <span class="number">3600</span>,</span><br><span class="line">  <span class="attr">&quot;id_token&quot;</span>: <span class="string">&quot;eyJhbGciOiJSUzI1NiIsImtpZCI6IjFlOWdkazcifQ.ewogImlzc</span></span><br><span class="line"><span class="string">    yI6ICJodHRwOi8vc2VydmVyLmV4YW1wbGUuY29tIiwKICJzdWIiOiAiMjQ4Mjg5</span></span><br><span class="line"><span class="string">    NzYxMDAxIiwKICJhdWQiOiAiczZCaGRSa3F0MyIsCiAibm9uY2UiOiAibi0wUzZ</span></span><br><span class="line"><span class="string">    fV3pBMk1qIiwKICJleHAiOiAxMzExMjgxOTcwLAogImlhdCI6IDEzMTEyODA5Nz</span></span><br><span class="line"><span class="string">    AKfQ.ggW8hZ1EuVLuxNuuIJKX_V8a_OMXzR0EHR9R6jgdqrOOF4daGU96Sr_P6q</span></span><br><span class="line"><span class="string">    Jp6IcmD3HP99Obi1PRs-cwh3LO-p146waJ8IhehcwL7F09JdijmBqkvPeB2T9CJ</span></span><br><span class="line"><span class="string">    NqeGpe-gccMg4vfKjkM8FcGvnzZUN4_KSP0aAp1tOJ1zZwgjxqGByKHiOtX7Tpd</span></span><br><span class="line"><span class="string">    QyHE5lcMiKPXfEIQILVq0pc_E2DzL7emopWoaoZTF_m0_N0YzFC6g6EJbOEoRoS</span></span><br><span class="line"><span class="string">    K5hoDalrcvRYLSrQAZZKflyuVCyixEoV9GfNQC3_osjzw2PAithfubEEBLuVVk4</span></span><br><span class="line"><span class="string">    XUVrWOLrLl0nx7RkKU8NXNHq-rvKMzqg&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>在上面的每一方，比如OP收到请求、RP收到响应，都会对得到的数据进行验证，我们都忽略了，不过这里重点将RP收到ID Token后的验证逻辑列出来</p>
+<ol>
+<li>依据JWT协议解密该Token</li>
+<li>iss字段必须匹配RP提前获取到的OP的issuer值</li>
+<li>aud字段必须是RP在OP处注册时填写的client_id</li>
+<li>如果包含多个aud字段，则还要验证azp字段</li>
+<li>如果azp字段存在，则它的值必须是RP在OP处注册时填写的client_id</li>
+<li>如果ID Token是RP直接从OP处获取，没有走授权码这一步（比如走隐藏模式的流程），必须走JWS流程验证该JWT的签名</li>
+<li>alg的值要么为默认的RS256，要么是RP在OP处注册时通过id_token_signed_response_alg字段指定的算法</li>
+<li>exp所展示的时间必须比当前时间晚</li>
+<li>iat可以用来识别签发时间过久的JWT，太久的可以拒掉，多久算久，这个取决于RP自己</li>
+<li>nonce必须和请求授权码时对应上</li>
+<li>acr必须和请求授权码时对应上</li>
+<li>接和auth_time、max_age，可以判断举例上一次时间是不是太久，从而决定是否需要重新发起鉴权请求</li>
+</ol>
+</blockquote>
+<h3 id="隐藏模式"><a href="#隐藏模式" class="headerlink" title="隐藏模式"></a>隐藏模式</h3><p>这个模式就比较简单了</p>
+<ol>
+<li>RP准备请求参数</li>
+<li>RP发送请求</li>
+<li>OP认证用户</li>
+<li>OP获取用户的认证和授权信息</li>
+<li>OP发送ID Token，可能还有Access Token给RP</li>
+<li>RP验证ID Token，提取用户的标识</li>
+</ol>
+<p><strong>请求</strong></p>
+<p>请求参数和授权码模式基本一样，这里列出差别</p>
+<ul>
+<li>response_type：id_token，或者<code>id_token token</code>，差别是，如果加上token，步骤5会返回Access Token，否则就么有</li>
+<li>redirect_uri：处于安全考虑，这个地方必须使用HTTPS传输</li>
+<li>nonce：这个变成了必须的</li>
+</ul>
+<p><strong>响应</strong></p>
+<p>给个例子就好了</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 302 Found</span><br><span class="line">Location: https://client.example.org/cb#</span><br><span class="line">  access_token=SlAV32hkKG</span><br><span class="line">  &amp;token_type=bearer</span><br><span class="line">  &amp;id_token=eyJ0 ... NiJ9.eyJ1c ... I6IjIifX0.DeWt4Qu ... ZXso</span><br><span class="line">  &amp;expires_in=3600</span><br><span class="line">  &amp;state=af0ifjsldkj</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>与前面不同的是，这里会多一个Access Token的验证，它要结合ID Token中的at_hash字段验证</p>
+<ul>
+<li>使用ID Token中头部alg字段指定的算法对Access Token进行哈希</li>
+<li>对哈希值进行base64url编码，取左半边</li>
+<li>上一步得到的值必须和ID Token中的at_hash字段指定的值匹配</li>
+</ul>
+</blockquote>
+<h3 id="混合模式"><a href="#混合模式" class="headerlink" title="混合模式"></a>混合模式</h3><ol>
+<li>RP准备请求</li>
+<li>RP发送请求给OP</li>
+<li>OP对用户鉴权</li>
+<li>OP采集用户的鉴权和授权信息</li>
+<li>OP发送给RP授权码，同时根据请求时指定的<code>response_type</code>，发送额外的参数</li>
+<li>RP通过授权码向OP请求</li>
+<li>RP从OP处得到ID Token和Access Token</li>
+<li>RP验证ID Token，解析用户的唯一标识</li>
+</ol>
+<p><strong>授权码请求</strong></p>
+<p>混合模式在response_type上做文章，允许的值包括：<code>code id_token</code>、<code>code token</code>、<code>code id_token token</code>。可以看出，在授权码请求这一步，可能会返回授权码、ID Token、Access Token。下面是一个返回授权码和ID Token的例子</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">HTTP/1.1 302 Found</span><br><span class="line">Location: https://client.example.org/cb#</span><br><span class="line">code=SplxlOBeZQQYbYS6WxSbIA</span><br><span class="line">&amp;id_token=eyJ0 ... NiJ9.eyJ1c ... I6IjIifX0.DeWt4Qu ... ZXso</span><br><span class="line">&amp;state=af0ifjsldkj</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>如果返回值有ID Token，它会包含授权码的签名，对应其c_hash字段，计算方式和隐藏模式的Access Token验证差不多。</p>
+</blockquote>
+<p>至此，混合模式看起来很奇怪，体现在两处</p>
+<ul>
+<li>ID Token既能在授权码请求时返回，也能在Access Token请求时返回</li>
+<li>Access Token也有上面的情况</li>
+</ul>
+<p>这样做有什么意义呢？</p>
+<h3 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h3><p>ID Token的意义，主要在于以安全的方式分发用户的唯一标识，Access Token才是用来作为访问凭证的。</p>
+<h2 id="获取用户信息"><a href="#获取用户信息" class="headerlink" title="获取用户信息"></a>获取用户信息</h2><p>上面介绍了获取访问凭证之前的动作，这里介绍使用访问凭证访问ID Token指定的用户的信息的问题。</p>
+<h3 id="能获得什么"><a href="#能获得什么" class="headerlink" title="能获得什么"></a>能获得什么</h3><p>获得的内容和请求访问凭证时传的scope有关，具体如下。</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>scope</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>sub</td>
+<td>-</td>
+<td>唯一标识，对应JWT的sub</td>
+</tr>
+<tr>
+<td>name</td>
+<td>profile</td>
+<td>用户全名</td>
+</tr>
+<tr>
+<td>given_name</td>
+<td>profile</td>
+<td>名</td>
+</tr>
+<tr>
+<td>family_name</td>
+<td>profile</td>
+<td>姓</td>
+</tr>
+<tr>
+<td>middle_name</td>
+<td>profile</td>
+<td>中间名，这个某些文化有关</td>
+</tr>
+<tr>
+<td>nickname</td>
+<td>profile</td>
+<td>昵称</td>
+</tr>
+<tr>
+<td>perferred_username</td>
+<td>profile</td>
+<td>用户希望展示给RP的名字</td>
+</tr>
+<tr>
+<td>profile</td>
+<td>profile</td>
+<td>用户的概览信息的页面URI</td>
+</tr>
+<tr>
+<td>picture</td>
+<td>profile</td>
+<td>用户图片的URI</td>
+</tr>
+<tr>
+<td>website</td>
+<td>profile</td>
+<td>用户的网站或者博客URI</td>
+</tr>
+<tr>
+<td>email</td>
+<td>email</td>
+<td>用户邮箱</td>
+</tr>
+<tr>
+<td>email_verified</td>
+<td>email</td>
+<td>邮箱是否通过验证。如果没有，这可能是用户随便填写的一个邮箱</td>
+</tr>
+<tr>
+<td>gender</td>
+<td>profile</td>
+<td>性别</td>
+</tr>
+<tr>
+<td>birthdate</td>
+<td>profile</td>
+<td>生日</td>
+</tr>
+<tr>
+<td>zoneinfo</td>
+<td>profile</td>
+<td>用户所处时区信息</td>
+</tr>
+<tr>
+<td>locale</td>
+<td>profile</td>
+<td>用户所处地域，语言环境</td>
+</tr>
+<tr>
+<td>phone_number</td>
+<td>phone</td>
+<td>电话号码</td>
+</tr>
+<tr>
+<td>phone_number_verified</td>
+<td>phone</td>
+<td>电话号码是否通过验证</td>
+</tr>
+<tr>
+<td>address</td>
+<td>address</td>
+<td>地址，这是一个JSON对象</td>
+</tr>
+<tr>
+<td>updated_at</td>
+<td>profile</td>
+<td>用户的这些信息最后一次被更新的时间，epoch seconds</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>scope可以指定多个值，得到的结果就是并集。比如<code>scope=profile email phone address</code></p>
+</blockquote>
+<p>一个成功的例子</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">HTTP/<span class="number">1.1</span> <span class="number">200</span> OK</span><br><span class="line">Content-Type: application/json</span><br><span class="line"></span><br><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;sub&quot;</span>: <span class="string">&quot;248289761001&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;name&quot;</span>: <span class="string">&quot;Jane Doe&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;given_name&quot;</span>: <span class="string">&quot;Jane&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;family_name&quot;</span>: <span class="string">&quot;Doe&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;preferred_username&quot;</span>: <span class="string">&quot;j.doe&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;email&quot;</span>: <span class="string">&quot;janedoe@example.com&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;picture&quot;</span>: <span class="string">&quot;http://example.com/janedoe/me.jpg&quot;</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="另类获取信息的方式-claims"><a href="#另类获取信息的方式-claims" class="headerlink" title="另类获取信息的方式 - claims"></a>另类获取信息的方式 - claims</h3><p>可以在请求时加上claims参数，指定能够从用户信息端点或者在ID Token中包含什么信息，它是一个类似json schema的东西，如下是例子：要求给的字段，以及字段是否必要。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;userinfo&quot;</span>:</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;given_name&quot;</span>: &#123;<span class="attr">&quot;essential&quot;</span>: <span class="literal">true</span>&#125;,</span><br><span class="line">    <span class="attr">&quot;nickname&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">    <span class="attr">&quot;email&quot;</span>: &#123;<span class="attr">&quot;essential&quot;</span>: <span class="literal">true</span>&#125;,</span><br><span class="line">    <span class="attr">&quot;email_verified&quot;</span>: &#123;<span class="attr">&quot;essential&quot;</span>: <span class="literal">true</span>&#125;,</span><br><span class="line">    <span class="attr">&quot;picture&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">    <span class="attr">&quot;http://example.info/claims/groups&quot;</span>: <span class="literal">null</span></span><br><span class="line">  &#125;,</span><br><span class="line">  <span class="attr">&quot;id_token&quot;</span>:</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;auth_time&quot;</span>: &#123;<span class="attr">&quot;essential&quot;</span>: <span class="literal">true</span>&#125;,</span><br><span class="line">    <span class="attr">&quot;acr&quot;</span>: &#123;<span class="attr">&quot;values&quot;</span>: [<span class="string">&quot;urn:mace:incommon:iap:silver&quot;</span>] &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>理解了OAuth2.0的工作流程，再理解OpenID Connect就很容易了，相较而言，它的特点如下</p>
+<ul>
+<li>OP = 授权服务+资源服务，资源服务的唯一作用就是分发用户信息</li>
+<li>规定了用户信息包含的内容</li>
+<li>Token响应中多了ID Token，它用来指定用户ID，以便在访问用户信息时作为标识</li>
+<li>ID Token使用了JWT</li>
+<li>多了混合模式</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/OpenID-Connect/" rel="tag"># OpenID Connect</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2021/12/23/OAuth2.0/" rel="prev" title="OAuth2.0详解">
+      <i class="fa fa-chevron-left"></i> OAuth2.0详解
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%A6%82%E8%A7%88"><span class="nav-number">1.</span> <span class="nav-text">概览</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%90%8D%E8%AF%8D%E8%A7%A3%E9%87%8A"><span class="nav-number">1.1.</span> <span class="nav-text">名词解释</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%80%BB%E4%BD%93%E6%B5%81%E7%A8%8B"><span class="nav-number">1.2.</span> <span class="nav-text">总体流程</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E9%89%B4%E6%9D%83"><span class="nav-number">2.</span> <span class="nav-text">客户鉴权</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%8E%88%E6%9D%83%E7%A0%81%E6%A8%A1%E5%BC%8F"><span class="nav-number">2.1.</span> <span class="nav-text">授权码模式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%9A%90%E8%97%8F%E6%A8%A1%E5%BC%8F"><span class="nav-number">2.2.</span> <span class="nav-text">隐藏模式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%B7%B7%E5%90%88%E6%A8%A1%E5%BC%8F"><span class="nav-number">2.3.</span> <span class="nav-text">混合模式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B0%8F%E7%BB%93"><span class="nav-number">2.4.</span> <span class="nav-text">小结</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%8E%B7%E5%8F%96%E7%94%A8%E6%88%B7%E4%BF%A1%E6%81%AF"><span class="nav-number">3.</span> <span class="nav-text">获取用户信息</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%83%BD%E8%8E%B7%E5%BE%97%E4%BB%80%E4%B9%88"><span class="nav-number">3.1.</span> <span class="nav-text">能获得什么</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%8F%A6%E7%B1%BB%E8%8E%B7%E5%8F%96%E4%BF%A1%E6%81%AF%E7%9A%84%E6%96%B9%E5%BC%8F-claims"><span class="nav-number">3.2.</span> <span class="nav-text">另类获取信息的方式 - claims</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">91</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">28</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">60</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2021</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
