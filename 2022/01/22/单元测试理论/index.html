@@ -1,0 +1,848 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="很多是不写单元测的，无非是性价比太低。但我始终以为，真实原因是打开方式不正确，如果花功夫系统研究一下，或许会不一样。 这不就来了，现希望相对系统第了解单元测试的理论、常用工具、实施方法。伴随会产生系列文章。初预备三部分：  理论：介绍单元测试需要关注的内容，从设计上如何考虑 工具：介绍Spring Test、JUnit、Assert、Mock技术，相关库的使用 实践：基于以上两个部分的学习，重构">
+<meta property="og:type" content="article">
+<meta property="og:title" content="单元测试 - 理论">
+<meta property="og:url" content="https://zou8944.com/2022/01/22/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E7%90%86%E8%AE%BA/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="很多是不写单元测的，无非是性价比太低。但我始终以为，真实原因是打开方式不正确，如果花功夫系统研究一下，或许会不一样。 这不就来了，现希望相对系统第了解单元测试的理论、常用工具、实施方法。伴随会产生系列文章。初预备三部分：  理论：介绍单元测试需要关注的内容，从设计上如何考虑 工具：介绍Spring Test、JUnit、Assert、Mock技术，相关库的使用 实践：基于以上两个部分的学习，重构">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220122114903059.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220122115159520.png">
+<meta property="article:published_time" content="2022-01-22T03:28:34.000Z">
+<meta property="article:modified_time" content="2022-01-22T04:33:41.609Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="单元测试">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220122114903059.png">
+
+<link rel="canonical" href="https://zou8944.com/2022/01/22/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E7%90%86%E8%AE%BA/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>单元测试 - 理论 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">97</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">30</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">65</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2022/01/22/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E7%90%86%E8%AE%BA/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          单元测试 - 理论
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-01-22 11:28:34 / 修改时间：12:33:41" itemprop="dateCreated datePublished" datetime="2022-01-22T11:28:34+08:00">2022-01-22</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B5%8B%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">测试</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2022/01/22/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95%E7%90%86%E8%AE%BA/" class="post-meta-item leancloud_visitors" data-flag-title="单元测试 - 理论" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>很多是不写单元测的，无非是性价比太低。但我始终以为，真实原因是打开方式不正确，如果花功夫系统研究一下，或许会不一样。</p>
+<p>这不就来了，现希望相对系统第了解单元测试的理论、常用工具、实施方法。伴随会产生系列文章。初预备三部分：</p>
+<ul>
+<li>理论：介绍单元测试需要关注的内容，从设计上如何考虑</li>
+<li>工具：介绍Spring Test、JUnit、Assert、Mock技术，相关库的使用</li>
+<li>实践：基于以上两个部分的学习，重构当前的一个项目，记录过程中考虑的点。并最终给出结论。</li>
+</ul>
+<p>此篇为首！</p>
+</blockquote>
+<span id="more"></span>
+
+<p>与单元测试相关的书籍，大约有这么三本，评分都不戳。</p>
+<ul>
+<li>《单元测试的艺术》</li>
+<li>《有效的单元测试》</li>
+<li>《单元测试之道》</li>
+</ul>
+<p>本文主要内容来自于《单元测试之道》，需要注意的是，它是2005年出版的书籍，谨慎接受其知识点。</p>
+<h2 id="几个概念"><a href="#几个概念" class="headerlink" title="几个概念"></a>几个概念</h2><p>无论文章或书籍，时常提及几个概念，注意区分。</p>
+<ul>
+<li><p>SDLC：Software Development Lifecycle</p>
+<p>软件开发生命周期</p>
+</li>
+<li><p>TDD：Test Driven Development</p>
+<p>测试驱动开发，以测试用例为主，编码以通过用例为主要目的。通过不断地 测试-重构 ，最终完成编码</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220122114903059.png" alt="image-20220122114903059"></p>
+</li>
+<li><p>BDD：Bebavioural Driven Development</p>
+<p>行为驱动开发，TDD衍生出来的一种<strong>测试case开发方式</strong>。测试基于被测系统的行为，即所谓的Given-When-Then（假设 - 当 -然后），举例</p>
+<ul>
+<li>假设用户输入了有效凭证</li>
+<li>当用户点击登录按钮</li>
+<li>提示登录成功信息</li>
+</ul>
+<p>BDD使得开发者更加关注用户的行为。</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220122115159520.png" alt="image-20220122115159520" style="zoom:80%;" />
+
+<blockquote>
+<p>AssertJ提供BDD方式的断言API</p>
+</blockquote>
+</li>
+<li><p>ATDD：Acceptance Test-Driven Development</p>
+<p>验收测试驱动开发。从用户的角度编写。主要侧重于验证系统的功能行为。它用于验证 - 代码是否按照预期工作了。重点在验收，行为人是QA或用户</p>
+</li>
+</ul>
+<p>TDD、BDD、ATDD都可归属于测试驱动开发，三者主要对比关系如下</p>
+<table>
+<thead>
+<tr>
+<th align="left"><strong>Parameters</strong></th>
+<th align="left"><strong>TDD</strong></th>
+<th align="left"><strong>BDD</strong></th>
+<th align="left"><strong>ATDD</strong></th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><strong>参与方</strong></td>
+<td align="left">开发者</td>
+<td align="left">开发者, 用户, QA</td>
+<td align="left">开发者, 用户, QA</td>
+</tr>
+<tr>
+<td align="left"><strong>使用语言</strong></td>
+<td align="left">编程语言，如Java、Kotlin</td>
+<td align="left">自然语言。或者是DSL</td>
+<td align="left">自然语言。或者是DSL</td>
+</tr>
+<tr>
+<td align="left"><strong>关注点</strong></td>
+<td align="left">单元测试</td>
+<td align="left">理解需求</td>
+<td align="left">验收测试</td>
+</tr>
+<tr>
+<td align="left"><strong>工具(过时)</strong></td>
+<td align="left">JDave, <a target="_blank" rel="noopener" href="https://www.browserstack.com/guide/learn-about-cucumber-testing-tool">Cucumber</a>, JBehave, Spec Flow, BeanSpec, Gherkin Concordian, FitNesse</td>
+<td align="left">Gherkin, Dave, Cucumber, JBehave, Spec Flow, BeanSpec, Concordian</td>
+<td align="left"><a target="_blank" rel="noopener" href="https://www.browserstack.com/guide/testng-framework-with-selenium-automation">TestNG</a>, FitNesse, EasyB, Spectacular, Concordian, Thucydides</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>资料参考：<a target="_blank" rel="noopener" href="https://www.browserstack.com/guide/tdd-vs-bdd-vs-atdd">https://www.browserstack.com/guide/tdd-vs-bdd-vs-atdd</a></p>
+</blockquote>
+<h2 id="测试什么"><a href="#测试什么" class="headerlink" title="测试什么"></a>测试什么</h2><p>提到单元测试，你肯定会想到测试边缘case，但其实不止于此。详细来说，所有需要考虑的点可以用RIGHT-BICEP表示</p>
+<h3 id="RIGHT"><a href="#RIGHT" class="headerlink" title="RIGHT"></a>RIGHT</h3><p>结果是否正确？</p>
+<p>首先考虑所有的正常case，保证基本功能正常。对于这类case，如果有大量测试数据，可以考虑使用数据文件存储，测试代码读取的方式。</p>
+<h3 id="B-order"><a href="#B-order" class="headerlink" title="B[order]"></a>B[order]</h3><p>所有边界条件都正确吗？</p>
+<p>有一个方式有助于思考所有的边界条件</p>
+<ul>
+<li>Conformance - 一致性，值是否和预期一致</li>
+<li>Ordering - 顺序性，值是否和预期一样有序</li>
+<li>Range - 区间性，值是否位于最小值和最大值之间</li>
+<li>Reference - 依赖性，代码是否引入了一些不在代码控制范围内的资源</li>
+<li>Existence - 存在性，值是否存在，null、0、””、空集合等</li>
+<li>Cardinatity - 基数性，是否恰好有足够的数量</li>
+<li>Time - 时间性，所有事情的发生是否是有序的、时间是否正好</li>
+</ul>
+<h3 id="I-nverse"><a href="#I-nverse" class="headerlink" title="I[nverse]"></a>I[nverse]</h3><p>反向关联如何？</p>
+<p>运用方法的反向逻辑关系来验证它们。比如插入数据库，可以用查询数据库进行验证。</p>
+<h3 id="C-ross"><a href="#C-ross" class="headerlink" title="C[ross]"></a>C[ross]</h3><p>能用其它手段交叉检查结果吗？</p>
+<p>计算一个量可以有多种算法，当我们实现一种算法时。可以在单元测试中用另一种看起来比较笨但正确率比较高的算法来对比验证。这就叫交叉检查。</p>
+<h3 id="E-rror"><a href="#E-rror" class="headerlink" title="E[rror]"></a>E[rror]</h3><p>是否可以强制错误条件发生？</p>
+<p>模拟现实情况中的错误，当然不可能去拔网线，但是我们可以Mock，一些典型的错误如</p>
+<ul>
+<li>内存耗光</li>
+<li>磁盘用满</li>
+<li>时钟出问题</li>
+<li>网络不可用或者有问题</li>
+<li>系统过载</li>
+</ul>
+<h3 id="P-erformance"><a href="#P-erformance" class="headerlink" title="P[erformance]"></a>P[erformance]</h3><p>性能是否满足要求？</p>
+<p>测试指定方法的性能，但是需要注意的是这类单元测试不能经常做，因为比较耗时，要与其它单元测试分开。</p>
+<blockquote>
+<p>下文，我们具体来看看各细分点</p>
+</blockquote>
+<h2 id="边界条件"><a href="#边界条件" class="headerlink" title="边界条件"></a>边界条件</h2><h3 id="常见边界"><a href="#常见边界" class="headerlink" title="常见边界"></a>常见边界</h3><ul>
+<li>逻辑边界：如角度超过360、人的年龄超过200等</li>
+<li>集合：空集合、null、下标越界</li>
+</ul>
+<h3 id="引用性"><a href="#引用性" class="headerlink" title="引用性"></a>引用性</h3><ul>
+<li>前条件：系统必须处于什么状态下才能运行。这和一致性类似</li>
+<li>后条件：方法将保证哪些状态发生。方法本身的结果，需要检查。方法产生的副作用，也是需要检查的。</li>
+</ul>
+<p>比如，对数据库的操作应该就算是副作用，也需要对插入的结果进行验证。</p>
+<h3 id="基数性"><a href="#基数性" class="headerlink" title="基数性"></a>基数性</h3><ul>
+<li>基数指的是计数，是否有恰好的数量</li>
+<li>关注0-1-n，其中n可能会随着数量的变化而变化</li>
+<li>这个n意味着两方面<ul>
+<li>写代码时，需要考虑n变化的情况，不能写死</li>
+<li>测试时，需要验证n的变化情况是否在代码中有考虑到</li>
+</ul>
+</li>
+</ul>
+<h3 id="时间性"><a href="#时间性" class="headerlink" title="时间性"></a>时间性</h3><ul>
+<li><p>相对时间，即时间上的顺序</p>
+<ul>
+<li><p>比如两个方法的调用需要有顺序，如果调用顺序相反，则需要有错误</p>
+<p>比如connect() 和 read()</p>
+</li>
+</ul>
+</li>
+<li><p>绝对时间，即time，钟表上的时间</p>
+<ul>
+<li><p>时区是否对代码有所影响。遵循不同的时间规则，对时间的计算不一样。比如GMT、夏令时等</p>
+<p>一般来说，遇到时区问题时，底层库很可能会出现问题。因此在单元测试中有必要进行测试</p>
+</li>
+<li><p>超时时间是否生效</p>
+</li>
+</ul>
+</li>
+<li><p>并发问题</p>
+<ul>
+<li>即多线程测试</li>
+</ul>
+</li>
+</ul>
+<h2 id="使用Mock"><a href="#使用Mock" class="headerlink" title="使用Mock"></a>使用Mock</h2><p><strong>单元测试的目的是一次只验证一个方法。</strong>如果方法耦合了其它因素，比如数据库、网络请求等，此时我们在验证方法之前去准备这些外部环境，不仅浪费时间，还可能因为外部环境发生变化而导致单元测试在没有修改的情况下出现失败。此时需要使用Mock进行数据模拟。</p>
+<p>一般来说，真实对象具有如下不方便的特点，Mock可以完全解决这些问题</p>
+<ul>
+<li>具有不确定的行为</li>
+<li>很难被创建</li>
+<li>某些行为很难被触发</li>
+<li>可能有用户界面</li>
+</ul>
+<blockquote>
+<p>日常使用的大部分东西，如数据库、网络，都有专门的Mock库，不要费劲去自己手动Mock。</p>
+</blockquote>
+<h2 id="何为好的单元测试"><a href="#何为好的单元测试" class="headerlink" title="何为好的单元测试"></a>何为好的单元测试</h2><p>单元测试虽好，但如果使用不当，则会浪费大量时间。有一个衡量单元测试好坏的标准：A-TRIP</p>
+<ul>
+<li>Automatic - 自动化<ul>
+<li>测试调用自动化</li>
+<li>测试结果检查自动化</li>
+</ul>
+</li>
+<li>Thorough - 彻底<ul>
+<li>单元测试覆盖要完全</li>
+</ul>
+</li>
+<li>Repeatable - 可重复<ul>
+<li>每个测试独立于其它测试；独立于周围的环境</li>
+<li>需要能够以任意顺序可重复地执行</li>
+</ul>
+</li>
+<li>Independent - 独立<ul>
+<li>每个测试都要有很强的针对性</li>
+<li>确保一次只测试了一样东西</li>
+<li>一个测试函数可以仅测试一个复杂函数的一小部分功能；该函数的测试由多个这种小的测试函数共同组成</li>
+<li>JUnit的@Before和@After就是针对这个问题设置的。每个test函数都会执行一次@Before和@After指定的函数</li>
+<li>你绝对不能假设JUnit的单元测试函数之间的顺序</li>
+</ul>
+</li>
+<li>Professional - 专业<ul>
+<li>不要对无关紧要的bug进行测试</li>
+<li>测试的代码和正常的代码一样，都可以面向对象、遵循解耦合原则等</li>
+</ul>
+</li>
+</ul>
+<h2 id="面向测试的设计"><a href="#面向测试的设计" class="headerlink" title="面向测试的设计"></a>面向测试的设计</h2><p>如TDD所说，从一开始就针对测试进行设计，具体来说：</p>
+<ul>
+<li>通过令代码更加容易测试来改善代码的设计。甚至可能为了使代码变得容易测试而对代码进行重构</li>
+<li>关注点分离。将能够测试的点和不能测试的点分离，使得该方法可测试</li>
+<li>如果测试代码看起来非常丑陋，这可能就是一个不好的征兆，代码需要重新设计，直到写出易于测试的代码</li>
+</ul>
+<p>书中给出了一个例子，一个GUI组件，将逻辑和GUI显示糅合在了一起，使得无法进行单元测试。解决方案是拆分出逻辑部分，对它进行单元测试。</p>
+<h2 id="一些陷阱"><a href="#一些陷阱" class="headerlink" title="一些陷阱"></a>一些陷阱</h2><p>一些陷阱，还挺典型的</p>
+<ul>
+<li><p>不写单元测试</p>
+<p>没有单元测试的代码，bug一定会在某个时刻爆发</p>
+</li>
+<li><p>用冒烟测试替代单元测试</p>
+<p>这里并不是指整个系统的冒烟测试，而是很多人写单元测试的一种方式：将包含多个流程的函数用一个单元测试搞定，忽略中间逻辑的测试，这种测试的目的是：流程是否能够跑通</p>
+<p>这种单元测试无非在给自己营造一种虚无的安全感而已 - <strong>你以为你测试过了，实际上并没有</strong></p>
+</li>
+<li><p>只在本机跑单元测试</p>
+<p>有可能在CI机或别人的机器上跑不了，要求在所有机器上都能跑起来</p>
+</li>
+<li><p>浮点数相等问题</p>
+<p>断言浮点数相等时，要考虑精度问题</p>
+</li>
+<li><p>每次执行长耗时单元测试</p>
+<p>部分单元测试耗时太长，不能每次提交CI都执行，需要将其提取出来，低频测试</p>
+</li>
+<li><p>代码修改导致单元测试失败</p>
+<p>如果实现代码只修改一小部分，就导致测试代码失败，需要大量修改才能重新正确，说明被测试的代码逻辑之间耦合太深</p>
+<p>理论上，修改一部分代码，只需要对这部分测试代码进行修改</p>
+</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>一个好的单元测试，需要考虑的绝不仅仅是边界case，还需要考虑正确性、性能、代码的优雅性。</p>
+<p>一个好的单元测试，最终应该是能够提升开发效率，而不是带来无止尽的修改，如果这种情况出现了，考虑重构单元测试🤔。</p>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95/" rel="tag"># 单元测试</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/01/10/Linux%E7%94%A8%E6%88%B7%E5%92%8C%E6%9D%83%E9%99%90%E7%AE%A1%E7%90%86/" rel="prev" title="Linux用户和权限管理">
+      <i class="fa fa-chevron-left"></i> Linux用户和权限管理
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%87%A0%E4%B8%AA%E6%A6%82%E5%BF%B5"><span class="nav-number">1.</span> <span class="nav-text">几个概念</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E4%BB%80%E4%B9%88"><span class="nav-number">2.</span> <span class="nav-text">测试什么</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#RIGHT"><span class="nav-number">2.1.</span> <span class="nav-text">RIGHT</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#B-order"><span class="nav-number">2.2.</span> <span class="nav-text">B[order]</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#I-nverse"><span class="nav-number">2.3.</span> <span class="nav-text">I[nverse]</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#C-ross"><span class="nav-number">2.4.</span> <span class="nav-text">C[ross]</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#E-rror"><span class="nav-number">2.5.</span> <span class="nav-text">E[rror]</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#P-erformance"><span class="nav-number">2.6.</span> <span class="nav-text">P[erformance]</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BE%B9%E7%95%8C%E6%9D%A1%E4%BB%B6"><span class="nav-number">3.</span> <span class="nav-text">边界条件</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%B8%B8%E8%A7%81%E8%BE%B9%E7%95%8C"><span class="nav-number">3.1.</span> <span class="nav-text">常见边界</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%BC%95%E7%94%A8%E6%80%A7"><span class="nav-number">3.2.</span> <span class="nav-text">引用性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E6%95%B0%E6%80%A7"><span class="nav-number">3.3.</span> <span class="nav-text">基数性</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%97%B6%E9%97%B4%E6%80%A7"><span class="nav-number">3.4.</span> <span class="nav-text">时间性</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8Mock"><span class="nav-number">4.</span> <span class="nav-text">使用Mock</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BD%95%E4%B8%BA%E5%A5%BD%E7%9A%84%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95"><span class="nav-number">5.</span> <span class="nav-text">何为好的单元测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9D%A2%E5%90%91%E6%B5%8B%E8%AF%95%E7%9A%84%E8%AE%BE%E8%AE%A1"><span class="nav-number">6.</span> <span class="nav-text">面向测试的设计</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%BA%9B%E9%99%B7%E9%98%B1"><span class="nav-number">7.</span> <span class="nav-text">一些陷阱</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">8.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">97</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">30</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">65</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
