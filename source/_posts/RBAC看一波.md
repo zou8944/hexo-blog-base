@@ -1,9 +1,9 @@
 ---
 title: Kubernetes的鉴权
 categories:
-  - kubernetes
+  - 运维 
 tags:
-  - kubernetes
+  - Kubernetes
 ---
 
 前面介绍过Kubernetes的结构组成，其中API Server用于与外界的交互，我们常用的命令行工具kubectl、UI工具lens、云服务商提供的WebUI，最终都是通过Restfule API的形式，走HTTP协议，到达API Server。此时就带来权限控制问题。
