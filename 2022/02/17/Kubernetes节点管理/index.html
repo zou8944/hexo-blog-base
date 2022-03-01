@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Kubernetes集群运行一段时间后，通常会出现磁盘占用过高的问题。这里聊聊排查这类问题的方法和思路。">
+  <meta name="description" content="Kubernetes集群运行一段时间后，通常会出现磁盘占用过高、内存占用虚高等问题。这里聊聊排查这类问题的方法和思路。">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Kubernetes节点磁盘管理">
+<meta property="og:title" content="Kubernetes节点问题排查思路">
 <meta property="og:url" content="https://zou8944.com/2022/02/17/Kubernetes%E8%8A%82%E7%82%B9%E7%AE%A1%E7%90%86/index.html">
 <meta property="og:site_name" content="半中二青年">
-<meta property="og:description" content="Kubernetes集群运行一段时间后，通常会出现磁盘占用过高的问题。这里聊聊排查这类问题的方法和思路。">
+<meta property="og:description" content="Kubernetes集群运行一段时间后，通常会出现磁盘占用过高、内存占用虚高等问题。这里聊聊排查这类问题的方法和思路。">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-02-17T04:07:46.000Z">
-<meta property="article:modified_time" content="2022-02-17T07:12:44.284Z">
+<meta property="article:modified_time" content="2022-03-01T03:06:16.742Z">
 <meta property="article:author" content="果冻">
 <meta property="article:tag" content="Kubernetes">
 <meta name="twitter:card" content="summary">
@@ -46,7 +46,7 @@
   };
 </script>
 
-  <title>Kubernetes节点磁盘管理 | 半中二青年</title>
+  <title>Kubernetes节点问题排查思路 | 半中二青年</title>
   
 
 
@@ -217,7 +217,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          Kubernetes节点磁盘管理
+          Kubernetes节点问题排查思路
         </h1>
 
         <div class="post-meta">
@@ -226,10 +226,16 @@
                 <i class="far fa-calendar"></i>
               </span>
               <span class="post-meta-item-text">发表于</span>
-              
 
-              <time title="创建时间：2022-02-17 12:07:46 / 修改时间：15:12:44" itemprop="dateCreated datePublished" datetime="2022-02-17T12:07:46+08:00">2022-02-17</time>
+              <time title="创建时间：2022-02-17 12:07:46" itemprop="dateCreated datePublished" datetime="2022-02-17T12:07:46+08:00">2022-02-17</time>
             </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-01 11:06:16" itemprop="dateModified" datetime="2022-03-01T11:06:16+08:00">2022-03-01</time>
+              </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
                 <i class="far fa-folder"></i>
@@ -241,7 +247,7 @@
             </span>
 
           
-            <span id="/2022/02/17/Kubernetes%E8%8A%82%E7%82%B9%E7%AE%A1%E7%90%86/" class="post-meta-item leancloud_visitors" data-flag-title="Kubernetes节点磁盘管理" title="阅读次数">
+            <span id="/2022/02/17/Kubernetes%E8%8A%82%E7%82%B9%E7%AE%A1%E7%90%86/" class="post-meta-item leancloud_visitors" data-flag-title="Kubernetes节点问题排查思路" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -265,17 +271,17 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>Kubernetes集群运行一段时间后，通常会出现磁盘占用过高的问题。这里聊聊排查这类问题的方法和思路。</p>
+        <p>Kubernetes集群运行一段时间后，通常会出现磁盘占用过高、内存占用虚高等问题。这里聊聊排查这类问题的方法和思路。</p>
 <span id="more"></span>
 
 <h2 id="问题点"><a href="#问题点" class="headerlink" title="问题点"></a>问题点</h2><p>如果是正常的Linux服务器出现这种情况，解决方案无非是ssh到该主机查看大文件然后进行删除。Kubernetes上也是如此，但问题在于，其中的节点由Kubernetes自己管理，登录秘钥管理人员很可能不知道。</p>
-<p>所以通常的问题点是：无法进入Kubernetes节点。就磁盘问题来说，是无法进入节点的文件系统。</p>
+<p>所以问题点转化：无法进入Kubernetes节点进行管理</p>
 <h2 id="进入节点"><a href="#进入节点" class="headerlink" title="进入节点"></a>进入节点</h2><p>有两个进入节点的方式</p>
 <ul>
 <li>使用Lens管理软件，它是一个非常厉害的Kubernetes IDE，提供直接进入节点的能力。</li>
 <li>自建pod，将节点根目录挂载在该pod的子目录。即挂载整个文件系统</li>
 </ul>
-<p>本文专注第二种方式，这类deployment的Manifest如下，关键点：节点亲和性设置到想要管理的节点</p>
+<p>第二种方式比较通用，这类deployment的Manifest如下，关键点：节点亲和性设置到想要管理的节点</p>
 <figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">app:</span> <span class="string">admin-entry</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">admin-entry</span></span><br><span class="line">  <span class="attr">namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">replicas:</span> <span class="number">1</span></span><br><span class="line">  <span class="attr">selector:</span></span><br><span class="line">    <span class="attr">matchLabels:</span></span><br><span class="line">      <span class="attr">app:</span> <span class="string">admin-entry</span></span><br><span class="line">  <span class="attr">strategy:</span></span><br><span class="line">    <span class="attr">rollingUpdate:</span></span><br><span class="line">      <span class="attr">maxSurge:</span> <span class="number">25</span><span class="string">%</span></span><br><span class="line">      <span class="attr">maxUnavailable:</span> <span class="number">25</span><span class="string">%</span></span><br><span class="line">    <span class="attr">type:</span> <span class="string">RollingUpdate</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">metadata:</span></span><br><span class="line">      <span class="attr">labels:</span></span><br><span class="line">        <span class="attr">app:</span> <span class="string">admin-entry</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">affinity:</span></span><br><span class="line">        <span class="attr">nodeAffinity:</span></span><br><span class="line">          <span class="attr">requiredDuringSchedulingIgnoredDuringExecution:</span></span><br><span class="line">            <span class="attr">nodeSelectorTerms:</span></span><br><span class="line">              <span class="bullet">-</span> <span class="attr">matchExpressions:</span></span><br><span class="line">                  <span class="bullet">-</span> <span class="attr">key:</span> <span class="string">kubernetes.io/hostname</span></span><br><span class="line">                    <span class="attr">operator:</span> <span class="string">In</span></span><br><span class="line">                    <span class="attr">values:</span></span><br><span class="line">                      <span class="bullet">-</span> <span class="string">cn-shenzhen.172.18.18.192</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">image:</span> <span class="string">&#x27;busybox:latest&#x27;</span></span><br><span class="line">          <span class="attr">name:</span> <span class="string">admin-entry</span></span><br><span class="line">          <span class="attr">resources:</span></span><br><span class="line">            <span class="attr">requests:</span></span><br><span class="line">              <span class="attr">cpu:</span> <span class="string">10m</span></span><br><span class="line">              <span class="attr">memory:</span> <span class="string">512Mi</span></span><br><span class="line">          <span class="attr">stdin:</span> <span class="literal">true</span></span><br><span class="line">          <span class="attr">tty:</span> <span class="literal">true</span></span><br><span class="line">          <span class="attr">volumeMounts:</span></span><br><span class="line">            <span class="bullet">-</span> <span class="attr">mountPath:</span> <span class="string">/host-dir</span></span><br><span class="line">              <span class="attr">name:</span> <span class="string">volume-1611735574911</span></span><br><span class="line">      <span class="attr">dnsPolicy:</span> <span class="string">ClusterFirst</span></span><br><span class="line">      <span class="attr">restartPolicy:</span> <span class="string">Always</span></span><br><span class="line">      <span class="attr">volumes:</span></span><br><span class="line">        <span class="bullet">-</span> <span class="attr">hostPath:</span></span><br><span class="line">            <span class="attr">path:</span> <span class="string">/</span></span><br><span class="line">            <span class="attr">type:</span> <span class="string">&#x27;&#x27;</span></span><br><span class="line">          <span class="attr">name:</span> <span class="string">volume-1611735574911</span></span><br></pre></td></tr></table></figure>
 
 <p>然后创建</p>
@@ -298,9 +304,14 @@
 <p>可以看出主要占用在<code>/var</code>下。继续排查发现占用高主要问题有两个</p>
 <ul>
 <li><code>/var/lib/docker/overlay2</code>，docker创建的容器、镜像、其他资源占用，不能随便删除。<strong>使用<code>docker image prune -a -f</code>可以删除不用的镜像，以节省资源</strong>。对ECS，通常可以直接发送命令达成此目标。</li>
-<li><code>/var/log</code>，产生的日志，这里<strong>我们可以删除不用的，能节省较多空间</strong></li>
+<li><code>/var/log</code>，产生的日志，这里<strong>我们可以删除不用的，能节省较多空间</strong>。占用较多的是 <code>/var/log/messages</code>，来自<code>kubelet</code>和<code>systemd</code>。</li>
 </ul>
-<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>本文说的这种进入节点的方式，只能管理文件系统，但是无法管理pod之外的其它进程。使用lens则可以。</p>
+<h2 id="SSH访问节点"><a href="#SSH访问节点" class="headerlink" title="SSH访问节点"></a>SSH访问节点</h2><p>既然能够访问根文件系统，岂不是可以为所欲为：修改 <code>/root/.ssh/authorized_keys</code>，将本机ssh公钥写入，就能够远程访问了。此时，就取得了节点的完整控制权。</p>
+<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><ul>
+<li>遇到过进入节点打开过大的文件导致CPU占满，今儿导致节点不可用，大量应用挂掉的情况。所以如果要管理文件系统，还是新开一个节点，设好limit值，这样即时不小心占满pod的CPU、内存等资源，也不会导致节点出问题。比较保险。</li>
+<li>如果觉得线上不方便查看日志，可以使用<code>kubectl cp</code>命令将其复制到本地，以更为便捷地查看。</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>使用本文的方式可以管理文件系统，也可以在忘记密码的情况下进入节点管理，是一个通用的方案。</p>
 <p>对于Kubernetes的磁盘占用率过高，通过上述两种清理闲置镜像 + 多余log文件的形式，可以节省出较多空间。如果能加个定期任务做这两件事，基本可以直接解决该问题。</p>
 <figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">#</span><span class="bash">!/bin/sh</span></span><br><span class="line">docker image prune -a -f;</span><br><span class="line">rm /var/log/messages*</span><br></pre></td></tr></table></figure>
 
@@ -392,7 +403,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E7%82%B9"><span class="nav-number">1.</span> <span class="nav-text">问题点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9B%E5%85%A5%E8%8A%82%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">进入节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%A7%E6%96%87%E4%BB%B6%E5%8D%A0%E7%94%A8%E6%8E%92%E6%9F%A5"><span class="nav-number">3.</span> <span class="nav-text">大文件占用排查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">4.</span> <span class="nav-text">总结</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E7%82%B9"><span class="nav-number">1.</span> <span class="nav-text">问题点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%BF%9B%E5%85%A5%E8%8A%82%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">进入节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%A4%A7%E6%96%87%E4%BB%B6%E5%8D%A0%E7%94%A8%E6%8E%92%E6%9F%A5"><span class="nav-number">3.</span> <span class="nav-text">大文件占用排查</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SSH%E8%AE%BF%E9%97%AE%E8%8A%82%E7%82%B9"><span class="nav-number">4.</span> <span class="nav-text">SSH访问节点</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">5.</span> <span class="nav-text">注意事项</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
