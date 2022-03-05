@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="是不是最佳不知道，反正它是个实践！">
+<meta property="og:type" content="article">
+<meta property="og:title" content="单元测试 - 最佳实践">
+<meta property="og:url" content="https://zou8944.com/2022/03/06/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="是不是最佳不知道，反正它是个实践！">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220305174323051.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220305174813410.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220305185526827.png">
+<meta property="article:published_time" content="2022-03-06T05:13:35.000Z">
+<meta property="article:modified_time" content="2022-03-05T14:05:54.336Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="测试">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220305174323051.png">
+
+<link rel="canonical" href="https://zou8944.com/2022/03/06/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>单元测试 - 最佳实践 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">100</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">29</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">70</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2022/03/06/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          单元测试 - 最佳实践
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-03-06 13:13:35" itemprop="dateCreated datePublished" datetime="2022-03-06T13:13:35+08:00">2022-03-06</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-05 22:05:54" itemprop="dateModified" datetime="2022-03-05T22:05:54+08:00">2022-03-05</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B5%8B%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">测试</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2022/03/06/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95-%E6%9C%80%E4%BD%B3%E5%AE%9E%E8%B7%B5/" class="post-meta-item leancloud_visitors" data-flag-title="单元测试 - 最佳实践" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>是不是最佳不知道，反正它是个实践！</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="预备"><a href="#预备" class="headerlink" title="预备"></a>预备</h1><h2 id="测试目标"><a href="#测试目标" class="headerlink" title="测试目标"></a>测试目标</h2><p>每记后端是没有单元测试的，此次对其进行添加单元测试的重构。</p>
+<h2 id="技术选型及项目配置"><a href="#技术选型及项目配置" class="headerlink" title="技术选型及项目配置"></a>技术选型及项目配置</h2><p>主要技术如下</p>
+<ul>
+<li>测试平台：JUnit5</li>
+<li>mock库：MockK</li>
+<li>断言库：AssertK</li>
+<li>测试覆盖率：Jacoco</li>
+<li>数据层测试：embedded-database-spring-test、flyway-spring-test、mybatis-plus-spring-boot-test</li>
+</ul>
+<p>gradle配置如下</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br></pre></td><td class="code"><pre><span class="line">plugins &#123;</span><br><span class="line">  id <span class="string">&#x27;jacoco&#x27;</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">dependencies &#123;</span><br><span class="line">  <span class="comment">// 测试：mockk替代mockito,assertk替代assertj;embedded-database</span></span><br><span class="line">  testImplementation(<span class="string">&#x27;org.springframework.boot:spring-boot-starter-test&#x27;</span>) &#123;</span><br><span class="line">    exclude <span class="attr">module:</span> <span class="string">&#x27;mockito-core&#x27;</span></span><br><span class="line">    exclude <span class="attr">module:</span> <span class="string">&#x27;assertj-core&#x27;</span></span><br><span class="line">  &#125;</span><br><span class="line">  testImplementation(<span class="string">&quot;com.ninja-squad:springmockk:3.1.0&quot;</span>)</span><br><span class="line">  testImplementation(<span class="string">&#x27;com.willowtreeapps.assertk:assertk-jvm:0.25&#x27;</span>)</span><br><span class="line">  testImplementation(<span class="string">&#x27;io.zonky.test:embedded-database-spring-test:2.1.1&#x27;</span>)</span><br><span class="line">  testImplementation(<span class="string">&#x27;com.baomidou:mybatis-plus-boot-starter-test:3.5.1&#x27;</span>)</span><br><span class="line">  testImplementation(<span class="string">&#x27;org.flywaydb.flyway-test-extensions:flyway-spring-test:7.0.0&#x27;</span>)</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// https://docs.gradle.org/current/dsl/org.gradle.api.tasks.testing.Test.html</span></span><br><span class="line"><span class="comment">// 测试报告位置: build/reports/test</span></span><br><span class="line">test &#123;</span><br><span class="line">  <span class="comment">// 使用JUnit5进行测试</span></span><br><span class="line">  useJUnitPlatform()</span><br><span class="line">  <span class="comment">// 测试线程数：2</span></span><br><span class="line">  maxParallelForks(<span class="number">2</span>)</span><br><span class="line">  <span class="comment">// 日志配置</span></span><br><span class="line">  testLogging &#123;</span><br><span class="line">    <span class="comment">// level=LIFECYCLE的配置项</span></span><br><span class="line">    events <span class="string">&quot;passed&quot;</span>, <span class="string">&quot;skipped&quot;</span>, <span class="string">&quot;failed&quot;</span></span><br><span class="line">    exceptionFormat <span class="string">&quot;full&quot;</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="comment">// 生成覆盖率测试报告: ./gradlew test jacocoTestReport</span></span><br><span class="line"><span class="comment">// 测试报告位置: build/jacocoReport</span></span><br><span class="line">jacocoTestReport &#123;</span><br><span class="line">  reports &#123;</span><br><span class="line">    xml.enabled = <span class="literal">false</span></span><br><span class="line">    csv.enabled = <span class="literal">false</span></span><br><span class="line">    html.enabled = <span class="literal">true</span></span><br><span class="line">    html.destination = file(<span class="string">&quot;$&#123;buildDir&#125;/jacocoReport&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>日志：src/test/resources下添加logback-test.xml文件，这里我们仅在控制台打印WARN级别的应用日志</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">&lt;?xml version=&quot;1.0&quot; encoding=&quot;UTF-8&quot;?&gt;</span></span><br><span class="line"></span><br><span class="line"><span class="tag">&lt;<span class="name">configuration</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;<span class="name">appender</span> <span class="attr">name</span>=<span class="string">&quot;CONSOLE&quot;</span> <span class="attr">class</span>=<span class="string">&quot;ch.qos.logback.core.ConsoleAppender&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">encoder</span>&gt;</span></span><br><span class="line">            <span class="tag">&lt;<span class="name">pattern</span>&gt;</span>%d&#123;HH:mm:ss.SSS&#125; [%thread] %-5level %logger - %msg %X&#123;THREAD_ID&#125; %n<span class="tag">&lt;/<span class="name">pattern</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;/<span class="name">encoder</span>&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">appender</span>&gt;</span></span><br><span class="line"></span><br><span class="line">    <span class="tag">&lt;<span class="name">root</span> <span class="attr">level</span>=<span class="string">&quot;WARN&quot;</span>&gt;</span></span><br><span class="line">        <span class="tag">&lt;<span class="name">appender-ref</span> <span class="attr">ref</span>=<span class="string">&quot;CONSOLE&quot;</span>/&gt;</span></span><br><span class="line">    <span class="tag">&lt;/<span class="name">root</span>&gt;</span></span><br><span class="line"><span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>IDEA：安装JUnit插件（如果是IDEA专业版，默认已安装）。</p>
+<h2 id="测试思路-MVC如何测试"><a href="#测试思路-MVC如何测试" class="headerlink" title="测试思路 - MVC如何测试"></a>测试思路 - MVC如何测试</h2><p>被测项目是采用Spring Web MVC构建的Restful服务，那么MVC应该如何测试呢？</p>
+<p>如果我们将每一层的职责区分得比较好，则每层负责的内容和测试思路如下</p>
+<ul>
+<li>Controller：路由转发、参数验证<ul>
+<li>重点在参数验证的测试，对Service的调用应该被Mock掉</li>
+<li>使用MockMvc</li>
+<li>使用@WebMvcTest加载单个Controller类，提升启动速度</li>
+</ul>
+</li>
+<li>Service：业务逻辑的处理<ul>
+<li>常规测试，单元测试的主要工作集中在这里</li>
+<li>不使用Spring Test的任何注解，可以提升启动速度</li>
+</ul>
+</li>
+<li>Repository：数据库访问<ul>
+<li>使用嵌入式数据库提供真实等价的数据库环境</li>
+<li>使用@MybatisPlusTest只加载数据库相关的Bean，提升启动速度</li>
+</ul>
+</li>
+</ul>
+<blockquote>
+<p>你写的是单元测试还是集成测试？</p>
+<p>使用Spring Boot Test，我们写出来的往往是集成测试。即一个测试中其实包含了Controller、Service、Repository。但真的单元测试，一个测试应该只包含一个方法的一种case。</p>
+<p>集成测试的好处是写起来方便快捷，缺点是覆盖不全面，且一旦一个调用链路的任何环节修改，相关的case都必须修改。</p>
+</blockquote>
+<p>接下来看具体的实施情况。</p>
+<h1 id="Controller测试"><a href="#Controller测试" class="headerlink" title="Controller测试"></a>Controller测试</h1><h2 id="测什么"><a href="#测什么" class="headerlink" title="测什么"></a>测什么</h2><ul>
+<li>测试接口路由是否正确</li>
+<li>测试参数验证是否符合预期</li>
+</ul>
+<h2 id="一个需求"><a href="#一个需求" class="headerlink" title="一个需求"></a>一个需求</h2><p>一个典型待测试的接口如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RestController</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UserController</span></span>(</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> userService: UserService,</span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">val</span> subscriptionService: SubscriptionService</span><br><span class="line">) &#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Authenticate</span></span><br><span class="line">  <span class="meta">@PatchMapping(<span class="meta-string">&quot;/users/&#123;id&#125;&quot;</span>)</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">updateUserInfo</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="meta">@PathVariable</span> id: <span class="type">Int</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">    <span class="meta">@RequestBody</span> request: <span class="type">UserUpdateReq</span>,</span></span></span><br><span class="line"><span class="params"><span class="function">  )</span></span>: R&lt;User&gt; &#123;</span><br><span class="line">    <span class="keyword">val</span> initiator = RequestContext.getUserId()!!</span><br><span class="line">    <span class="keyword">return</span> R.succeed(userService.updateUserInfo(id, initiator, request))</span><br><span class="line">  &#125;</span><br><span class="line">  </span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li><p>@Authenticate表示该接口需要鉴权，具体鉴权逻辑如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Component</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AuthInterceptor</span></span>(</span><br><span class="line">  <span class="meta">@Autowired</span> <span class="keyword">val</span> objectMapper: ObjectMapper</span><br><span class="line">) : HandlerInterceptor &#123;</span><br><span class="line"></span><br><span class="line">  <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">preHandle</span><span class="params">(request: <span class="type">HttpServletRequest</span>, response: <span class="type">HttpServletResponse</span>, handler: <span class="type">Any</span>)</span></span>: <span class="built_in">Boolean</span> &#123;</span><br><span class="line">    <span class="comment">// 从头部取X-5E-USER字段值，解析成User对象</span></span><br><span class="line">    <span class="keyword">val</span> user = request.getHeader(<span class="string">&quot;X-5E-USER&quot;</span>)?.let &#123; objectMapper.readValue(it, User::<span class="keyword">class</span>.java) &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 判断方法是否被@Authenticate注解，如果被注解了且user为空，则报401错误</span></span><br><span class="line">    <span class="keyword">val</span> authorize = (handler <span class="keyword">as</span> HandlerMethod).beanType.getDeclaredAnnotation(Authenticate::<span class="keyword">class</span>.java)</span><br><span class="line">    ?: handler.getMethodAnnotation(Authenticate::<span class="keyword">class</span>.java)</span><br><span class="line">    <span class="keyword">if</span> (authorize != <span class="literal">null</span> &amp;&amp; user == <span class="literal">null</span>) &#123;</span><br><span class="line">      <span class="keyword">throw</span> ResponseException(ResErrCode.NEED_AUTHORIZE)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">true</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>UserUpdateReq需要被验证</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ApiModel(<span class="meta-string">&quot;更新用户信息&quot;</span>)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UserUpdateReq</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@ApiModelProperty(<span class="meta-string">&quot;用户名&quot;</span>)</span></span><br><span class="line">  <span class="meta">@NotBlank</span></span><br><span class="line">  <span class="keyword">var</span> name: String? = <span class="literal">null</span></span><br><span class="line"></span><br><span class="line">  <span class="meta">@ApiModelProperty(<span class="meta-string">&quot;头像&quot;</span>)</span></span><br><span class="line">  <span class="meta">@NotBlank</span></span><br><span class="line">  <span class="keyword">var</span> avatar: String? = <span class="literal">null</span></span><br><span class="line"></span><br><span class="line">  <span class="meta">@ApiModelProperty(<span class="meta-string">&quot;用户描述&quot;</span>)</span></span><br><span class="line">  <span class="meta">@NotBlank</span></span><br><span class="line">  <span class="keyword">var</span> description: String? = <span class="literal">null</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="测试类的构建"><a href="#测试类的构建" class="headerlink" title="测试类的构建"></a>测试类的构建</h2><p>测试类的构建，主要考虑以下几个因素</p>
+<ul>
+<li><p>只加载Web配置和待测Controller，其它Bean都不要，我们基于@WebMvcTest构建自己的注解</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Inherited</span></span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="meta">@Target(ElementType.TYPE)</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br><span class="line"><span class="meta">@WebMvcTest</span></span><br><span class="line"><span class="comment">// WebMvcConfig是本业务中自定义的Web配置</span></span><br><span class="line"><span class="meta">@Import(WebMvcConfig.class)</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> ControllerTest &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@AliasFor(annotation = WebMvcTest.class)</span></span><br><span class="line">    String[] properties() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@AliasFor(annotation = WebMvcTest.class)</span></span><br><span class="line">    Class&lt;?&gt;[] value() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@AliasFor(annotation = WebMvcTest.class)</span></span><br><span class="line">    Class&lt;?&gt;[] controllers() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@AliasFor(annotation = WebMvcTest.class)</span></span><br><span class="line">    <span class="function"><span class="keyword">boolean</span> <span class="title">useDefaultFilters</span><span class="params">()</span> <span class="keyword">default</span> <span class="keyword">true</span></span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@AliasFor(annotation = WebMvcTest.class)</span></span><br><span class="line">    Filter[] includeFilters() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@AliasFor(annotation = WebMvcTest.class)</span></span><br><span class="line">    Filter[] excludeFilters() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@AliasFor(annotation = WebMvcTest.class)</span></span><br><span class="line">    Class&lt;?&gt;[] excludeAutoConfiguration() <span class="keyword">default</span> &#123;&#125;;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>一个Controller一个测试类，但每个接口都有好几个case，因此需要分组。用内部类+@Nested实现，不过这样的话，一个内部类对应一个接口，可以定义一个接口，管理公共属性</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">IRequestMapping</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 指定本次测试的路径</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="keyword">val</span> path: String</span><br><span class="line"></span><br><span class="line">  <span class="comment">/**</span></span><br><span class="line"><span class="comment">   * 针对该路径的mock。这样，子类只需要调用mockRequest即可请求，而不需要每个case重新构建填写path、method等重复参数</span></span><br><span class="line"><span class="comment">   */</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">mockRequest</span><span class="params">(block: <span class="type">MockHttpServletRequestDsl</span>.() -&gt; <span class="type">Unit</span> = &#123;&#125;)</span></span>: ResultActionsDsl</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">mockRequestWithToken</span><span class="params">(block: <span class="type">MockHttpServletRequestDsl</span>.() -&gt; <span class="type">Unit</span> = &#123;&#125;)</span></span>: ResultActionsDsl &#123;</span><br><span class="line">    <span class="keyword">return</span> mockRequest &#123;</span><br><span class="line">      header(mockAuthHeader.first, mockAuthHeader.second)</span><br><span class="line">      block(<span class="keyword">this</span>)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">mockRequestWithEmptyContent</span><span class="params">(block: <span class="type">MockHttpServletRequestDsl</span>.() -&gt; <span class="type">Unit</span> = &#123;&#125;)</span></span>: ResultActionsDsl &#123;</span><br><span class="line">    <span class="keyword">return</span> mockRequest &#123;</span><br><span class="line">      content = <span class="string">&quot;&#123;&#125;&quot;</span></span><br><span class="line">      block(<span class="keyword">this</span>)</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>实际上，所有的接口都有两个共同的需求，我们将其写成父类</p>
+<ul>
+<li><p>都需要测试鉴权</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">AuthenticateTest</span> : <span class="type">IRequestMapping &#123;</span></span></span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> `401 <span class="keyword">when</span> missing token`<span class="params">()</span></span> &#123;</span><br><span class="line">    mockRequestWithEmptyContent().andExpect &#123;</span><br><span class="line">      status &#123;</span><br><span class="line">        isUnauthorized()</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+<li><p>都需要验证响应结构</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">interface</span> <span class="title">ResponseFormatTest</span> : <span class="type">IRequestMapping &#123;</span></span></span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> `response format validate`<span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> mockResult = mockRequestWithEmptyContent().andReturn()</span><br><span class="line">    assertThat(mockResult.response.contentType).isEqualTo(MediaType.APPLICATION_JSON.toString())</span><br><span class="line">    <span class="keyword">val</span> resNode = publicObjectMapper.readTree(mockResult.response.contentAsString)</span><br><span class="line">    assertThat(publicObjectMapper.convertValue(resNode, R::<span class="keyword">class</span>.java)).isInstanceOf(R::<span class="class"><span class="keyword">class</span>)</span></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<p>这样，就构建得到如下测试类</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br></pre></td><td class="code"><pre><span class="line"></span><br><span class="line"><span class="meta">@DisplayName(<span class="meta-string">&quot;用户参数验证&quot;</span>)</span></span><br><span class="line"><span class="meta">@ControllerTest(UserController::class)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UserControllerTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> mockMvc: MockMvc</span><br><span class="line"></span><br><span class="line">  <span class="meta">@MockkBean</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> subscriptionService: SubscriptionService</span><br><span class="line"></span><br><span class="line">  <span class="meta">@MockkBean(relaxed = true)</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> userService: UserService</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 同时需要验证鉴权和响应格式</span></span><br><span class="line">  <span class="meta">@Nested</span></span><br><span class="line">  <span class="meta">@DisplayName(<span class="meta-string">&quot;更新用户信息&quot;</span>)</span></span><br><span class="line">  <span class="keyword">inner</span> <span class="class"><span class="keyword">class</span> <span class="title">UpdateUserInfo</span> : <span class="type">AuthenticateTest</span>, <span class="type">ResponseFormatTest &#123;</span></span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指定接口路径</span></span><br><span class="line">    <span class="keyword">override</span> <span class="keyword">val</span> path: String = <span class="string">&quot;/users/1&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// 指定接口的method和contentType等公共属性</span></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">mockRequest</span><span class="params">(block: <span class="type">MockHttpServletRequestDsl</span>.() -&gt; <span class="type">Unit</span>)</span></span>: ResultActionsDsl &#123;</span><br><span class="line">      <span class="keyword">return</span> mockMvc.patch(path) &#123;</span><br><span class="line">        contentType = MediaType.APPLICATION_JSON</span><br><span class="line">        block(<span class="keyword">this</span>)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 异常case的测试</span></span><br><span class="line">    <span class="meta">@ParameterizedTest(name = <span class="meta-string">&quot;&#123;displayName&#125; &#123;argumentsWithNames&#125;&quot;</span>)</span></span><br><span class="line">    <span class="meta">@CsvSource(</span></span><br><span class="line"><span class="meta">      value = [</span></span><br><span class="line"><span class="meta">        <span class="meta-string">&quot;&#x27;&#x27;, &#x27;&#x27;, null&quot;</span>,</span></span><br><span class="line"><span class="meta">        <span class="meta-string">&quot;&#x27; &#x27;, null, 非空&quot;</span></span></span><br><span class="line"><span class="meta">      ],</span></span><br><span class="line"><span class="meta">      nullValues = [<span class="meta-string">&quot;null&quot;</span>]</span></span><br><span class="line"><span class="meta">    )</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> `400 <span class="keyword">when</span> illegal input`<span class="params">(name: <span class="type">String</span>?, avatar: <span class="type">String</span>?, description: <span class="type">String</span>?)</span></span> &#123;</span><br><span class="line">      mockRequestWithToken &#123;</span><br><span class="line">        <span class="keyword">val</span> mockBody = UserUpdateReq().apply &#123;</span><br><span class="line">          <span class="keyword">this</span>.name = name</span><br><span class="line">          <span class="keyword">this</span>.avatar = avatar</span><br><span class="line">          <span class="keyword">this</span>.description = description</span><br><span class="line">        &#125;</span><br><span class="line">        content = mockBody.toJsonString()</span><br><span class="line">      &#125;.andExpect &#123;</span><br><span class="line">        status &#123; isBadRequest() &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// 正常case的测试</span></span><br><span class="line">    <span class="meta">@ParameterizedTest(name = <span class="meta-string">&quot;&#123;displayName&#125; &#123;argumentsWithNames&#125;&quot;</span>)</span></span><br><span class="line">    <span class="meta">@CsvSource(</span></span><br><span class="line"><span class="meta">      value = [</span></span><br><span class="line"><span class="meta">        <span class="meta-string">&quot;null, null, null&quot;</span>,</span></span><br><span class="line"><span class="meta">        <span class="meta-string">&quot;null, null, 非空&quot;</span></span></span><br><span class="line"><span class="meta">      ],</span></span><br><span class="line"><span class="meta">      nullValues = [<span class="meta-string">&quot;null&quot;</span>]</span></span><br><span class="line"><span class="meta">    )</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> `200 <span class="keyword">when</span> legal input`<span class="params">(name: <span class="type">String</span>?, avatar: <span class="type">String</span>?, description: <span class="type">String</span>?)</span></span> &#123;</span><br><span class="line">      mockRequestWithToken &#123;</span><br><span class="line">        <span class="keyword">val</span> mockBody = UserUpdateReq().apply &#123;</span><br><span class="line">          <span class="keyword">this</span>.name = name</span><br><span class="line">          <span class="keyword">this</span>.avatar = avatar</span><br><span class="line">          <span class="keyword">this</span>.description = description</span><br><span class="line">        &#125;</span><br><span class="line">        content = mockBody.toJsonString()</span><br><span class="line">      &#125;.andExpect &#123;</span><br><span class="line">        status &#123; isOk() &#125;</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="关于Json格式的测试"><a href="#关于Json格式的测试" class="headerlink" title="关于Json格式的测试"></a>关于Json格式的测试</h2><p>当前项目一个比较特殊的需求：资源保存接口，资源的结构如下，每次保存时需要验证资源的结构是否符合预期。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;resourceId&quot;</span>: <span class="string">&quot;1233&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;resourceType&quot;</span>: <span class="string">&quot;record&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;data&quot;</span>: &#123;</span><br><span class="line">    <span class="attr">&quot;...&quot;</span>: <span class="string">&quot;...&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;...&quot;</span>: <span class="string">&quot;...&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;...&quot;</span>: <span class="string">&quot;...&quot;</span>,</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>其中的data结构不固定，多达五六种。服务端将data的验证逻辑写成了json schema，以自定义validator的形式加入Spring中。现在要对这些验证逻辑进行单元测试。</p>
+<p>这其中的测试难点及解决方法如下</p>
+<ul>
+<li><p>测试数据量大</p>
+<p>将测试数据写在文件中，通过文件读取各条测试数据，再以参数化形式传入测试case。需要用到JUnit的@ParameterizedTest + @MethodSource达成</p>
+</li>
+<li><p>测试case多</p>
+<p>我们提取了最常见的case，对它们进行数据构建</p>
+<ul>
+<li><p>预期成功的case</p>
+<ul>
+<li>拥有最少合法元素</li>
+<li>拥有最多合法元素</li>
+<li>可空元素都为null</li>
+</ul>
+<p>以tag为例，可以看到除了数据之外我们还添加了针对该数据的说明：_comment_字段，这在测试结果中会打印出来</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line">[</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;_comment_&quot;</span>: <span class="string">&quot;拥有最少合法元素&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceId&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceType&quot;</span>: <span class="string">&quot;tag&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;data&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;id&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;5qCH562+5qCH6aKY&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;created_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;updated_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;version&quot;</span>: <span class="number">3</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;_comment_&quot;</span>: <span class="string">&quot;拥有最多合法元素&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceId&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceType&quot;</span>: <span class="string">&quot;tag&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;data&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;id&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;5qCH562+5qCH6aKY&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="string">&quot;5o+P6L+w&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;created_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;updated_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;deleted_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;version&quot;</span>: <span class="number">3</span>,</span><br><span class="line">      <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;_comment_&quot;</span>: <span class="string">&quot;可空元素都为null&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceId&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceType&quot;</span>: <span class="string">&quot;tag&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;usn&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">    <span class="attr">&quot;data&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;id&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;5qCH562+5qCH6aKY&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">      <span class="attr">&quot;created_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;updated_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;deleted_time&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">      <span class="attr">&quot;version&quot;</span>: <span class="number">3</span>,</span><br><span class="line">      <span class="attr">&quot;usn&quot;</span>: <span class="literal">null</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure></li>
+<li><p>预期失败的case</p>
+<ul>
+<li>必须字段未出现</li>
+<li>不可空元素设置为null</li>
+<li>数据类型问题：故意将每个元素的数据类型写错</li>
+<li>数据格式问题：故意将每个元素的数据格式写错</li>
+<li>出现未定义的字段</li>
+</ul>
+<p>同样以tag为例，不同的是这次还多了_errorKeywords_字段，指出了该case的错误信息必须包含的关键字</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br><span class="line">101</span><br><span class="line">102</span><br><span class="line">103</span><br><span class="line">104</span><br><span class="line">105</span><br><span class="line">106</span><br><span class="line">107</span><br></pre></td><td class="code"><pre><span class="line">[</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;_comment_&quot;</span>: <span class="string">&quot;必须字段未出现&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;_errorKeywords_&quot;</span>: [</span><br><span class="line">      <span class="string">&quot;id&quot;</span>,</span><br><span class="line">      <span class="string">&quot;title&quot;</span>,</span><br><span class="line">      <span class="string">&quot;created_time&quot;</span>,</span><br><span class="line">      <span class="string">&quot;updated_time&quot;</span>,</span><br><span class="line">      <span class="string">&quot;version&quot;</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;resourceId&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceType&quot;</span>: <span class="string">&quot;tag&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;data&quot;</span>: &#123;&#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;_comment_&quot;</span>: <span class="string">&quot;字段可空问题: id, title, created_time, updated_time, version&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;_errorKeywords_&quot;</span>: [</span><br><span class="line">      <span class="string">&quot;id&quot;</span>,</span><br><span class="line">      <span class="string">&quot;title&quot;</span>,</span><br><span class="line">      <span class="string">&quot;created_time&quot;</span>,</span><br><span class="line">      <span class="string">&quot;updated_time&quot;</span>,</span><br><span class="line">      <span class="string">&quot;version&quot;</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;resourceId&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceType&quot;</span>: <span class="string">&quot;tag&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;data&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;id&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">      <span class="attr">&quot;title&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="string">&quot;5o+P6L+w&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;created_time&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">      <span class="attr">&quot;updated_time&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">      <span class="attr">&quot;deleted_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;version&quot;</span>: <span class="literal">null</span>,</span><br><span class="line">      <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;_comment_&quot;</span>: <span class="string">&quot;数据类型问题: id、title、description为string;其它为数字&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;_errorKeywords_&quot;</span>: [</span><br><span class="line">      <span class="string">&quot;id&quot;</span>,</span><br><span class="line">      <span class="string">&quot;title&quot;</span>,</span><br><span class="line">      <span class="string">&quot;description&quot;</span>,</span><br><span class="line">      <span class="string">&quot;created_time&quot;</span>,</span><br><span class="line">      <span class="string">&quot;updated_time&quot;</span>,</span><br><span class="line">      <span class="string">&quot;deleted_time&quot;</span>,</span><br><span class="line">      <span class="string">&quot;version&quot;</span>,</span><br><span class="line">      <span class="string">&quot;usn&quot;</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;resourceId&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceType&quot;</span>: <span class="string">&quot;tag&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;data&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;id&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;title&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;created_time&quot;</span>: <span class="string">&quot;1&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;updated_time&quot;</span>: <span class="string">&quot;1&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;deleted_time&quot;</span>: <span class="string">&quot;1&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;version&quot;</span>: <span class="string">&quot;3&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;usn&quot;</span>: <span class="string">&quot;1&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;_comment_&quot;</span>: <span class="string">&quot;数据格式问题: id为32位;title、description为base64;version固定为3&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;_errorKeywords_&quot;</span>: [</span><br><span class="line">      <span class="string">&quot;id&quot;</span>,</span><br><span class="line">      <span class="string">&quot;title&quot;</span>,</span><br><span class="line">      <span class="string">&quot;description&quot;</span>,</span><br><span class="line">      <span class="string">&quot;version&quot;</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;resourceId&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceType&quot;</span>: <span class="string">&quot;tag&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;data&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;id&quot;</span>: <span class="string">&quot;123456789012345678901234567890&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;明文标题&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="string">&quot;明文描述&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;created_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;updated_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;deleted_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;version&quot;</span>: <span class="number">2</span>,</span><br><span class="line">      <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;,</span><br><span class="line">  &#123;</span><br><span class="line">    <span class="attr">&quot;_comment_&quot;</span>: <span class="string">&quot;出现未定义字段: undefinedField&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;_errorKeywords_&quot;</span>: [</span><br><span class="line">      <span class="string">&quot;undefinedField&quot;</span></span><br><span class="line">    ],</span><br><span class="line">    <span class="attr">&quot;resourceId&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;resourceType&quot;</span>: <span class="string">&quot;tag&quot;</span>,</span><br><span class="line">    <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span>,</span><br><span class="line">    <span class="attr">&quot;data&quot;</span>: &#123;</span><br><span class="line">      <span class="attr">&quot;id&quot;</span>: <span class="string">&quot;12345678901234567890123456789012&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;title&quot;</span>: <span class="string">&quot;5qCH562+5qCH6aKY&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;description&quot;</span>: <span class="string">&quot;5o+P6L+w&quot;</span>,</span><br><span class="line">      <span class="attr">&quot;created_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;updated_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;deleted_time&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;version&quot;</span>: <span class="number">3</span>,</span><br><span class="line">      <span class="attr">&quot;usn&quot;</span>: <span class="number">1</span>,</span><br><span class="line">      <span class="attr">&quot;undefinedField&quot;</span>: <span class="string">&quot;&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">]</span><br></pre></td></tr></table></figure></li>
+</ul>
+<p>目前为止所有数据有这么多：</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220305174323051.png" alt="image-20220305174323051"></p>
+</li>
+</ul>
+<p>至于测试方法，我们这样写</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ParameterizedTest(name = <span class="meta-string">&quot;&#123;displayName&#125; &#123;argumentsWithNames&#125;&quot;</span>)</span></span><br><span class="line"><span class="meta">@MethodSource(<span class="meta-string">&quot;com.project5e.app.mylog.controller.mock.ResourceProvider#provideLegalResource&quot;</span>)</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> `200 <span class="keyword">when</span> legal resource`<span class="params">(type: <span class="type">String</span>, comment: <span class="type">String</span>, content: <span class="type">String</span>)</span></span> &#123;</span><br><span class="line">  every &#123; resourceService.saveV2(any()) &#125; returns listOf()</span><br><span class="line">  mockRequestWithToken &#123;</span><br><span class="line">    <span class="keyword">this</span>.content = content</span><br><span class="line">  &#125;.andExpect &#123;</span><br><span class="line">    status &#123; isOk() &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@ParameterizedTest(name = <span class="meta-string">&quot;&#123;displayName&#125; &#123;argumentsWithNames&#125;&quot;</span>)</span></span><br><span class="line"><span class="meta">@MethodSource(<span class="meta-string">&quot;com.project5e.app.mylog.controller.mock.ResourceProvider#provideIllegalResource&quot;</span>)</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> `400 <span class="keyword">when</span> illegal resource`<span class="params">(type: <span class="type">String</span>, comment: <span class="type">String</span>, errorKeyWords: <span class="type">List</span>&lt;<span class="type">String</span>&gt;, content: <span class="type">String</span>)</span></span> &#123;</span><br><span class="line">  <span class="keyword">val</span> mvcResult = mockRequestWithToken &#123;</span><br><span class="line">    <span class="keyword">this</span>.content = content</span><br><span class="line">  &#125;.andExpect &#123;</span><br><span class="line">    status &#123; isBadRequest() &#125;</span><br><span class="line">  &#125;.andReturn()</span><br><span class="line"></span><br><span class="line">  errorKeyWords.forEach &#123; errorKeyWord -&gt;</span><br><span class="line">                         assertThat(mvcResult.response.contentAsString).contains(errorKeyWord)</span><br><span class="line">                        &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>测试数据读取方法如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">object</span> ResourceProvider &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> RESOURCE_FILE_SUFFIX = <span class="string">&quot;json&quot;</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> LEGAL_RESOURCE_PATTERN = <span class="string">&quot;classpath:mock-resource/legal/*.<span class="variable">$RESOURCE_FILE_SUFFIX</span>&quot;</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> ILLEGAL_RESOURCE_PATTERN = <span class="string">&quot;classpath:mock-resource/illegal/*.<span class="variable">$RESOURCE_FILE_SUFFIX</span>&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> COMMENT_KEY = <span class="string">&quot;_comment_&quot;</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">const</span> <span class="keyword">val</span> ERROR_KEYWORDS_KEY = <span class="string">&quot;_errorKeywords_&quot;</span></span><br><span class="line"></span><br><span class="line">    <span class="meta">@JvmStatic</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">provideLegalResource</span><span class="params">()</span></span>: List&lt;Arguments&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> PathMatchingResourcePatternResolver().getResources(LEGAL_RESOURCE_PATTERN).map &#123; resource -&gt;</span><br><span class="line">            resource.file.name to publicObjectMapper.readTree(resource.file)</span><br><span class="line">        &#125;.map &#123; (fileName, mockResources) -&gt;</span><br><span class="line">            mockResources.map &#123; mockResource -&gt;</span><br><span class="line">                <span class="keyword">val</span> resourceType = fileName.removeSuffix(RESOURCE_FILE_SUFFIX)</span><br><span class="line">                <span class="keyword">val</span> comment = (mockResource <span class="keyword">as</span> ObjectNode).remove(COMMENT_KEY).asText()</span><br><span class="line">                <span class="keyword">val</span> content = <span class="string">&quot;&quot;&quot;&#123;&quot;resources&quot;: [<span class="subst">$&#123;mockResource.toJsonString()&#125;</span>]&#125;&quot;&quot;&quot;</span></span><br><span class="line">                Arguments.of(resourceType, comment, content)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;.flatten()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@JvmStatic</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">provideIllegalResource</span><span class="params">()</span></span>: List&lt;Arguments&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> PathMatchingResourcePatternResolver().getResources(ILLEGAL_RESOURCE_PATTERN).map &#123; resource -&gt;</span><br><span class="line">            resource.file.name to publicObjectMapper.readTree(resource.file)</span><br><span class="line">        &#125;.map &#123; (fileName, mockResources) -&gt;</span><br><span class="line">            mockResources.map &#123; it <span class="keyword">as</span> ObjectNode &#125;.map &#123; mockResource -&gt;</span><br><span class="line">                <span class="keyword">val</span> resourceType = fileName.removeSuffix(RESOURCE_FILE_SUFFIX)</span><br><span class="line">                <span class="keyword">val</span> comment = mockResource.remove(COMMENT_KEY).asText()</span><br><span class="line">                <span class="keyword">val</span> errorKeywords = mockResource.remove(ERROR_KEYWORDS_KEY).map &#123; it.asText() &#125;</span><br><span class="line">                <span class="keyword">val</span> content = <span class="string">&quot;&quot;&quot;&#123;&quot;resources&quot;: [<span class="subst">$&#123;mockResource.toJsonString()&#125;</span>]&#125;&quot;&quot;&quot;</span></span><br><span class="line">                Arguments.of(resourceType, comment, errorKeywords, content)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;.flatten()</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>如果运行测试，能够得到如下输出</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220305174813410.png" alt="image-20220305174813410"></p>
+<h2 id="可以改进的地方"><a href="#可以改进的地方" class="headerlink" title="可以改进的地方"></a>可以改进的地方</h2><ul>
+<li>controller层测试还可以再抽象：不需要写代码，通过excel或db录入访问路径、预期输入、预期输出，直接生成测试代码生成，更为方便</li>
+<li>controller层测试或许可以和集成测试合并。但也不尽然，集成测试不一定要在controller这一次层做，以service为入口或许更加方便</li>
+</ul>
+<h1 id="Service测试"><a href="#Service测试" class="headerlink" title="Service测试"></a>Service测试</h1><h2 id="测什么-1"><a href="#测什么-1" class="headerlink" title="测什么"></a>测什么</h2><ul>
+<li>测试业务逻辑</li>
+</ul>
+<h2 id="一个需求-1"><a href="#一个需求-1" class="headerlink" title="一个需求"></a>一个需求</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Service</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UserService</span></span>(<span class="meta">@Autowired</span> <span class="keyword">private</span> <span class="keyword">val</span> userDao: UserDao) &#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Value(<span class="meta-string">&quot;\$&#123;user.appid&#125;&quot;</span>)</span></span><br><span class="line">  <span class="keyword">lateinit</span> <span class="keyword">var</span> appId: String</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Value(<span class="meta-string">&quot;\$&#123;user.fresh.avatar&#125;&quot;</span>)</span></span><br><span class="line">  <span class="keyword">lateinit</span> <span class="keyword">var</span> freshUserAvatar: String</span><br><span class="line"></span><br><span class="line">  <span class="meta">@GrpcClient(<span class="meta-string">&quot;user-service&quot;</span>)</span></span><br><span class="line">  <span class="keyword">lateinit</span> <span class="keyword">var</span> userStub: UserServiceGrpc.UserServiceBlockingStub</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">updateUserInfo</span><span class="params">(id: <span class="type">Int</span>, initiator: <span class="type">Int</span>, request: <span class="type">UserUpdateReq</span>)</span></span>: User &#123;</span><br><span class="line">    <span class="keyword">if</span> (id != initiator) &#123;</span><br><span class="line">      <span class="keyword">throw</span> ResponseException(ResErrCode.ILLEGAL_REQUEST, <span class="string">&quot;不可修改他人信息&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">if</span> (!request.isAllFieldNull()) &#123;</span><br><span class="line">      userDao.updateUserInfo(id, request)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> getUserInfo(id)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="构建测试类"><a href="#构建测试类" class="headerlink" title="构建测试类"></a>构建测试类</h2><p>在Controller测试时，我们采用了@Nested+内部类的方式对接口进行了分组。但是在Service中，往往有很多个方法，每个方法的case也会非常多，如果还采用和Controller一样的方式，测试类会爆炸。因此我们采用类继承的方式进行分组。</p>
+<p>父类如下：定义了mock对象和测试对象，以及测试对象中的共享mock属性</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ExtendWith(MockKExtension::class)</span></span><br><span class="line"><span class="keyword">open</span> <span class="class"><span class="keyword">class</span> <span class="title">UserServiceTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@RelaxedMockK</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> userDao: UserDao</span><br><span class="line"></span><br><span class="line">    <span class="meta">@InjectMockKs</span></span><br><span class="line">    <span class="keyword">protected</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> userService: UserService</span><br><span class="line"></span><br><span class="line">    <span class="meta">@BeforeEach</span></span><br><span class="line">    <span class="meta">@Order(Int.MIN_VALUE)</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">setUp</span><span class="params">()</span></span> &#123;</span><br><span class="line">        userService.appId = MOCK_APP_ID</span><br><span class="line">        userService.freshUserAvatar = MOCK_FRESH_USER_AVATAR</span><br><span class="line">        userService.userStub = mockk(relaxed = <span class="literal">true</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>针对需求中的方法的测试类如下，只需要写测试方法即可</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@DisplayName(<span class="meta-string">&quot;UserService测试 &gt; 更新用户信息&quot;</span>)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">UpdateUserInfoTest</span> : <span class="type">UserServiceTest</span></span>() &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> `reject <span class="keyword">when</span> update others info`<span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">val</span> mockUserId = MOCK_USER_ID</span><br><span class="line">        <span class="keyword">val</span> mockInitiatorId = MOCK_USER_ID + <span class="number">1</span></span><br><span class="line">        <span class="keyword">val</span> mockRequest = UserUpdateReq()</span><br><span class="line"></span><br><span class="line">        assertThat &#123; userService.updateUserInfo(mockUserId, mockInitiatorId, mockRequest) &#125;.isFailure()</span><br><span class="line">            .isInstanceOf(ResponseException::<span class="class"><span class="keyword">class</span>)</span></span><br><span class="line">            .matchesPredicate &#123; it.errorCode == ResErrCode.ILLEGAL_REQUEST &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> `success <span class="keyword">when</span> empty request`<span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">val</span> spyUserService = spyk(userService)</span><br><span class="line">        every &#123; spyUserService.getUserInfo(any()) &#125; returns User()</span><br><span class="line"></span><br><span class="line">        spyUserService.updateUserInfo(MOCK_USER_ID, MOCK_USER_ID, UserUpdateReq())</span><br><span class="line"></span><br><span class="line">        verify &#123; userDao wasNot called &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> `success <span class="keyword">when</span> non-empty request`<span class="params">()</span></span> &#123;</span><br><span class="line">        <span class="keyword">val</span> mockUserId = MOCK_USER_ID</span><br><span class="line">        <span class="keyword">val</span> mockInitiatorId = MOCK_USER_ID</span><br><span class="line">        <span class="keyword">val</span> mockRequest = UserUpdateReq().apply &#123;</span><br><span class="line">            <span class="keyword">this</span>.name = <span class="string">&quot;假名，只让它非空&quot;</span></span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">val</span> spyUserService = spyk(userService)</span><br><span class="line">        <span class="keyword">val</span> mockUpdateResult = User()</span><br><span class="line"></span><br><span class="line">        every &#123; spyUserService.getUserInfo(any()) &#125; returns mockUpdateResult</span><br><span class="line"></span><br><span class="line">        <span class="keyword">val</span> updateResult = spyUserService.updateUserInfo(mockUserId, mockInitiatorId, mockRequest)</span><br><span class="line"></span><br><span class="line">        <span class="keyword">val</span> idSlot = slot&lt;<span class="built_in">Int</span>&gt;()</span><br><span class="line">        <span class="keyword">val</span> requestSlot = slot&lt;UserUpdateReq&gt;()</span><br><span class="line">        verify &#123; userDao.updateUserInfo(capture(idSlot), capture(requestSlot)) &#125;</span><br><span class="line">        assertThat(idSlot.captured).isEqualTo(mockUserId)</span><br><span class="line">        assertThat(requestSlot.captured).isEqualTo(mockRequest)</span><br><span class="line">        assertThat(updateResult).isEqualTo(mockUpdateResult)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>如何脱离Spring </p>
+<p>当Service依赖Bean的注入使用构造器注入时，对Service层的单元测试就能脱离Spring：因为MockK在构建测试对象时，是通过构造器注入的。否则就得一个个手动mock</p>
+</blockquote>
+<h2 id="让代码更易于测试"><a href="#让代码更易于测试" class="headerlink" title="让代码更易于测试"></a>让代码更易于测试</h2><p>最易于测试的代码当然是纯函数式，一个确定的输入就能对应一个确定的输出。但理想与现实是有差别的，日常业务中过分追求函数式可能会使得代码晦涩难懂。尽量函数式+mock才是正解。但是副作用和函数内部的级联调用过多，又会造成mock灾难。所以还是一个权衡的过程。</p>
+<p>按照个人经验总结一下就是</p>
+<ul>
+<li>函数式+适当mock</li>
+<li>功能拆解：复杂方法拆分成若干小的方法，分别测试，这样弹性更高</li>
+</ul>
+<p>一个例子：如下是重构之前的一个方法（获取用户邀请信息），如此之大，很显然是无法测试的</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">getInvitationInfo</span><span class="params">()</span></span>: InvitationInfoResponseDto &#123;</span><br><span class="line">      <span class="keyword">val</span> currentUser = RequestContext.currentUser</span><br><span class="line">      <span class="comment">// 从库中获取邀请码，没有就生成一个插入库中</span></span><br><span class="line">      <span class="keyword">var</span> userModel = userDao.getById(currentUser)</span><br><span class="line">      <span class="keyword">if</span> (userModel.invitationCode.isNullOrEmpty()) &#123;</span><br><span class="line">          userModel.invitationCode = userDao.generateInvitationCode().toUpperCase()</span><br><span class="line">          userModel.invitedCount = <span class="number">0</span></span><br><span class="line">          <span class="comment">// 尝试更新，如果提示冲突，说明发生了并发问题，以库中已有为准。不过这能发生的前提是数据表针对invitation_code做了unique限制</span></span><br><span class="line">          runCatching &#123; userModel.updateById() &#125;.exceptionOrNull()</span><br><span class="line">              ?.takeIf &#123; it.message?.contains(<span class="string">&quot;duplicate&quot;</span>) == <span class="literal">true</span> &#125;</span><br><span class="line">              ?.run &#123; userModel = userDao.getById(currentUser) &#125;</span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// 查出一串记录，作为后面的计算依据</span></span><br><span class="line">      <span class="keyword">val</span> invitedHistory = invitationHistoryDao.getByInvitee(currentUser)</span><br><span class="line">      <span class="keyword">val</span> redeemHistory = invitationRedeemHistoryDao.listByRedeemer(currentUser)</span><br><span class="line">      <span class="keyword">val</span> subscriptionModel = subscriptionService.ktQuery().eq(SubscriptionModel::userId, currentUser).one()</span><br><span class="line"></span><br><span class="line">      <span class="comment">// 奖品构建：基本信息固定，只需填充兑换状态、是否可用（置灰状态）</span></span><br><span class="line">      <span class="keyword">val</span> awards = awardModels.map &#123; InvitationInfoResponseDto.Award().fillWith(it) &#125;.onEach &#123; award -&gt;</span><br><span class="line">          award.redeemed = redeemHistory.any &#123; it.awardId == award.id &#125;</span><br><span class="line">          <span class="comment">// 常规case：邀请数够且未被兑换，则高亮。否则置灰</span></span><br><span class="line">          award.enable = (userModel.invitedCount!! &gt;= award.triggerCount!!) &amp;&amp; !award.redeemed!!</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">val</span> standardAward = awards.single &#123; it.membershipLevel == MembershipLevel.STANDARD &#125;</span><br><span class="line">      <span class="keyword">val</span> premiumAward = awards.single &#123; it.membershipLevel == MembershipLevel.PREMIUM &#125;</span><br><span class="line">      <span class="comment">// 特殊case1：只要高级有效(要么购买要么兑换)，普通奖励就置灰</span></span><br><span class="line">      <span class="keyword">if</span> (subscriptionModel?.membershipLevel == MembershipLevel.PREMIUM) &#123;</span><br><span class="line">          standardAward.enable = <span class="literal">false</span></span><br><span class="line">      &#125;</span><br><span class="line"></span><br><span class="line">      <span class="comment">// 构建完整的邀请信息</span></span><br><span class="line">      <span class="keyword">return</span> InvitationInfoResponseDto().apply &#123;</span><br><span class="line">          <span class="keyword">this</span>.invitationCode = userModel.invitationCode</span><br><span class="line">          <span class="keyword">this</span>.invitedCount = userModel.invitedCount</span><br><span class="line">          <span class="keyword">this</span>.hasBeenInvited = invitedHistory != <span class="literal">null</span></span><br><span class="line">          <span class="keyword">this</span>.awards = awards</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<p>如下是重构之后的代码，按功能拆分，不但更易测，可读性也增强了不少。之前的代码不一点点看你一定不知道它在干啥</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">getInvitationInfo</span><span class="params">()</span></span>: InvitationInfoResponseDto &#123;</span><br><span class="line">      <span class="keyword">val</span> currentUser = RequestContext.currentUser</span><br><span class="line">      <span class="keyword">val</span> (invitationCode, invitedCount) = getInvitationCodeAndInvitedCount(currentUser)</span><br><span class="line">      <span class="keyword">val</span> hasBeenInvited = hasBeenInvited(invitationHistoryDao.getByInvitee(currentUser))</span><br><span class="line">      <span class="keyword">val</span> awards = awardModels.map &#123; InvitationInfoResponseDto.Award().fillWith(it) &#125;</span><br><span class="line">      fillAwardRedeemed(awards, invitationRedeemHistoryDao.listByRedeemer(currentUser))</span><br><span class="line">      fillAwardEnable(awards, currentUser, invitedCount, subscriptionDao.getByUserId(currentUser))</span><br><span class="line"></span><br><span class="line">      <span class="keyword">return</span> InvitationInfoResponseDto().apply &#123;</span><br><span class="line">          <span class="keyword">this</span>.invitationCode = invitationCode</span><br><span class="line">          <span class="keyword">this</span>.invitedCount = invitedCount</span><br><span class="line">          <span class="keyword">this</span>.hasBeenInvited = hasBeenInvited</span><br><span class="line">          <span class="keyword">this</span>.awards = awards</span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">getInvitationCodeAndInvitedCount</span><span class="params">(userId: <span class="type">Int</span>)</span></span>: Pair&lt;String, <span class="built_in">Int</span>&gt; &#123;</span><br><span class="line">      <span class="keyword">var</span> userModel = userDao.getById(userId)!!</span><br><span class="line">      <span class="keyword">if</span> (userModel.invitationCode.isNullOrEmpty()) &#123;</span><br><span class="line">          userModel.invitationCode = generateCode()</span><br><span class="line">          userModel.invitedCount = <span class="number">0</span></span><br><span class="line">          <span class="comment">// 尝试更新，如果提示冲突，说明发生了并发问题，以库中已有为准。前提：invitation_code做了unique限制</span></span><br><span class="line">          <span class="keyword">try</span> &#123;</span><br><span class="line">              userDao.updateById(userModel)</span><br><span class="line">          &#125; <span class="keyword">catch</span> (_: DuplicateKeyException) &#123;</span><br><span class="line">              userModel = userDao.getById(userId)!!</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">return</span> userModel.invitationCode!! to userModel.invitedCount!!</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">generateCode</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">      <span class="keyword">val</span> tryCount = <span class="number">3</span></span><br><span class="line">      (<span class="number">0.</span>.tryCount).forEach &#123; _ -&gt;</span><br><span class="line">          <span class="keyword">val</span> candidate = UUID.randomUUID().toString().takeLast(<span class="number">6</span>).toUpperCase()</span><br><span class="line">          <span class="keyword">if</span> (userDao.getByInvitationCode(candidate) == <span class="literal">null</span>) &#123;</span><br><span class="line">              <span class="keyword">return</span> candidate</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;</span><br><span class="line">      log.error(<span class="string">&quot;邀请码生成失败，请查找问题&quot;</span>)</span><br><span class="line">      <span class="keyword">throw</span> ResponseException(ResErrCode.COMM_ERROR)</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">hasBeenInvited</span><span class="params">(invitationHistoryModel: <span class="type">InvitationHistoryModel</span>?)</span></span>: <span class="built_in">Boolean</span> &#123;</span><br><span class="line">      <span class="keyword">return</span> invitationHistoryModel != <span class="literal">null</span></span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">fillAwardRedeemed</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">      awards: <span class="type">List</span>&lt;<span class="type">InvitationInfoResponseDto</span>.<span class="type">Award</span>&gt;, redeemHistory: <span class="type">List</span>&lt;<span class="type">InvitationRedeemHistoryModel</span>&gt;</span></span></span><br><span class="line"><span class="params"><span class="function">  )</span></span> = awards.forEach &#123; award -&gt;</span><br><span class="line">      award.redeemed = redeemHistory.any &#123; it.awardId == award.id &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">fillAwardEnable</span><span class="params">(</span></span></span><br><span class="line"><span class="params"><span class="function">      awards: <span class="type">List</span>&lt;<span class="type">InvitationInfoResponseDto</span>.<span class="type">Award</span>&gt;, userId: <span class="type">Int</span>, invitedCount: <span class="type">Int</span>, subscription: <span class="type">SubscriptionModel</span>?</span></span></span><br><span class="line"><span class="params"><span class="function">  )</span></span> &#123;</span><br><span class="line">      awards.forEach &#123; award -&gt;</span><br><span class="line">          award.enable = (invitedCount &gt;= award.triggerCount!!) &amp;&amp; !award.redeemed!!</span><br><span class="line">      &#125;</span><br><span class="line">      <span class="keyword">val</span> standardAward = awards.single &#123; it.membershipLevel == MembershipLevel.STANDARD &#125;</span><br><span class="line">      <span class="comment">// 特殊case1：只要高级有效(要么购买要么兑换)，普通奖励就置灰</span></span><br><span class="line">      <span class="keyword">if</span> (subscription?.membershipLevel == MembershipLevel.PREMIUM) &#123;</span><br><span class="line">          standardAward.enable = <span class="literal">false</span></span><br><span class="line">      &#125;</span><br><span class="line">  &#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>一个经验：在重构一个大方法时，预想拆分成多个子方法，每个方法写成完全无副作用、无级联方法调用，这样做的结果是子方法包含很多高阶方法，可读性相较于前，差了不少。</p>
+</blockquote>
+<h2 id="不要过分纠结BDD风格"><a href="#不要过分纠结BDD风格" class="headerlink" title="不要过分纠结BDD风格"></a>不要过分纠结BDD风格</h2><p>BDD风格即所谓的 given - when - then 结构（mock数据 - 执行被测方法 - 断言判断），AssertJ提供BDD风格的断言。但given阶段由Mock库决定，then阶段由断言库决定。这两个库通常还不是一个，所以API很可能组合不出预想的效果。还不如老老实实用every{}进行mock，assertThat()进行断言，约定俗成，言简意赅，大家都懂。</p>
+<h1 id="Repository测试"><a href="#Repository测试" class="headerlink" title="Repository测试"></a>Repository测试</h1><p>对该层的测试难点及解决方法如下</p>
+<ul>
+<li><p>数据库环境难以搭建</p>
+<p>对于MySQL，还有嵌入式数据库H2可供选择。但对于PostgreSQL，有一个更好的选择：<a target="_blank" rel="noopener" href="https://github.com/zonkyio/embedded-postgres">embedded-postres</a>，测试期间启动数据库，支持PG11版本以上，支持run in docker。这是真实的环境，应该说是绝佳选择了。</p>
+</li>
+<li><p>MyBatis Plus写的如何测试</p>
+<p>MyBatsi Plus有提供<a target="_blank" rel="noopener" href="https://baomidou.com/pages/b7dae0/">测试支持</a>，仅加载数据库相关内容。</p>
+</li>
+</ul>
+<p>如下自定义的注解，包含了所有测试必须的内容</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Inherited</span></span><br><span class="line"><span class="meta">@Documented</span></span><br><span class="line"><span class="meta">@Target(ElementType.TYPE)</span></span><br><span class="line"><span class="meta">@Retention(RetentionPolicy.RUNTIME)</span></span><br><span class="line"><span class="comment">// mybatis plus的测试支持</span></span><br><span class="line"><span class="meta">@MybatisPlusTest</span></span><br><span class="line"><span class="comment">// 关闭测试完成后的事务回滚（@MybatisPlusTest默认开启，但我们是单元测试单独的环境，测试完成后会被销毁，因此不需要）</span></span><br><span class="line"><span class="meta">@Transactional(propagation = Propagation.NOT_SUPPORTED)</span></span><br><span class="line"><span class="comment">// 导入自定义的针对MyBatis的配置，主要是Mapper扫描位置</span></span><br><span class="line"><span class="meta">@Import(MyBatisConfig.class)</span></span><br><span class="line"><span class="comment">// 扫描dao、model等内容</span></span><br><span class="line"><span class="meta">@ComponentScan(&quot;com.project5e.app.mylog.repo&quot;)</span></span><br><span class="line"><span class="comment">// PG的嵌入式数据库开启</span></span><br><span class="line"><span class="meta">@AutoConfigureEmbeddedDatabase(type = AutoConfigureEmbeddedDatabase.DatabaseType.POSTGRES, refresh = AutoConfigureEmbeddedDatabase.RefreshMode.AFTER_EACH_TEST_METHOD)</span></span><br><span class="line"><span class="comment">// 嵌入式数据库的初始化走Flyway</span></span><br><span class="line"><span class="meta">@FlywayTest</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> RepositoryTest &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="测什么-2"><a href="#测什么-2" class="headerlink" title="测什么"></a>测什么</h2><ul>
+<li>测试表完整性</li>
+<li>测试SQL正确性</li>
+</ul>
+<h2 id="关于Flyway"><a href="#关于Flyway" class="headerlink" title="关于Flyway"></a>关于Flyway</h2><p>flyway的使用，自行查阅手册，在这里的作用是：embedded-postres在启动本地数据库后，将使用flyway对数据库初始化。所以，src/db/migration下的sql必须组成一个完整的数据表环境。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220305185526827.png" alt="image-20220305185526827"></p>
+<h2 id="表完整性测试"><a href="#表完整性测试" class="headerlink" title="表完整性测试"></a>表完整性测试</h2><p>包括如下内容</p>
+<ul>
+<li>不可空字段检查</li>
+<li>可空或具有默认值的字段检查</li>
+<li>唯一索引检查</li>
+</ul>
+<p>由于每个表都需要进行完整性测试，因此我们写成一个抽象类。子类需要提供预期不允许为空的字段列表、具有默认值字段和默认值映射、唯一索引和用于测试它们的数据。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">abstract</span> <span class="class"><span class="keyword">class</span> <span class="title">RepositoryIntegrityTest</span>&lt;<span class="type">M : BaseMapper&lt;T</span>&gt;, <span class="type">T&gt; &#123;</span></span></span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 非空且无默认值的字段</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">abstract</span> <span class="keyword">val</span> nonNullableWithoutDefaultValueFields: List&lt;KMutableProperty&lt;*&gt;&gt;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 可空或有默认值的字段</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">abstract</span> <span class="keyword">val</span> nullableOrDefaultFields: Map&lt;KMutableProperty&lt;*&gt;, Any?&gt;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 唯一索引列表和测试它们的数据（当存在多个唯一索引时，测试数据不好造，还是交给实现类比较好）</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">abstract</span> <span class="keyword">val</span> uniqueIndexesWithTestData: Map&lt;List&lt;KMutableProperty&lt;*&gt;&gt;, List&lt;T&gt;&gt;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">abstract</span> <span class="function"><span class="keyword">fun</span> <span class="title">getDao</span><span class="params">()</span></span>: ServiceImpl&lt;M, T&gt;</span><br><span class="line"></span><br><span class="line">    <span class="comment">/**</span></span><br><span class="line"><span class="comment">     * 提供一个所有字段都不为空的基础model，用于测试</span></span><br><span class="line"><span class="comment">     */</span></span><br><span class="line">    <span class="keyword">abstract</span> <span class="function"><span class="keyword">fun</span> <span class="title">createModelWithAllFieldNotNull</span><span class="params">()</span></span>: T</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> `validate <span class="keyword">when</span> field <span class="title">absent</span> <span class="params">(without default value)</span></span>`() &#123;</span><br><span class="line">        assertAll &#123;</span><br><span class="line">            nonNullableWithoutDefaultValueFields.forEach &#123; prop -&gt;</span><br><span class="line">                <span class="comment">// 待测字段填充null</span></span><br><span class="line">                <span class="keyword">val</span> mockModel = createModelWithAllFieldNotNull().apply &#123; prop.setter.call(<span class="keyword">this</span>, <span class="literal">null</span>) &#125;</span><br><span class="line">                <span class="comment">// 填充null的字段都有应该报错</span></span><br><span class="line">                <span class="keyword">val</span> result = Result.runCatching &#123; getDao().save(mockModel) &#125;</span><br><span class="line">                assertThat(result, prop.name).isFailure().matchesPredicate &#123;</span><br><span class="line">                    <span class="keyword">val</span> nameInDb = StringUtils.camelToUnderline(prop.name)</span><br><span class="line">                    it.message!!.contains(<span class="string">&quot;&quot;&quot;null value in column &quot;<span class="variable">$nameInDb</span>&quot; violates not-null constraint&quot;&quot;&quot;</span>)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> `validate <span class="keyword">when</span> field <span class="title">absent</span> <span class="params">(with default value)</span></span>`() &#123;</span><br><span class="line">        <span class="comment">// 清空数据库</span></span><br><span class="line">        clearTable()</span><br><span class="line">        <span class="comment">// 字段填充null</span></span><br><span class="line">        <span class="keyword">val</span> mockModel = createModelWithAllFieldNotNull().apply &#123;</span><br><span class="line">            nullableOrDefaultFields.forEach &#123; (prop, _) -&gt;</span><br><span class="line">                prop.setter.call(<span class="keyword">this</span>, <span class="literal">null</span>)</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 保存然后查出</span></span><br><span class="line">        getDao().save(mockModel)</span><br><span class="line">        <span class="keyword">val</span> insertedModel = getDao().list().first()</span><br><span class="line">        <span class="comment">// 所有设置为null的字段查询结果都应该与预期的一致</span></span><br><span class="line">        assertAll &#123;</span><br><span class="line">            nullableOrDefaultFields.forEach &#123; (prop, expectedValue) -&gt;</span><br><span class="line">                <span class="keyword">if</span> (expectedValue != <span class="literal">null</span> &amp;&amp; expectedValue::<span class="class"><span class="keyword">class</span> == <span class="title">Any</span>:<span class="type">:class) &#123;</span></span></span><br><span class="line">                    assertThat(prop.getter.call(insertedModel), prop.name).isNotNull()</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    assertThat(prop.getter.call(insertedModel), prop.name).isEqualTo(expectedValue)</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Test</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> `validate unique constraint`<span class="params">()</span></span> &#123;</span><br><span class="line">        clearTable()</span><br><span class="line">        <span class="comment">// 构建两个拥有一样字段值的对象</span></span><br><span class="line">        assertAll &#123;</span><br><span class="line">            uniqueIndexesWithTestData.forEach &#123; (index, testModels) -&gt;</span><br><span class="line">                <span class="keyword">val</span> result = Result.runCatching &#123; getDao().saveBatch(testModels) &#125;</span><br><span class="line">                assertThat(result, index.toString()).isFailure().isInstanceOf(DuplicateKeyException::<span class="class"><span class="keyword">class</span>)</span></span><br><span class="line">                    .matchesPredicate &#123;</span><br><span class="line">                        it.message!!.contains(<span class="string">&quot;already exists&quot;</span>)</span><br><span class="line">                    &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">clearTable</span><span class="params">()</span></span> &#123;</span><br><span class="line">        getDao().ktUpdate().remove()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以表senior_user为例，实现它如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@RepositoryTest</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SeniorTest</span> : <span class="type">RepositoryIntegrityTest</span>&lt;<span class="type">SeniorUserMapper, SeniorUserModel</span>&gt;</span>() &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Autowired</span></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> seniorUserDao: SeniorUserDao</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="keyword">val</span> nonNullableWithoutDefaultValueFields: List&lt;KMutableProperty&lt;*&gt;&gt; = listOf(</span><br><span class="line">        SeniorUserModel::id</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="keyword">val</span> nullableOrDefaultFields: Map&lt;KMutableProperty&lt;*&gt;, Any?&gt; = mapOf(</span><br><span class="line">        SeniorUserModel::createdTime to Any(),</span><br><span class="line">        SeniorUserModel::updatedTime to Any(),</span><br><span class="line">        SeniorUserModel::redeemed to <span class="literal">false</span></span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="keyword">val</span> uniqueIndexesWithTestData: Map&lt;List&lt;KMutableProperty&lt;*&gt;&gt;, List&lt;SeniorUserModel&gt;&gt; = mapOf(</span><br><span class="line">        listOf(SeniorUserModel::id) to listOf(createModelWithAllFieldNotNull(), createModelWithAllFieldNotNull())</span><br><span class="line">    )</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">getDao</span><span class="params">()</span></span>: ServiceImpl&lt;SeniorUserMapper, SeniorUserModel&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> seniorUserDao</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">final</span> <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">createModelWithAllFieldNotNull</span><span class="params">()</span></span>: SeniorUserModel &#123;</span><br><span class="line">        <span class="keyword">return</span> SeniorUserModel().apply &#123;</span><br><span class="line">            <span class="keyword">this</span>.id = MOCK_USER_ID.toLong()</span><br><span class="line">            <span class="keyword">this</span>.createdTime = OffsetDateTime.now()</span><br><span class="line">            <span class="keyword">this</span>.updatedTime = OffsetDateTime.now()</span><br><span class="line">            <span class="keyword">this</span>.redeemed = <span class="literal">false</span></span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="SQL正确性测试"><a href="#SQL正确性测试" class="headerlink" title="SQL正确性测试"></a>SQL正确性测试</h2><p>通常的做法是：构建mock数据，插入数据库 -&gt; 调用被测SQL -&gt; 判断结果</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> `test update user info partially`<span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="comment">// 清空表</span></span><br><span class="line">  clearTable()</span><br><span class="line">  <span class="comment">// 构建测试数据</span></span><br><span class="line">  <span class="keyword">val</span> oldModel = createModelWithAllFieldNotNull()</span><br><span class="line">  userDao.save(oldModel)</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 调用被测SQL方法</span></span><br><span class="line">  <span class="keyword">val</span> mockUserId = MOCK_USER_ID</span><br><span class="line">  <span class="keyword">val</span> mockUserName = MOCK_USER_NAME + <span class="string">&quot;gt&quot;</span></span><br><span class="line">  <span class="keyword">val</span> mockRequest = UserUpdateReq().apply &#123;</span><br><span class="line">    <span class="keyword">this</span>.name = mockUserName</span><br><span class="line">  &#125;</span><br><span class="line">  userDao.updateUserInfo(mockUserId, mockRequest)</span><br><span class="line">  <span class="comment">// 取出数据</span></span><br><span class="line">  <span class="keyword">val</span> newModel = userDao.getById(mockUserId)</span><br><span class="line">	<span class="comment">// 判断结果</span></span><br><span class="line">  assertThat(newModel.id).isEqualTo(mockUserId)</span><br><span class="line">  assertThat(newModel.name).isEqualTo(mockRequest.name)</span><br><span class="line">  assertThat(newModel.avatar).isEqualTo(oldModel.avatar)</span><br><span class="line">  assertThat(newModel.description).isEqualTo(oldModel.description)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>被测SQL如下（当然它也不一定是个SQL，也可能是基于底层库构建的对数据库的操作，比如这里）</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">updateUserInfo</span><span class="params">(id: <span class="type">Int</span>, request: <span class="type">UserUpdateReq</span>)</span></span>: <span class="built_in">Boolean</span> &#123;</span><br><span class="line">  <span class="keyword">return</span> UserModel(</span><br><span class="line">    id = id,</span><br><span class="line">    name = request.name,</span><br><span class="line">    avatar = request.avatar,</span><br><span class="line">    description = request.description,</span><br><span class="line">  ).run &#123; updateById() &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="MyBatis-Plus的SQL写在哪里"><a href="#MyBatis-Plus的SQL写在哪里" class="headerlink" title="MyBatis Plus的SQL写在哪里"></a>MyBatis Plus的SQL写在哪里</h2><p>MyBatis Plus提供了类<code>public class ServiceImpl&lt;M extends BaseMapper&lt;T&gt;, T&gt; implements IService&lt;T&gt;</code>，提供三个能力</p>
+<ul>
+<li>快捷方法，如save、list、getById等</li>
+<li>提供写SQL的DSL能力</li>
+<li>提供baseMapper，对mapper直接调用</li>
+</ul>
+<p>如此方便，以至于很多业务将Service类继承了它，省去了定义DAO的麻烦。个人认为，这样做在能力1和能力3的使用上都没有问题，但利用DSL构建SQL的能力对Service层造成了入侵，至少它不是容易测试的代码：</p>
+<ul>
+<li>如果构建的SQL DSL和业务代码混在一起，则根本无法测试</li>
+<li>如果将其提成一个单独的方法，那为什么不专门定义一个DAO来负责呢？能力1和能力3调用的方便性没有变差，能力2也得到了的有效管控</li>
+</ul>
+<p>所以我的看法是：应该将ServiceImpl锁定在DAO里，不要侵入到业务代码。</p>
+<h2 id="测试锁"><a href="#测试锁" class="headerlink" title="测试锁"></a>测试锁</h2><p>如下SQL如何测试，测试重点在于FOR UPDATE</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">lockUser</span><span class="params">(userId: <span class="type">Int</span>)</span></span> &#123;</span><br><span class="line">  ktQuery()</span><br><span class="line">  .eq(UserModel::id, userId)</span><br><span class="line">  .last(<span class="string">&quot;FOR UPDATE&quot;</span>)</span><br><span class="line">  .list()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>分析难点及解决方案</p>
+<ul>
+<li><p>需要在两个并发的事物中分别调用才能测试</p>
+<p>可以利用线程+手动管理事务+延迟</p>
+</li>
+<li><p>如何验证是否成功</p>
+<p>使用<code>SELECT XXXX FOR UPDATE NOWAIT</code>语句，检测到锁冲突时马上报错</p>
+</li>
+</ul>
+<p>于是代码可以如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 事务管理器，直接注入即可</span></span><br><span class="line"><span class="meta">@Autowired</span></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> tm: DataSourceTransactionManager</span><br><span class="line"></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> `test lock user`<span class="params">()</span></span> &#123;</span><br><span class="line">  <span class="comment">// 注意latch的使用</span></span><br><span class="line">  <span class="keyword">val</span> latch = CountDownLatch(<span class="number">2</span>)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">val</span> transaction1 = Runnable &#123;</span><br><span class="line">    <span class="comment">// 注意编程式事务的使用方式</span></span><br><span class="line">    <span class="keyword">val</span> transactionStatus = tm.getTransaction(TransactionDefinition.withDefaults())</span><br><span class="line">    userDao.lockUser(MOCK_USER_ID)</span><br><span class="line">    TimeUnit.SECONDS.sleep(<span class="number">2</span>)</span><br><span class="line">    tm.commit(transactionStatus)</span><br><span class="line">    latch.countDown()</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">val</span> transaction2 = Runnable &#123;</span><br><span class="line">    TimeUnit.SECONDS.sleep(<span class="number">1</span>)</span><br><span class="line">    <span class="keyword">val</span> transactionStatus = tm.getTransaction(TransactionDefinition.withDefaults())</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">      assertThat &#123;</span><br><span class="line">        userDao.ktQuery().eq(UserModel::id, MOCK_USER_ID).last(<span class="string">&quot;FOR UPDATE NOWAIT&quot;</span>).list()</span><br><span class="line">      &#125;.isFailure().isInstanceOf(CannotAcquireLockException::<span class="class"><span class="keyword">class</span>)</span></span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">      tm.commit(transactionStatus)</span><br><span class="line">      latch.countDown()</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">  Thread(transaction1).start()</span><br><span class="line">  Thread(transaction2).start()</span><br><span class="line">  latch.await()</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="问题记录"><a href="#问题记录" class="headerlink" title="问题记录"></a>问题记录</h1><ul>
+<li><p>使用@WebMvcTest单独测试Controller时，报错：无法找到xxxMapper</p>
+<p>原因：默认情况下，@WebMvcTest会将SpringBootApplication注解的那个启动类当做配置主类，而之前将@MapperScan写在了上面。</p>
+<p>解决：将@MapperScan转移到单独的配置文件中。同时也提醒：配置不要乱放</p>
+</li>
+<li><p>logback-test.xml中指定的日志等级不生效</p>
+<p>原因：如果在src/main/resources/application.properties中指定了logging.root.level，在配置文件中的等级就不会生效</p>
+<p>解决：移除logging.root.level</p>
+<p>要彻底解决，可以参考<a target="_blank" rel="noopener" href="https://www.notion.so/TDD-e8c9e51b1c28483c890a9a3ddc12338d#1fea41c4163f4fc7a64c75aa756b7f4c">这篇文章</a></p>
+</li>
+<li><p>配置问题：Controller测试过程中发现一些针对Web的配置未生效</p>
+<p>原因：配置类未被@WebMvcTest加载</p>
+<p>解决：手动导入自定义的Web配置</p>
+</li>
+<li><p>Kotlin兼容性问题：@NotBlank对写在构造方法中的Kotlin属性不生效</p>
+<p>原因：验证库和Kotlin的兼容性问题</p>
+<p>解决：使用@field:NotBlank或者将属性从构造方法移到类体</p>
+</li>
+<li><p>MockK无法调用、mock私有方法</p>
+<p>解决：MockK提供这样的功能，但使用起来不是很方便。所以这个问题尚未有较好的解决方式</p>
+</li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>我花了两周去了解单元测试常用技术，细读JUnit用户手册，浏览了Spring Boot Test手册（但是忘记看Spring Test手册，是说用的时候觉得哪里不对，😓），去了解了如何正确地写单元测试。又花了两周对每记后端项目进行TDD重构，先后尝试了Mockito、AssertJ和MockK、AssertK，发现用Kotlin时，MockK比Mockito香得不是一点点（Mockito写得像Java，mock静态方法时还得打补丁，对Kotlin DSL的补丁看起来并不特别好；MockK就不一样了，功能全面，使用优雅）。</p>
+<p>在补单元测试时，还修复了一些之前没注意也没测出来的bug，所谓矫枉过正，现在的我觉得没有单元测试的代码，是非常不可靠的。</p>
+<p>本周开发新功能时，同步添加单元测试。两点感受颇深</p>
+<ul>
+<li>写起来确实放心不少。写测试的过程中，已经细细品过很多边缘case了。也省去了本地启动服务一遍遍手动测试的麻烦。</li>
+<li>是真的挺花费时间。扪心自问，如果进度要求再急一点，这单元测试可能写不下去，还得后面补。所以，要给自己预留充足的时间。</li>
+</ul>
+<p>回看刚写的这些单测，还是有很多问题的</p>
+<ul>
+<li>case数量多，当前有将近300个case（算上条件测试）。根据80%的bug出在20%代码中的定律，可以依靠经验识别容易出问题的地方，集中测试，其它地方，相对可以放松警惕。这样能够节省写单测时间</li>
+<li>测试速度慢，CI机上跑完所有case需要2:30左右。速度有待优化</li>
+<li>测试代码质量有待加强</li>
+</ul>
+<p>而就整个测试工作来说，要做的也还有很多</p>
+<ul>
+<li>集成测试：目前没有集成测试，所以各层的协作还是靠手动测试</li>
+<li>CI+接口测试自动化：当前CI负责从构建、单元测试、发布应用的过程；还可以更加自动化：发布使用金丝雀，检测应用发布完成后对所有接口进行冒烟测试，测试通过再替换实际应用，否则就只发布金丝雀，从而最大程度降低发布风险。</li>
+<li>推广单元测试：单测值得推广吗？肯定是值得的。但说实话，让我去写table应用的单元测试，我也会心生抗拒，毕竟case太多了。如果克服这些问题，让大家认真写测试，是个课题。</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/%E6%B5%8B%E8%AF%95/" rel="tag"># 测试</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/03/05/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95-%E5%B7%A5%E5%85%B7/" rel="prev" title="单元测试 - 工具">
+      <i class="fa fa-chevron-left"></i> 单元测试 - 工具
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%A2%84%E5%A4%87"><span class="nav-number">1.</span> <span class="nav-text">预备</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E7%9B%AE%E6%A0%87"><span class="nav-number">1.1.</span> <span class="nav-text">测试目标</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E9%80%89%E5%9E%8B%E5%8F%8A%E9%A1%B9%E7%9B%AE%E9%85%8D%E7%BD%AE"><span class="nav-number">1.2.</span> <span class="nav-text">技术选型及项目配置</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%80%9D%E8%B7%AF-MVC%E5%A6%82%E4%BD%95%E6%B5%8B%E8%AF%95"><span class="nav-number">1.3.</span> <span class="nav-text">测试思路 - MVC如何测试</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Controller%E6%B5%8B%E8%AF%95"><span class="nav-number">2.</span> <span class="nav-text">Controller测试</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E4%BB%80%E4%B9%88"><span class="nav-number">2.1.</span> <span class="nav-text">测什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E9%9C%80%E6%B1%82"><span class="nav-number">2.2.</span> <span class="nav-text">一个需求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E7%B1%BB%E7%9A%84%E6%9E%84%E5%BB%BA"><span class="nav-number">2.3.</span> <span class="nav-text">测试类的构建</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8EJson%E6%A0%BC%E5%BC%8F%E7%9A%84%E6%B5%8B%E8%AF%95"><span class="nav-number">2.4.</span> <span class="nav-text">关于Json格式的测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E4%BB%A5%E6%94%B9%E8%BF%9B%E7%9A%84%E5%9C%B0%E6%96%B9"><span class="nav-number">2.5.</span> <span class="nav-text">可以改进的地方</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Service%E6%B5%8B%E8%AF%95"><span class="nav-number">3.</span> <span class="nav-text">Service测试</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E4%BB%80%E4%B9%88-1"><span class="nav-number">3.1.</span> <span class="nav-text">测什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%80%E4%B8%AA%E9%9C%80%E6%B1%82-1"><span class="nav-number">3.2.</span> <span class="nav-text">一个需求</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA%E6%B5%8B%E8%AF%95%E7%B1%BB"><span class="nav-number">3.3.</span> <span class="nav-text">构建测试类</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A9%E4%BB%A3%E7%A0%81%E6%9B%B4%E6%98%93%E4%BA%8E%E6%B5%8B%E8%AF%95"><span class="nav-number">3.4.</span> <span class="nav-text">让代码更易于测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%8D%E8%A6%81%E8%BF%87%E5%88%86%E7%BA%A0%E7%BB%93BDD%E9%A3%8E%E6%A0%BC"><span class="nav-number">3.5.</span> <span class="nav-text">不要过分纠结BDD风格</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Repository%E6%B5%8B%E8%AF%95"><span class="nav-number">4.</span> <span class="nav-text">Repository测试</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E4%BB%80%E4%B9%88-2"><span class="nav-number">4.1.</span> <span class="nav-text">测什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8EFlyway"><span class="nav-number">4.2.</span> <span class="nav-text">关于Flyway</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%A1%A8%E5%AE%8C%E6%95%B4%E6%80%A7%E6%B5%8B%E8%AF%95"><span class="nav-number">4.3.</span> <span class="nav-text">表完整性测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#SQL%E6%AD%A3%E7%A1%AE%E6%80%A7%E6%B5%8B%E8%AF%95"><span class="nav-number">4.4.</span> <span class="nav-text">SQL正确性测试</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MyBatis-Plus%E7%9A%84SQL%E5%86%99%E5%9C%A8%E5%93%AA%E9%87%8C"><span class="nav-number">4.5.</span> <span class="nav-text">MyBatis Plus的SQL写在哪里</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E9%94%81"><span class="nav-number">4.6.</span> <span class="nav-text">测试锁</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95"><span class="nav-number">5.</span> <span class="nav-text">问题记录</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">100</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">29</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">70</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
