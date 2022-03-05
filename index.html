@@ -129,7 +129,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">98</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">99</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
@@ -139,7 +139,7 @@
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">66</span></a>
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">69</span></a>
 
   </li>
         <li class="menu-item menu-item-about">
@@ -352,6 +352,497 @@
             </div>
           <!--/noindex-->
         
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2022/02/15/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95-%E5%B7%A5%E5%85%B7/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2022/02/15/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95-%E5%B7%A5%E5%85%B7/" class="post-title-link" itemprop="url">单元测试 - 工具</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-02-15 21:14:47" itemprop="dateCreated datePublished" datetime="2022-02-15T21:14:47+08:00">2022-02-15</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-03-05 13:06:26" itemprop="dateModified" datetime="2022-03-05T13:06:26+08:00">2022-03-05</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%B5%8B%E8%AF%95/" itemprop="url" rel="index"><span itemprop="name">测试</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2022/02/15/%E5%8D%95%E5%85%83%E6%B5%8B%E8%AF%95-%E5%B7%A5%E5%85%B7/" class="post-meta-item leancloud_visitors" data-flag-title="单元测试 - 工具" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <p>工欲善其事，必先利其器。写单元测试，需要三类工具</p>
+<ul>
+<li>测试平台：JUnit、TestNG</li>
+<li>Mock框架：Mockito、MockK</li>
+<li>断言框架：AssertJ、Assertk</li>
+</ul>
+<p>当开发语言为kotlin时，推荐JUnit5 + MockK + Assertk的组合。</p>
+<h1 id="JUnit"><a href="#JUnit" class="headerlink" title="JUnit"></a>JUnit</h1><p>测试框架承载单元测试运行的环境，基础技术。一般会提到JUnit和TestNG，Spring默认集成了JUnit5，后者由于没有具体使用过，不大好作评论，但是网上文章搜了一圈，相比于JUnit5，TestNG并没有看出什么优势，具有差不多的功能，但是需要写xml。处于好奇看了下两者的发布时间，JUnit5诞生的日期、更新的频繁程度都较高，所以倾向使用JUnit5，至于JUnit4，现在已经过时了。</p>
+<table>
+<thead>
+<tr>
+<th>框架</th>
+<th>首版发布日期</th>
+<th>首个正式版发布日期</th>
+<th>最近一个正式版发布日期</th>
+<th>更新频率</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>JUnit4</td>
+<td>2014-7-29</td>
+<td>2014-7-29</td>
+<td>2021-2-14</td>
+<td>一年左右</td>
+</tr>
+<tr>
+<td>JUnit5</td>
+<td>alpha版2016-2-1</td>
+<td>2017-10-03</td>
+<td>2021-11-29</td>
+<td>一两个月一次</td>
+</tr>
+<tr>
+<td>TestNG</td>
+<td>2010往前</td>
+<td>2010往前</td>
+<td>2022-1-3</td>
+<td>一年左右</td>
+</tr>
+</tbody></table>
+<h2 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h2><p>注意区分它有4、5两个版本，后者为最新版，也是极力推广的版本，功能丰富了不少。组成如下</p>
+<p>JUnit 5 = JUnit Platform + JUnit Jupiter + JUnit Vintage</p>
+<p>JUnit Platform：在JVM中启动测试的基础；同时提供开发测试引擎的API</p>
+<p>JUnit Jupiter：是写单元测试的编程模型、扩展模型的结合；提供跑基于juipter测试的测试引擎</p>
+<p>JUnit Vintage：提供在当前平台跑JUnit3和JUnit4的测试引擎</p>
+<blockquote>
+<p>JUnit5最低支持JDK8</p>
+</blockquote>
+<blockquote>
+<p>有关JUnit的全部功能，参考<a target="_blank" rel="noopener" href="https://junit.org/junit5/docs/current/user-guide/">官方手册</a>，建议从头到尾看一遍，了解一下有哪些型号的锤子。</p>
+</blockquote>
+<h2 id="基本概念"><a href="#基本概念" class="headerlink" title="基本概念"></a>基本概念</h2><p>掌握三个基本概念</p>
+<ul>
+<li><p>测试类</p>
+<p>如下三种类可以被称作静态类，并且它们必须至少包含一个测试方法</p>
+<ul>
+<li>顶级类</li>
+<li>静态内部类</li>
+<li>被@Nested注解的非静态内部类</li>
+</ul>
+</li>
+<li><p>测试方法</p>
+<p>被@Test,@RepeatedTest, @ParameterizedTest, @TestFactory, or @TestTemplate注解的实例方法</p>
+</li>
+<li><p>生命周期方法</p>
+<p>被@BeforeAll,@AfterAll, @BeforeEach, or @AfterEach注解的方法</p>
+</li>
+</ul>
+<p>注意事项</p>
+<ul>
+<li>除@TestFactory注解的方法外，测试方法不能有返回值</li>
+<li>测试类、测试方法不必是public的，但也不能是private的</li>
+<li>对于Java来说，JUnit建议省略掉类和方法的public关键字</li>
+</ul>
+<h2 id="注解和功能解释"><a href="#注解和功能解释" class="headerlink" title="注解和功能解释"></a>注解和功能解释</h2><p>JUnit有21个以上的注解，我们挑选其中最常用的看</p>
+<table>
+<thead>
+<tr>
+<th>注解</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>@Test</td>
+<td>标记一个测试方法</td>
+</tr>
+<tr>
+<td>@ParameterizedTest</td>
+<td>参数化测试，与数据源注解协同使用</td>
+</tr>
+<tr>
+<td>@RepeatedTest</td>
+<td>重复执行的方法，即一个方法被执行多次</td>
+</tr>
+<tr>
+<td>@DisplayName</td>
+<td>显示在测试报告中的名称<br />注：部分注解有name属性，也可以指定</td>
+</tr>
+<tr>
+<td>@Nested</td>
+<td>表明被注解的类是非静态的嵌套类；主要用来分组</td>
+</tr>
+<tr>
+<td>@Tag</td>
+<td>标签，用于过滤<br />和TestNG中的组概念类似<br />和JUnit4中的分类概念类似</td>
+</tr>
+<tr>
+<td>@BeforeAll<br />@AfterAll<br />@BeforeEach<br />@AfterEach</td>
+<td>生命周期方法</td>
+</tr>
+<tr>
+<td>@Timeout</td>
+<td>方法执行的超时时间，超时则报错</td>
+</tr>
+<tr>
+<td>@ExtendWith</td>
+<td>声明式扩展</td>
+</tr>
+<tr>
+<td>@RegisterExtension</td>
+<td>编程式扩展</td>
+</tr>
+</tbody></table>
+<h2 id="一个例子"><a href="#一个例子" class="headerlink" title="一个例子"></a>一个例子</h2><p>使用Kotlin编写的两个工具测试方法</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 将类S的同名属性填充到D中</span></span><br><span class="line"><span class="comment"> * 要求源对象的属性必须有getter方法，且，目标对象的属性必须有setter方法，否则复制不会成功</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="type">&lt;S, D&gt;</span> D.<span class="title">fillWith</span><span class="params">(source: <span class="type">S</span>)</span></span>: D = apply &#123;</span><br><span class="line">    BeanUtils.copyProperties(source, <span class="keyword">this</span>)</span><br><span class="line">&#125;</span><br><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 从一个链接中解析出oss的object key，如果它不是oss的链接，解析结果为null</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> String.<span class="title">parseOssObjectKey</span><span class="params">()</span></span>: String? &#123;</span><br><span class="line">    <span class="keyword">if</span> (<span class="keyword">this</span>.startsWith(<span class="string">&quot;http&quot;</span>, <span class="literal">true</span>)) &#123;</span><br><span class="line">        <span class="keyword">return</span> URL(<span class="keyword">this</span>).path.trim(<span class="string">&#x27;/&#x27;</span>)</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> <span class="literal">null</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>对应的单元测试如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@DisplayName(<span class="meta-string">&quot;全局扩展方法测试&quot;</span>)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExtensionMethodTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">companion</span> <span class="keyword">object</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@BeforeAll</span></span><br><span class="line">        <span class="meta">@JvmStatic</span></span><br><span class="line">        <span class="function"><span class="keyword">fun</span> <span class="title">beforeAll</span><span class="params">()</span></span> &#123;</span><br><span class="line">            println(<span class="string">&quot;全局开始&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@AfterAll</span></span><br><span class="line">        <span class="meta">@JvmStatic</span></span><br><span class="line">        <span class="function"><span class="keyword">fun</span> <span class="title">afterAll</span><span class="params">()</span></span> &#123;</span><br><span class="line">            println(<span class="string">&quot;全局结束&quot;</span>)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@BeforeEach</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">beforeEach</span><span class="params">(info: <span class="type">TestInfo</span>)</span></span> &#123;</span><br><span class="line">        println(<span class="string">&quot;<span class="subst">$&#123;info.displayName&#125;</span>开始&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@AfterEach</span></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">afterEach</span><span class="params">(info: <span class="type">TestInfo</span>)</span></span> &#123;</span><br><span class="line">        println(<span class="string">&quot;<span class="subst">$&#123;info.displayName&#125;</span>结束&quot;</span>)</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Nested</span></span><br><span class="line">    <span class="meta">@DisplayName(<span class="meta-string">&quot;D.fillWith(S)&quot;</span>)</span></span><br><span class="line">    <span class="keyword">inner</span> <span class="class"><span class="keyword">class</span> <span class="title">FillWith</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@Test</span></span><br><span class="line">        <span class="function"><span class="keyword">fun</span> `fail case`<span class="params">()</span></span> &#123;</span><br><span class="line">            <span class="keyword">val</span> source = NonInheritanceValClass(</span><br><span class="line">                field1 = <span class="string">&quot;1&quot;</span>,</span><br><span class="line">                field2 = <span class="number">1</span>,</span><br><span class="line">                field3 = <span class="literal">false</span>,</span><br><span class="line">                fieldA = listOf&lt;String&gt;()</span><br><span class="line">            )</span><br><span class="line">            <span class="keyword">val</span> destination = NonInheritanceValClass()</span><br><span class="line"></span><br><span class="line">            destination.fillWith(source)</span><br><span class="line"></span><br><span class="line">            assertAll &#123;</span><br><span class="line">                assertThat(destination.field1).isNull()</span><br><span class="line">                assertThat(destination.field2).isNull()</span><br><span class="line">                assertThat(destination.field3).isNull()</span><br><span class="line">                assertThat(destination.fieldA).isNull()</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Nested</span></span><br><span class="line">    <span class="meta">@DisplayName(<span class="meta-string">&quot;String.parseOssObjectKey()&quot;</span>)</span></span><br><span class="line">    <span class="keyword">inner</span> <span class="class"><span class="keyword">class</span> <span class="title">ParseOssObjectKey</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">        <span class="meta">@ParameterizedTest(name = ParameterizedTest.ARGUMENTS_WITH_NAMES_PLACEHOLDER)</span></span><br><span class="line">        <span class="meta">@CsvSource(</span></span><br><span class="line"><span class="meta">            value = [</span></span><br><span class="line"><span class="meta">                <span class="meta-string">&quot;https://mylogs-oss.wemore.com/image/hello.jpg, image/hello.jpg&quot;</span>,</span></span><br><span class="line"><span class="meta">                <span class="meta-string">&quot;https://mylogs-oss.moumoux.com/image/hello.jpg, image/hello.jpg&quot;</span>,</span></span><br><span class="line"><span class="meta">                <span class="meta-string">&quot;http://mylogs-oss.moumoux.com/image/hello.jpg, image/hello.jpg&quot;</span></span></span><br><span class="line"><span class="meta">            ], nullValues = [<span class="meta-string">&quot;null&quot;</span>]</span></span><br><span class="line"><span class="meta">        )</span></span><br><span class="line">        <span class="function"><span class="keyword">fun</span> `just test`<span class="params">(input: <span class="type">String</span>, expectedOutput: <span class="type">String</span>?)</span></span> &#123;</span><br><span class="line">            <span class="keyword">val</span> result = input.parseOssObjectKey()</span><br><span class="line">            assertThat(result).isEqualTo(expectedOutput)</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>运行整个测试类，能够得到如下输出</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">全局开始</span><br><span class="line">fail case()开始</span><br><span class="line">fail case()结束</span><br><span class="line">input=https://mylogs-oss.wemore.com/image/hello.jpg, expectedOutput=image/hello.jpg开始</span><br><span class="line">input=https://mylogs-oss.wemore.com/image/hello.jpg, expectedOutput=image/hello.jpg结束</span><br><span class="line">input=https://mylogs-oss.moumoux.com/image/hello.jpg, expectedOutput=image/hello.jpg开始</span><br><span class="line">input=https://mylogs-oss.moumoux.com/image/hello.jpg, expectedOutput=image/hello.jpg结束</span><br><span class="line">input=http://mylogs-oss.moumoux.com/image/hello.jpg, expectedOutput=image/hello.jpg开始</span><br><span class="line">input=http://mylogs-oss.moumoux.com/image/hello.jpg, expectedOutput=image/hello.jpg结束</span><br><span class="line">全局结束</span><br><span class="line">全局扩展方法测试 &gt; D.fillWith(S) &gt; fail case() PASSED</span><br><span class="line">全局扩展方法测试 &gt; String.parseOssObjectKey() &gt; input=https://mylogs-oss.wemore.com/image/hello.jpg, expectedOutput=image/hello.jpg PASSED</span><br><span class="line">全局扩展方法测试 &gt; String.parseOssObjectKey() &gt; input=https://mylogs-oss.moumoux.com/image/hello.jpg, expectedOutput=image/hello.jpg PASSED</span><br><span class="line">全局扩展方法测试 &gt; String.parseOssObjectKey() &gt; input=http://mylogs-oss.moumoux.com/image/hello.jpg, expectedOutput=image/hello.jpg PASSED</span><br></pre></td></tr></table></figure>
+
+<p>上面的例子可以总结出几个问题，我们一个一个看</p>
+<ol>
+<li>如何启动那个测试类？可能在IEAD中有启动按钮，但是如果只是给了一个类文件，我们要如何启动呢？在CI构建时要如何启动呢？</li>
+<li>为什么要用嵌套类？</li>
+<li>@BeforeAll的使用看起来很不方便？</li>
+<li>测试case的生命周期是怎样的？</li>
+<li>参数化测试，还支持别的设置参数的方式吗？</li>
+</ol>
+<h2 id="启动"><a href="#启动" class="headerlink" title="启动"></a>启动</h2><p>三种启动方式</p>
+<ul>
+<li><p>Console Launcher</p>
+<p>提供一个可执行文件 junit-platform-console-standalone-1.8.2.jar ，用如下命令执行测试</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">java -jar junit-platform-console-standalone-1.8.2.jar &lt;额外选项&gt;</span><br></pre></td></tr></table></figure>
+
+<p>这种场景还没用过</p>
+</li>
+<li><p>IDEA插件 —— 开发最常用</p>
+<p>到IDEA的插件市场搜索junit，安装插件就能直接测试（可以看到，junit插件是软件绑定的，默认已经安装了，甚至没有卸载选项）</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220226175402518.png" alt="image-20220226175402518" style="zoom:80%;" />
+
+<p>此时写的测试类和方法上就会有运行按钮</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220226175613488.png" alt="image-20220226175613488" style="zoom:80%;" /></li>
+<li><p>gradle插件 —— CI最常用</p>
+<p>使用gradle构建时需要添加junit插件。同样，gradle已经将JUnit添加到test任务的默认支持工具中，同样支持的还有JUnit4、TestNG。详情参考<a target="_blank" rel="noopener" href="https://docs.gradle.org/current/userguide/java_testing.html">gradle的测试文档</a>，可配置的参数比较多，一个较为简单的配置如下</p>
+<figure class="highlight groovy"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line">test &#123;</span><br><span class="line">    <span class="comment">// 使用JUnit5进行测试</span></span><br><span class="line">    useJUnitPlatform()</span><br><span class="line">    <span class="comment">// 测试线程数：2</span></span><br><span class="line">    maxParallelForks(<span class="number">2</span>)</span><br><span class="line">    <span class="comment">// 日志配置</span></span><br><span class="line">    testLogging &#123;</span><br><span class="line">        <span class="comment">// level=LIFECYCLE的配置项</span></span><br><span class="line">        events <span class="string">&quot;passed&quot;</span>, <span class="string">&quot;skipped&quot;</span>, <span class="string">&quot;failed&quot;</span></span><br><span class="line">        exceptionFormat <span class="string">&quot;full&quot;</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<h2 id="测试生命周期"><a href="#测试生命周期" class="headerlink" title="测试生命周期"></a>测试生命周期</h2><p>一个测试类启动后，生命周期从上到下为（以上面的例子为例）</p>
+<ul>
+<li>测试类ExtensionMethodTest加载，执行被@BeforeAll注解的静态方法</li>
+<li>测试类创建：ExtensionMethodTest、嵌套类FillWith</li>
+<li>执行@BeforeEach注解的方法</li>
+<li>执行@Test或@ParameterizedTest注解的方法</li>
+<li>执行@AfterEach注解的方法</li>
+<li>测试类被丢弃</li>
+<li>执行另一个测试方法时，从第二步开始再执行</li>
+<li>执行被@AfterAll注解的静态方法</li>
+</ul>
+<p>所以重点是</p>
+<ul>
+<li>执行每个测试方法，都会重新创建测试类实例。而不是多个测试方法共用一个实例</li>
+<li>基于上面的原因，@BeforeAll、@AfterAll注解的方法只能在类加载期间执行，即只能注解到静态方法上。这也解释了为什么非静态嵌套类中无法使用@BeforeAll，因为它无法定义静态方法呀</li>
+</ul>
+<blockquote>
+<p>理解单元测试：单元测试的基本要求之一是测试case之间相互不影响，测试方法可能使用了测试类中定义的变量，为了保证不受其它使用该变量的测试方法的影响，最好的方式就是为该方法专门创建一个测试类实例。这就是JUnit的默认行为，一定要理解。</p>
+<p>也十分推荐这么做，这才是真的单元测试。</p>
+<p>对于那些多个测试方法确实需要共享一个测试类实例的情况，JUnit也提供支持。使用时要慎重，此时@BeforeAll的行为也会改变。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@TestInstance(Lifecycle.PER_CLASS)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">ExtensionMethodTest</span> </span>&#123;</span><br></pre></td></tr></table></figure>
+</blockquote>
+<h2 id="嵌套类"><a href="#嵌套类" class="headerlink" title="嵌套类"></a>嵌套类</h2><p>JUnit提供嵌套类的支持，是为了提供给用户更好的测试之间组关系的支持。</p>
+<p>上例中，对每个待测方法，都有多个case需要执行，为了将二者分为两组，我为每个待测方法建立了一个嵌套对象，测试case作为嵌套对象的方法，这样在嵌套类上添加公共的说明，得到的测试报告也更加层次化。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220226182218073.png" alt="image-20220226182218073"></p>
+<p>可以想见，如果没有这样的支持，我需要在每个方法的显示名中加上说明，多么麻烦。</p>
+<h2 id="参数化测试"><a href="#参数化测试" class="headerlink" title="参数化测试"></a>参数化测试</h2><p>利器之二，最典型的应用场景就是针对各种不同输入的测试，参考上例<code>ExtensionMethodTest.ParseOssObjectKey.just test()</code>，特点</p>
+<ul>
+<li><p>使用注解@ParameterizedTest，可以通过name指定测试名称。name指定的字符串中有几个可以使用的占位符</p>
+<table>
+<thead>
+<tr>
+<th align="left">Placeholder</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody><tr>
+<td align="left"><code>&#123;displayName&#125;</code></td>
+<td align="left">方法的名称</td>
+</tr>
+<tr>
+<td align="left"><code>&#123;index&#125;</code></td>
+<td align="left">当前调用的参数在参数列表中的索引</td>
+</tr>
+<tr>
+<td align="left"><code>&#123;arguments&#125;</code></td>
+<td align="left">完整的测试方法参数值，逗号分隔</td>
+</tr>
+<tr>
+<td align="left"><code>&#123;argumentsWithNames&#125;</code></td>
+<td align="left">完整的测试方法的参数名和参数值，格式 key1=value1,key2=value2…</td>
+</tr>
+<tr>
+<td align="left"><code>&#123;0&#125;</code>, <code>&#123;1&#125;</code>, …</td>
+<td align="left">具体的参数</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>有定义的现成名称可以使用，如：<code>ParameterizedTest#DISPLAY_NAME_PLACEHOLDER</code></p>
+</li>
+<li><p>必须和数据源注解一起使用，支持的注解源（可以叠加使用）</p>
+<ul>
+<li><p>@ValueSource：最常用，单个值的列表</p>
+</li>
+<li><p>@NullAndEmptySource、@NullSource。。。：最常用，null或空串</p>
+</li>
+<li><p>@EnumSource</p>
+</li>
+<li><p>@MethodSource：数据来源于一个方法</p>
+<p>一个例子如下，重点是方法要是静态的（除非LifeCycle.PER_CLASS）；返回Arguments的集合类型</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// 定义</span></span><br><span class="line">  <span class="meta">@JvmStatic</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">provideLegalResource</span><span class="params">()</span></span>: List&lt;Arguments&gt; &#123;</span><br><span class="line">      <span class="keyword">return</span> PathMatchingResourcePatternResolver().getResources(LEGAL_RESOURCE_PATTERN).map &#123; resource -&gt;</span><br><span class="line">          resource.file.name to publicObjectMapper.readTree(resource.file)</span><br><span class="line">      &#125;.map &#123; (fileName, mockResources) -&gt;</span><br><span class="line">          mockResources.map &#123; mockResource -&gt;</span><br><span class="line">              <span class="keyword">val</span> resourceType = fileName.removeSuffix(RESOURCE_FILE_SUFFIX)</span><br><span class="line">              <span class="keyword">val</span> comment = (mockResource <span class="keyword">as</span> ObjectNode).remove(COMMENT_KEY).asText()</span><br><span class="line">              <span class="keyword">val</span> content = <span class="string">&quot;&quot;&quot;&#123;&quot;resources&quot;: [<span class="subst">$&#123;mockResource.toJsonString()&#125;</span>]&#125;&quot;&quot;&quot;</span></span><br><span class="line">              <span class="comment">// 上面都忽略，这才是关键</span></span><br><span class="line">              Arguments.of(resourceType, comment, content)</span><br><span class="line">          &#125;</span><br><span class="line">      &#125;.flatten()</span><br><span class="line">  &#125;</span><br><span class="line">    </span><br><span class="line"><span class="comment">// 使用</span></span><br><span class="line">  <span class="meta">@ParameterizedTest(name = <span class="meta-string">&quot;&#123;displayName&#125; &#123;argumentsWithNames&#125;&quot;</span>)</span></span><br><span class="line">  <span class="meta">@MethodSource(<span class="meta-string">&quot;xxx.ResourceProvider#provideLegalResource&quot;</span>)</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> `200 <span class="keyword">when</span> legal resource`<span class="params">(type: <span class="type">String</span>, comment: <span class="type">String</span>, content: <span class="type">String</span>)</span></span> &#123;</span><br></pre></td></tr></table></figure></li>
+<li><p>@CsvSource：以CSV的方式提供多个值</p>
+</li>
+<li><p>@CsvFileSource</p>
+</li>
+<li><p>@ArgumentsSource：数据源于一个ArgumentsProvider，这个其实是最通用的方法，上面的所有注解都是用ArgumentsProvider实现的，比如下面这个</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ArgumentsSource(NullArgumentsProvider.class)</span></span><br><span class="line"><span class="keyword">public</span> <span class="meta">@interface</span> NullSource &#123;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+<h2 id="构造器和方法的注入"><a href="#构造器和方法的注入" class="headerlink" title="构造器和方法的注入"></a>构造器和方法的注入</h2><p>注意上面的beforeEach()方法的参数TestInfo，之所以方法执行时能够获得这个参数，是因为JUnit执行了注入操作。</p>
+<p>JUnit支持向测试类的构造器和所有成员方法执行注入操作，对应的API是<code>ParameterResolver</code>。默认实现有三个，有需要可以自己增加</p>
+<ul>
+<li><code>TestInfoParameterResolver</code></li>
+<li><code>RepetitionInfoParameterResolver</code></li>
+<li><code>TestReporterParameterResolver</code></li>
+</ul>
+<h2 id="测试的继承"><a href="#测试的继承" class="headerlink" title="测试的继承"></a>测试的继承</h2><p>如果有多个类都有相同的测试前置操作、测试case，可以将这些内容抽取成为一个接口。JUnit的注解效果是可以继承的，这是个利器。合理使用。</p>
+<p>举例：controller层的单元测试中，接口鉴权是公共的case，就很适合抽出来，每个接口都实现它。</p>
+<blockquote>
+<p>更多内容请参考JUnit用户手册，值得探究的内容</p>
+<ul>
+<li><p>测试顺序</p>
+<p>测试方法之间默认没有顺序，但可通过添加@Order的方式声明顺序</p>
+</li>
+<li><p>并行执行</p>
+<p>JUnit默认使用一个线程执行所有测试，我们可以指定多个以提升测试执行速度，不过要注意并发问题</p>
+</li>
+<li><p>条件测试</p>
+<p>测试case在条件满足的情况下才执行</p>
+</li>
+<li><p>测试模板和动态测试</p>
+<p>当需要动态生成测试方法时，不妨考虑考虑它们</p>
+</li>
+</ul>
+</blockquote>
+<h1 id="Mockk"><a href="#Mockk" class="headerlink" title="Mockk"></a>Mockk</h1><p>单元测试不像集成测试，”单元“二字是关键，一次只测试单个逻辑。其它级联的方法调用，都可以通过mock解决。与之对应的两个概念</p>
+<ul>
+<li>mock：完全伪造目标，目标可以是对象、静态方法、kotlin的object等</li>
+<li>spy：在现有的目标上进行mock</li>
+</ul>
+<p>如果用Kotlin，mockk一定是个很好的尝试。相对于Mockito，MockK功能全面，支持DSL，书写流畅简单。下面通过一些场景介绍。</p>
+<h2 id="基本使用方法"><a href="#基本使用方法" class="headerlink" title="基本使用方法"></a>基本使用方法</h2><p>MockK的完整使用方法包括</p>
+<ul>
+<li>声明mock对象</li>
+<li>mock对象的行为</li>
+<li>执行被测方法</li>
+<li>验证结果、行为、过程参数</li>
+</ul>
+<p>如果使用JUnit5，MockK提供MockkExtension，同MockitoExtension，Mockito中对应的@Mock、@Spy、@InjectMocks分别变成@MockK、@SpyK、@InjectMockKs。一个典型的例子</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ExtendWith(MockKExtension::class)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MediaServiceTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 声明mock对象</span></span><br><span class="line">  <span class="meta">@MockK</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> miscService: MiscService</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 声明spy对象，同时声明spy的具体对象：mockMediaProperties</span></span><br><span class="line">  <span class="meta">@SpyK</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">var</span> mediaProperties: MediaProperties = mockMediaProperties</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 声明被测对象，mediaService会被创建，并使用miscService和mediaProperties注入其构造方法</span></span><br><span class="line">  <span class="meta">@InjectMockKs</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> mediaService: MediaService</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> `test`<span class="params">()</span></span> &#123;</span><br><span class="line">    <span class="keyword">val</span> mockUser = MOCK_USER_ID</span><br><span class="line">    <span class="keyword">val</span> mockDir = <span class="string">&quot;mockDir&quot;</span></span><br><span class="line">    <span class="comment">// 临时声明的mock对象，GetOssDirMetaResp类的对象</span></span><br><span class="line">    <span class="keyword">val</span> mockOssDirMetaResp = mockk&lt;GetOssDirMetaResp&gt;()</span><br><span class="line">    <span class="keyword">val</span> mockDirMeta = mockk&lt;GetOssDirMetaResp.DirMeta&gt;()</span><br><span class="line">    <span class="comment">// 临时创建spy对象，基于被测对象mediaService创建，目标是mock被测对象的行为</span></span><br><span class="line">    <span class="keyword">val</span> spyMediaService = spyk(mediaService)</span><br><span class="line">    <span class="comment">// mock行为</span></span><br><span class="line">    every &#123; spyMediaService.parseDir(any()) &#125; returns mockDir</span><br><span class="line">    every &#123; spyMediaService.mediaStub.getOssDirMeta(any()) &#125; returns mockOssDirMetaResp</span><br><span class="line">    every &#123; mockOssDirMetaResp.dirMetaList &#125; returns listOf(mockDirMeta)</span><br><span class="line">    every &#123; mockDirMeta.totalSize &#125; returns <span class="number">0</span></span><br><span class="line">		<span class="comment">// 调用被测方法</span></span><br><span class="line">    spyMediaService.getOccupiedSpaceOfUser(mockUser)</span><br><span class="line"></span><br><span class="line">    <span class="keyword">val</span> slot = slot&lt;GetOssDirMetaReq&gt;()</span><br><span class="line">    <span class="comment">// 捕获spyMediaService.mediaStub.getOssDirMeta()的参数</span></span><br><span class="line">    verify &#123; spyMediaService.mediaStub.getOssDirMeta(capture(slot)) &#125;</span><br><span class="line">    <span class="comment">// 验证捕获到的参数</span></span><br><span class="line">    assertThat(slot.captured.app).isEqualTo(mediaProperties.appId)</span><br><span class="line">    assertThat(slot.captured.getDir(<span class="number">0</span>)).isEqualTo(mockDir)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>解释</p>
+<ul>
+<li><p>miscService需要凭空mock，mediaProperties需要在提供的对象基础上mock</p>
+</li>
+<li><p>mediaService的创建依赖于miscService和mediaProperties</p>
+</li>
+<li><p>除了MockKExtension，也可以直接使用<code>MockKAnnotations.init(this::class)</code>来使其生效</p>
+</li>
+<li><p>本例测试的是某个参数，使用slot()方法抓取该参数</p>
+</li>
+</ul>
+<h2 id="默认行为"><a href="#默认行为" class="headerlink" title="默认行为"></a>默认行为</h2><p>Mockito中，如果不对mock对象的行为做预设，行为默认返回对应返回类型的空值。MockK略有不同，不提供默认行为的mock，但可手动选择开启。</p>
+<ul>
+<li>@RelaxedMockK : 备注接的对象带有默认值</li>
+<li>@MockK(relaxed = true)：同上</li>
+<li>mockk&lt;MyObject&gt;(relaxed = true)：手动mock出来的MyObject对象行为带有默认值</li>
+</ul>
+<h2 id="mock单例对象"><a href="#mock单例对象" class="headerlink" title="mock单例对象"></a>mock单例对象</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">object</span> RequestContext &#123;</span><br><span class="line">	<span class="keyword">val</span> currentUser: <span class="built_in">Int</span> = <span class="number">12</span></span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">test</span><span class="params">()</span></span> &#123;</span><br><span class="line">  mockkObject(RequestContext)</span><br><span class="line">  every &#123; RequestContext.currentUser &#125; returns <span class="number">1</span></span><br><span class="line">  println(RequestContext.currentUser) <span class="comment">// 输出1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>值得一提的是，mock枚举对象也是通过mockkObject完成，毕竟，每个枚举项就是一个单例。</p>
+</blockquote>
+<h2 id="mock静态方法"><a href="#mock静态方法" class="headerlink" title="mock静态方法"></a>mock静态方法</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">object</span> RequestContext &#123;</span><br><span class="line">  <span class="meta">@JvmStatic</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> <span class="title">getUserId</span><span class="params">()</span></span> = userIdTL.<span class="keyword">get</span>()</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="meta">@Test</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">test</span><span class="params">()</span></span> &#123;</span><br><span class="line">  mockkStatic(RequestContext::getUserId)</span><br><span class="line">  every &#123; RequestContext.getUserId() &#125; returns <span class="number">1</span></span><br><span class="line">  println(RequestContext.getUserId()) <span class="comment">// 输出1</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="mock构造方法"><a href="#mock构造方法" class="headerlink" title="mock构造方法"></a>mock构造方法</h2><p>比如下面这个，MembershipLevelStrategySelector创建，然后调用select()方法，我想要mock select()方法的行为，就要mockMembershipLevelStrategySelector的构造方法</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">doRedeem</span><span class="params">(currentUser: <span class="type">Int</span>, currentAward: <span class="type">InvitationAwardModel</span>)</span></span> &#123;</span><br><span class="line">  ... ...</span><br><span class="line">  MembershipLevelStrategySelector(existSubscription, addPrivilegedBo).select().handle()</span><br><span class="line">  ... ...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>于是mock这样写</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">mockkConstructor(MembershipLevelStrategySelector::<span class="class"><span class="keyword">class</span>)</span></span><br><span class="line">every &#123; anyConstructed&lt;MembershipLevelStrategySelector&gt;().select() &#125; returns mockk&lt;AddPrivilegedStrategy&gt;(relaxed = <span class="literal">true</span>)</span><br></pre></td></tr></table></figure>
+
+<h2 id="与SpringBoot集成"><a href="#与SpringBoot集成" class="headerlink" title="与SpringBoot集成"></a>与SpringBoot集成</h2><p>有<a target="_blank" rel="noopener" href="https://github.com/Ninja-Squad/springmockk">springmock</a>项目为MockK集成到SpringBoot中提供支持，主要是支持@MockKBean注解啦。</p>
+<h2 id="其它"><a href="#其它" class="headerlink" title="其它"></a>其它</h2><p>还有功能如下，不再详述，详情参考<a target="_blank" rel="noopener" href="https://mockk.io/">官方手册</a></p>
+<ul>
+<li>mock链式调用，即一次性mock<code>a.method1().method2()</code>，而不需要单独mock</li>
+<li>带有层次结构的mock</li>
+<li>带有顺序的verify</li>
+<li>verify某个方法未被调用（很有用）</li>
+<li>自定义answer等</li>
+</ul>
+<h1 id="AssertK"><a href="#AssertK" class="headerlink" title="AssertK"></a>AssertK</h1><p>与AssertJ对应的，是AssertK。下面展示简单用法，具体参考<a target="_blank" rel="noopener" href="https://github.com/willowtreeapps/assertk">官方手册</a></p>
+<h2 id="常规"><a href="#常规" class="headerlink" title="常规"></a>常规</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">assertThat(person.name).isEqualTo(<span class="string">&quot;Hello&quot;</span>)</span><br><span class="line">assertThat(person.age, <span class="string">&quot;age&quot;</span>).isGreaterThan(<span class="number">20</span>) <span class="comment">// age是报错时的显示名</span></span><br><span class="line">assertThat(nullString).isNotNull().hasLength(<span class="number">4</span>) <span class="comment">// 可空判断和字符串判断</span></span><br><span class="line">assertThat(string).all &#123;</span><br><span class="line">    startsWith(<span class="string">&quot;L&quot;</span>)</span><br><span class="line">    hasLength(<span class="number">3</span>)</span><br><span class="line">&#125; <span class="comment">// 多个同时判断</span></span><br><span class="line">assertAll &#123;</span><br><span class="line">    assertThat(<span class="literal">false</span>).isTrue()</span><br><span class="line">    assertThat(<span class="literal">true</span>).isFalse()</span><br><span class="line">&#125; <span class="comment">// 更通用的多个同时判断</span></span><br></pre></td></tr></table></figure>
+
+<h2 id="错误判断"><a href="#错误判断" class="headerlink" title="错误判断"></a>错误判断</h2><figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">assertThat &#123; <span class="keyword">throw</span> Exception(<span class="string">&quot;error&quot;</span>) &#125;.isFailure().hasMessage(<span class="string">&quot;wrong&quot;</span>)</span><br><span class="line">assertThat &#123; <span class="keyword">throw</span> Exception(<span class="string">&quot;error&quot;</span>) &#125;.isFailure().matchPreticate &#123;</span><br><span class="line">  <span class="comment">// 自己的判断</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>个人认为断言库的两个关键点是使用的简单性和报错信息的展示，AssertK做的都还不错。</p>
+<p>如果觉得不够用，也有自定义断言可选。</p>
+</blockquote>
+<h1 id="Spring-Boot-Test"><a href="#Spring-Boot-Test" class="headerlink" title="Spring Boot Test"></a>Spring Boot Test</h1><p>SpringBoot的test模块，默认包含的测试工具JUnit5、Mockito、AssertJ。相对于此，额外的功能是提供Spring上下文。</p>
+<h2 id="SpringBootTest"><a href="#SpringBootTest" class="headerlink" title="@SpringBootTest"></a>@SpringBootTest</h2><p>在测试类上添加此注解是最为简单的方式。它做了如下几件事</p>
+<ul>
+<li><p>通过SpringApplication创建ApplicationContext</p>
+</li>
+<li><p>默认情况下它不会启动server。但是可以通过webEnvironment指定环境，默认为MOCK</p>
+<ul>
+<li><p>MOCK：创建一个web类型的ApplicationContext、一个web类型的Environment。SpringBoot内嵌的Server不会启动。如果类路径中没有web相关的类可提供。则回滚创建一个非web的ApplicationContext。</p>
+<p>可以结合@AutoConfigureMockMvc和@AutoConfigWebTestClient使用。前者提供一个服务mock，后者提供一个客户端mock终端</p>
+</li>
+<li><p>RANDOM_PORT：创建WebApplicationContext，创建真实的Server，内嵌Server被启动，端口随机</p>
+</li>
+<li><p>DEFINED_PORT：同上，只不过端口跟随配置文件</p>
+</li>
+<li><p>NONE：创建普通的ApplicationContext</p>
+</li>
+</ul>
+</li>
+<li><p>当Spring MVC、Spring Webflux任何一个被检测到，就创建对应的web环境。如果都存在，则创建MVC环境。此时想要使用webflux，只能@SpringBootTest(properties = “spring.main.web-application-type=reactive”)</p>
+</li>
+</ul>
+<p>可见，@SpringBootTest非常重，会扫描并加载所有Bean。但实际我们往往只会测试一部分内容，对此Spring提供了部分装载的功能，相当于@SpringBootTest的子集。它基于Spring的自动配置机制，现有支持可在<a target="_blank" rel="noopener" href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html#features.testing.spring-boot-applications.autoconfigured-tests">这里查看</a>。</p>
+<p>依据实际使用的经验，Spring提供的测试机制并不友好，往往过于复杂，所以能不用就不用。相反，它更适合集成测试时使用，而不是单元测试。</p>
+<h2 id="MockBean和-SpyBean"><a href="#MockBean和-SpyBean" class="headerlink" title="@MockBean和@SpyBean"></a>@MockBean和@SpyBean</h2><p>被此二者注解的属性，会使用Mockito生成一个mock对象，然后注入到容器中，其他地方可以自由注入。以@MockBean为例，它有如下特性</p>
+<ul>
+<li><p>使用@SpringBootTest时，该功能默认开启。其它情况使用时，需要手动开启。添加两个监听器</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ContextConfiguration(classes = MyConfig.class)</span></span><br><span class="line"><span class="meta">@TestExecutionListeners(&#123; MockitoTestExecutionListener.class, ResetMocksTestExecutionListener.class &#125;)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyTests</span> </span></span><br></pre></td></tr></table></figure></li>
+<li><p>它定义的是Mockito的Mock</p>
+</li>
+<li><p>每个test方法结束后，被Mock的Bean会被reset</p>
+</li>
+<li><p>例子如下：Reverser使用真实对象；RemoteService使用Mock出来的Bean(覆盖原对象中的Bean)</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@SpringBootTest</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">MyTests</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> Reverser reverser;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@MockBean</span></span><br><span class="line">  <span class="keyword">private</span> RemoteService remoteService;</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  void exampleTest() &#123;</span><br><span class="line">    given(<span class="keyword">this</span>.remoteService.getValue()).willReturn(<span class="string">&quot;spring&quot;</span>);</span><br><span class="line">    String reverse = <span class="keyword">this</span>.reverser.getReverseValue(); <span class="comment">// Calls injected RemoteService</span></span><br><span class="line">    assertThat(reverse).isEqualTo(<span class="string">&quot;gnirps&quot;</span>);</span><br><span class="line">  &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+<blockquote>
+<p>前文说过，使用MockK后，换成@MockKBean，由springmock库提供支持</p>
+</blockquote>
+<h2 id="MockMvc"><a href="#MockMvc" class="headerlink" title="MockMvc"></a>MockMvc</h2><p>MockMvc是个好东西，与之相对的，是端到端测试（即服务启动，然后使用客户端手动访问）。使用它能够很好滴对Spring MVC构建的端点进行测试，同时支持Kotlin DSL，一个简单的例子</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@ControllerTest(SyncController::class)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">SyncControllerTest</span> </span>&#123;</span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> mockMvc: MockMvc</span><br><span class="line"></span><br><span class="line">  <span class="meta">@MockkBean</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> resourceService: ResourceService</span><br><span class="line"></span><br><span class="line">  <span class="meta">@Test</span></span><br><span class="line">  <span class="function"><span class="keyword">fun</span> `test`<span class="params">()</span></span> &#123;</span><br><span class="line">    mockMvc.post(<span class="string">&quot;/v2/resources/push&quot;</span>) &#123;</span><br><span class="line">      contentType = MediaType.APPLICATION_JSON</span><br><span class="line">      content = PushReqV2Dto().apply &#123; resources = <span class="literal">null</span> &#125;.toJsonString()</span><br><span class="line">    &#125;.andExpect &#123;</span><br><span class="line">      status &#123;</span><br><span class="line">        isBadRequest()</span><br><span class="line">      &#125;</span><br><span class="line">      header &#123;</span><br><span class="line">        exists(<span class="string">&quot;TOKEN&quot;</span>)</span><br><span class="line">      &#125;</span><br><span class="line">      content &#123;</span><br><span class="line">        contentType(MediaType.APPLICATION_JSON)</span><br><span class="line">      &#125;</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>DSL的使用也相当简单，整体而言包括两个</p>
+<ul>
+<li>填充请求参数<ul>
+<li>请求方式：get、post，或者中性的perform</li>
+<li>请求路径</li>
+<li>请求参数：头部、参数、body</li>
+</ul>
+</li>
+<li>填充预期内容<ul>
+<li>状态码</li>
+<li>响应结果：头部、body等</li>
+</ul>
+</li>
+</ul>
+<p>通过代码提示，也能知道，有三种类型的API调用</p>
+<ul>
+<li>andReturn()：返回执行结果，以MvcResult封装</li>
+<li>andExpect{}：DSL，填充一些断言</li>
+<li>andDo{}：DSL，这里可以做一些中性的实行，比如打印出响应结果。</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220305125110742.png" alt="image-20220305125110742"></p>
+<blockquote>
+<p>这是Spring构建的Web应用的测试利器</p>
+<p>但正如<a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/docs/5.3.16/reference/html/testing.html#spring-mvc-test-framework">Spring手册</a>所分类的那样，其实这玩意儿被分类在集成测试的</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220305125736965.png" alt="image-20220305125736965" style="zoom:80%;" />
+</blockquote>
+<h1 id="一点想法"><a href="#一点想法" class="headerlink" title="一点想法"></a>一点想法</h1><p>有个感悟：眼高手低。收集资料时想着有好多东西可以写；写的时候又发现如果要把那些都写完，衍生出来的知识太多了，根本无暇顾及。于是一减再减，成了现在看到的这个样子，不甚满意。但总好过没有。</p>
+<h1 id="参考文档"><a href="#参考文档" class="headerlink" title="参考文档"></a>参考文档</h1><ul>
+<li><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/101905583">TestNG 与 Junit 对比，测试框架如何选择？</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://junit.org/junit5/docs/current/user-guide/">JUnit用户手册</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://mockk.io/">MockK用户手册</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/Ninja-Squad/springmockk">springmockk主页</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://github.com/willowtreeapps/assertk">AssertK主页</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://docs.spring.io/spring-boot/docs/current/reference/html/features.html">Spring Boot Test</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://docs.spring.io/spring-framework/docs/5.3.16/reference/html/testing.html#unit-testing">Spring Test</a></p>
+</li>
+</ul>
+
       
     </div>
 
@@ -1386,97 +1877,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/12/07/SpringBoot/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
-      <meta itemprop="name" content="果冻">
-      <meta itemprop="description" content="果冻的碎碎念">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="半中二青年">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/12/07/SpringBoot/" class="post-title-link" itemprop="url">Spring源码剖析 - SpringBoot启动流程</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2021-12-07 21:48:58" itemprop="dateCreated datePublished" datetime="2021-12-07T21:48:58+08:00">2021-12-07</time>
-            </span>
-              <span class="post-meta-item">
-                <span class="post-meta-item-icon">
-                  <i class="far fa-calendar-check"></i>
-                </span>
-                <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2021-12-08 11:58:18" itemprop="dateModified" datetime="2021-12-08T11:58:18+08:00">2021-12-08</time>
-              </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/Spring/" itemprop="url" rel="index"><span itemprop="name">Spring</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2021/12/07/SpringBoot/" class="post-meta-item leancloud_visitors" data-flag-title="Spring源码剖析 - SpringBoot启动流程" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <blockquote>
-<p>在Spring源码剖析的前三篇文章，我们介绍了ApplicationContext、Bean相关内容、BeanPostProcessor的内容；但从普遍反馈和自己事后阅读的体验来看，文章过长，没有重点，条理并不是特别清楚。想必是写作方式出了问题，最突出的莫过于流水账式写法，虽然写作的目的并不一定是写出好的文章，而是主要服务自己，但时间一长，自己也是个普通的读者，同样会看不大懂。</p>
-<p>因此，写作方法是需要变更了：要突出条理和重点，如需大段源码讲解，可在文章最后增加源码解析一节，读者可选读。也就是说，长度还是那么长，但可读性增强了很多。</p>
-</blockquote>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/12/07/SpringBoot/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1548,7 +1948,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">98</span>
+          <span class="site-state-item-count">99</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -1561,7 +1961,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">66</span>
+        <span class="site-state-item-count">69</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
