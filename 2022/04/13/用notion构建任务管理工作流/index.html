@@ -1,0 +1,757 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="项目开发时，会将整个项目各生命周期工作一一列出，总体规划，使得进度可控。 对个人而言，是一样的道理。凡是预则立，不预则废。想做的事很多，东一榔头西一锤子不是办法，得有规划。 最近发现之前基于notion构建的计划模板已经不够用了，于是又折腾个新版本。  总的来看，我的个人任务管理大概分为三个阶段  阶段零：使用有道云笔记做简单记录，列举近期要做的事项，极其简单，相当于没有规划 阶段一：使用not">
+<meta property="og:type" content="article">
+<meta property="og:title" content="用notion构建个人任务管理工作流">
+<meta property="og:url" content="https://zou8944.com/2022/04/13/%E7%94%A8notion%E6%9E%84%E5%BB%BA%E4%BB%BB%E5%8A%A1%E7%AE%A1%E7%90%86%E5%B7%A5%E4%BD%9C%E6%B5%81/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="项目开发时，会将整个项目各生命周期工作一一列出，总体规划，使得进度可控。 对个人而言，是一样的道理。凡是预则立，不预则废。想做的事很多，东一榔头西一锤子不是办法，得有规划。 最近发现之前基于notion构建的计划模板已经不够用了，于是又折腾个新版本。  总的来看，我的个人任务管理大概分为三个阶段  阶段零：使用有道云笔记做简单记录，列举近期要做的事项，极其简单，相当于没有规划 阶段一：使用not">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220413233852108.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220413234420173.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220413234516957.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414002005304.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414002147488.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414002214045.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414002238962.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414002949572.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414003113294.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414003258173.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414004222259.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414004312890.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414004442685.png">
+<meta property="article:published_time" content="2022-04-13T15:19:33.000Z">
+<meta property="article:modified_time" content="2022-04-13T16:45:43.588Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="notion">
+<meta property="article:tag" content="任务管理">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220413233852108.png">
+
+<link rel="canonical" href="https://zou8944.com/2022/04/13/%E7%94%A8notion%E6%9E%84%E5%BB%BA%E4%BB%BB%E5%8A%A1%E7%AE%A1%E7%90%86%E5%B7%A5%E4%BD%9C%E6%B5%81/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>用notion构建个人任务管理工作流 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">102</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">30</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">73</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2022/04/13/%E7%94%A8notion%E6%9E%84%E5%BB%BA%E4%BB%BB%E5%8A%A1%E7%AE%A1%E7%90%86%E5%B7%A5%E4%BD%9C%E6%B5%81/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          用notion构建个人任务管理工作流
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-04-13 23:19:33" itemprop="dateCreated datePublished" datetime="2022-04-13T23:19:33+08:00">2022-04-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-04-14 00:45:43" itemprop="dateModified" datetime="2022-04-14T00:45:43+08:00">2022-04-14</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E6%96%B9%E6%B3%95%E8%AE%BA/" itemprop="url" rel="index"><span itemprop="name">方法论</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2022/04/13/%E7%94%A8notion%E6%9E%84%E5%BB%BA%E4%BB%BB%E5%8A%A1%E7%AE%A1%E7%90%86%E5%B7%A5%E4%BD%9C%E6%B5%81/" class="post-meta-item leancloud_visitors" data-flag-title="用notion构建个人任务管理工作流" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>项目开发时，会将整个项目各生命周期工作一一列出，总体规划，使得进度可控。</p>
+<p>对个人而言，是一样的道理。凡是预则立，不预则废。想做的事很多，东一榔头西一锤子不是办法，得有规划。</p>
+<p>最近发现之前基于notion构建的计划模板已经不够用了，于是又折腾个新版本。</p>
+</blockquote>
+<p>总的来看，我的个人任务管理大概分为三个阶段</p>
+<ul>
+<li>阶段零：使用有道云笔记做简单记录，列举近期要做的事项，极其简单，相当于没有规划</li>
+<li>阶段一：使用notion做了一个年度计划、月计划、周计划模板，预先填好一周要做的事，做完后勾掉</li>
+<li>阶段二：使用notion一年半后，根据新需求基于notion的database重新构建的任务模板</li>
+</ul>
+<span id="more"></span>
+
+<h1 id="旧的方式"><a href="#旧的方式" class="headerlink" title="旧的方式"></a>旧的方式</h1><p>阶段零已经很久远了，无从考证。阶段一的月计划模板大概如下。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220413233852108.png" alt="image-20220413233852108"></p>
+<p>它主要有一下几个方面</p>
+<ul>
+<li><p>月度目标：列出了本月期望达成的目标</p>
+</li>
+<li><p>本月书单：本月待看书籍</p>
+</li>
+<li><p>本月片单：本月待看电影</p>
+</li>
+<li><p>本月博客：本月待写博客</p>
+</li>
+<li><p>周计划：本周每天预计的任务，比如下面是三月第四周的任务规划及完成情况</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220413234420173.png" alt="image-20220413234420173"></p>
+</li>
+<li><p>临时记录：记录一下临时想法</p>
+</li>
+<li><p>四象限图：一个任务池，按照任务的优先级程度放在里面，周计划中的任务从其中拖动而来。展开大概是这样</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220413234516957.png"></p>
+</li>
+</ul>
+<h2 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h2><p>这种方式总体还算不错，但有一个很大的问题：随着时间的增长，任务池累积得越来越多。本月书单、本月博客、本月片单的量在增大，远远不是本月能够完成的；四象限图任务池中的任务开始爆炸，很多任务可能半年也排不上号。这些情况，会让执行时失焦，还会产生焦虑。因此有待解决。</p>
+<p>而且，这种管理方式，解决的是极短期规划和永久记录的问题，并不能解决长久规划的问题。</p>
+<h1 id="新的方式"><a href="#新的方式" class="headerlink" title="新的方式"></a>新的方式</h1><h2 id="需求分析"><a href="#需求分析" class="headerlink" title="需求分析"></a>需求分析</h2><p>一言以蔽之，想要的其实就是个人版的任务管理工具。即个人版的TAPD。</p>
+<ul>
+<li>任务需要有几个属性：优先级、计划开始时间、计划结束时间。优先级用于判断紧急程度；开始结束时间用于长期规划</li>
+<li>支持甘特图：能够直观地看到任务排期</li>
+<li>支持看板：它取代前一个版本周计划的作用。随时能够知道当前需要做的事</li>
+</ul>
+<h2 id="工具选择"><a href="#工具选择" class="headerlink" title="工具选择"></a>工具选择</h2><p>市面上工具超多：Things、Todoist、Omini Focus、Agenda，更进一步的有Trello等，不过前面说的这些在甘特图这一点上无法满足。当然也可以选择各种table：黑怕云(停服了)、明道云、Foxtable(还不支持甘特图)。想了一圈，想起来notion的database有timeline视图，就是简单的甘特图呀。</p>
+<p>用notion还有一个最大的好处：block关联和page关联。输出的文档可直接关联到对应任务。</p>
+<h2 id="总体设计-思路"><a href="#总体设计-思路" class="headerlink" title="总体设计 - 思路"></a>总体设计 - 思路</h2><p><strong>分级</strong></p>
+<p>任何<strong>具体任务</strong>，都服务于更<strong>高一级的任务</strong>，背后都有一个更高级的<strong>目标</strong>。这其实可以结合OKR和目标笔记的想法，创建三个database。</p>
+<ul>
+<li>目标：想要达成的目的，比如每记开发</li>
+<li>一级拆分：相对大块和抽象的拆分，比如针对测试的重构</li>
+<li>具体任务：能够用来实施的最小单位，比如添加同步逻辑的测试代码。所有的任务规划、状态转移都在这个层级上操作。</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414002005304.png" alt="image-20220414002005304"></p>
+<p><strong>状态转移</strong></p>
+<p>将任务分为如下几种状态</p>
+<ul>
+<li><p>暂缓</p>
+<p>已加入任务池，但还没有计划执行</p>
+</li>
+<li><p>就绪</p>
+<p>任务已准备就绪，待执行。执行中的任务清空后，将此状态的任务流转过去</p>
+</li>
+<li><p>执行中</p>
+<p>执行中的任务</p>
+</li>
+<li><p>长期执行中</p>
+<p>当一个任务在执行中停留太久，流转到长期执行中</p>
+</li>
+<li><p>回顾中</p>
+<p>任务已执行完成，但还没做回顾，如笔记整理等。</p>
+</li>
+<li><p>已完成</p>
+<p>彻底做完的任务</p>
+</li>
+</ul>
+<h2 id="构建"><a href="#构建" class="headerlink" title="构建"></a>构建</h2><p>构建效果如下：</p>
+<h3 id="database-1-目标"><a href="#database-1-目标" class="headerlink" title="database 1 - 目标"></a>database 1 - 目标</h3><p>目标只包含名称和简要描述：</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414002147488.png" alt="image-20220414002147488"></p>
+<h3 id="database-2-任务分类"><a href="#database-2-任务分类" class="headerlink" title="database 2 - 任务分类"></a>database 2 - 任务分类</h3><p>任务分类与目标，是多对一的关系</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414002214045.png" alt="image-20220414002214045"></p>
+<h3 id="database-3-任务池"><a href="#database-3-任务池" class="headerlink" title="database 3 - 任务池"></a>database 3 - 任务池</h3><p>任务池是重点</p>
+<ul>
+<li>与任务分类是多对一的关系</li>
+<li>包含字段：重要性、执行状态、分类、计划时间段、文档关联、完成时间等。<ul>
+<li>执行状态上面已经说过了，就那几种</li>
+<li>重要性即四象限图</li>
+<li>任务分类，用于标识任务另一个层级的重要性：不同类型的任务所产生的影响是不一样的，工作任务和学习任务要均衡</li>
+<li>计划时间段，用于做规划，甘特图依据此</li>
+<li>完成时间，只为得到一个完成日历。它是有计划时间段列公式计算得来，取得是其结束时间。</li>
+</ul>
+</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414002238962.png" alt="image-20220414002238962"></p>
+<p>后面介绍基于database 3构建的各种视图</p>
+<h3 id="database-3-甘特图"><a href="#database-3-甘特图" class="headerlink" title="database 3 - 甘特图"></a>database 3 - 甘特图</h3><p>这是最需要的功能，在时间跨度上对所有任务进行规划。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414002949572.png" alt="image-20220414002949572"></p>
+<h3 id="database-3-状态看板"><a href="#database-3-状态看板" class="headerlink" title="database 3 - 状态看板"></a>database 3 - 状态看板</h3><p>这里可以清除地看到当前应该做什么。关注的是：执行中、长期执行中、回顾中三项</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414003113294.png" alt="image-20220414003113294"></p>
+<h3 id="database-3-完成日历"><a href="#database-3-完成日历" class="headerlink" title="database 3 - 完成日历"></a>database 3 - 完成日历</h3><p>这个视图主要用于回顾工作用。写年中总结、季度汇报时，从这里能够方便地知道自己做了什么。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414003258173.png" alt="image-20220414003258173"></p>
+<h1 id="Notion-tips"><a href="#Notion-tips" class="headerlink" title="Notion tips"></a>Notion tips</h1><p>Notion比你想象中的强大，却也每那么强。折腾过程中几个值得分享的点。</p>
+<ul>
+<li><p>使用Notion Enhancer。有它和没它，真的差很多，几个功能点还挺好用</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414004222259.png" alt="image-20220414004222259"></p>
+<ul>
+<li>悬浮侧边栏，解决了notion不支持目录固定的问题</li>
+<li>缩进提示线，不再头晕</li>
+<li>界面缩放，可以显示更多内容</li>
+<li>字数统计</li>
+<li>增强icon库</li>
+<li>代码行号</li>
+<li>一键回到顶部</li>
+</ul>
+</li>
+<li><p>使用分栏，让目录更加简洁</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414004312890.png" alt="image-20220414004312890" style="zoom:80%;" /></li>
+<li><p>为每个页面设置图标，而不是默认图，感官好很多。有了notion enhancer，图标的选择也更加多样。如果不够用，可以<a target="_blank" rel="noopener" href="https://icons8.com/icons/set/go">从这里找</a></p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220414004442685.png" alt="image-20220414004442685" style="zoom:80%;" /></li>
+<li><p>尽可能使用引用，方便很多</p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/notion/" rel="tag"># notion</a>
+              <a href="/tags/%E4%BB%BB%E5%8A%A1%E7%AE%A1%E7%90%86/" rel="tag"># 任务管理</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/03/19/Spring%E5%AF%B9Kotlin%E7%9A%84%E4%B8%8D%E5%8F%8B%E5%A5%BD/" rel="prev" title="用Kotlin写Spring的正确方式">
+      <i class="fa fa-chevron-left"></i> 用Kotlin写Spring的正确方式
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%97%A7%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="nav-number">1.</span> <span class="nav-text">旧的方式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98"><span class="nav-number">1.1.</span> <span class="nav-text">问题</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%B0%E7%9A%84%E6%96%B9%E5%BC%8F"><span class="nav-number">2.</span> <span class="nav-text">新的方式</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9C%80%E6%B1%82%E5%88%86%E6%9E%90"><span class="nav-number">2.1.</span> <span class="nav-text">需求分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B7%A5%E5%85%B7%E9%80%89%E6%8B%A9"><span class="nav-number">2.2.</span> <span class="nav-text">工具选择</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E4%BD%93%E8%AE%BE%E8%AE%A1-%E6%80%9D%E8%B7%AF"><span class="nav-number">2.3.</span> <span class="nav-text">总体设计 - 思路</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%9E%84%E5%BB%BA"><span class="nav-number">2.4.</span> <span class="nav-text">构建</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#database-1-%E7%9B%AE%E6%A0%87"><span class="nav-number">2.4.1.</span> <span class="nav-text">database 1 - 目标</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#database-2-%E4%BB%BB%E5%8A%A1%E5%88%86%E7%B1%BB"><span class="nav-number">2.4.2.</span> <span class="nav-text">database 2 - 任务分类</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#database-3-%E4%BB%BB%E5%8A%A1%E6%B1%A0"><span class="nav-number">2.4.3.</span> <span class="nav-text">database 3 - 任务池</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#database-3-%E7%94%98%E7%89%B9%E5%9B%BE"><span class="nav-number">2.4.4.</span> <span class="nav-text">database 3 - 甘特图</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#database-3-%E7%8A%B6%E6%80%81%E7%9C%8B%E6%9D%BF"><span class="nav-number">2.4.5.</span> <span class="nav-text">database 3 - 状态看板</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#database-3-%E5%AE%8C%E6%88%90%E6%97%A5%E5%8E%86"><span class="nav-number">2.4.6.</span> <span class="nav-text">database 3 - 完成日历</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#Notion-tips"><span class="nav-number">3.</span> <span class="nav-text">Notion tips</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">102</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">30</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">73</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
