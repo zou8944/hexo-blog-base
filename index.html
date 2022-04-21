@@ -226,7 +226,7 @@
               <span class="post-meta-item-text">发表于</span>
               
 
-              <time title="创建时间：2022-04-21 14:55:15 / 修改时间：17:09:53" itemprop="dateCreated datePublished" datetime="2022-04-21T14:55:15+08:00">2022-04-21</time>
+              <time title="创建时间：2022-04-21 14:55:15 / 修改时间：17:15:30" itemprop="dateCreated datePublished" datetime="2022-04-21T14:55:15+08:00">2022-04-21</time>
             </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -259,98 +259,14 @@
           <blockquote>
 <p>Infrastructure as Code，将基础设施以代码的形式管理起来，放在git仓库中。Kubernetes的清单文件就是一种<br>gitops = Infrastructure as Code + version control + Pull/Push Request + CI/CD流水线。即，将维护在git仓库中的基础设施代码，以git仓库的方式进行开发、权限管理，再在CI中做正确性检查，然后CD交付到具体基础设施。<br>此处，需要维护的基础设施，即Kubernetes。</p>
 </blockquote>
-<h1 id="问题"><a href="#问题" class="headerlink" title="问题"></a>问题</h1><p>当前应用发布方式。</p>
-<ol>
-<li>应用创建：在仓库中创建应用，生成清单文件，kubectl apply到目标集群</li>
-<li>CI：镜像打包上传远端仓库后，通过kubectl edit Deployment set 命令修改目标镜像</li>
-</ol>
-<p>这样做的缺点</p>
-<ol>
-<li>kubectl属于主动push，多个集群就要维护多套配置</li>
-<li>当前的清单文件仓库鸡肋，只能够初始化应用，无法跟踪应用状态</li>
-<li>Runner依赖：依赖于有kubectl和配置的Runner</li>
-<li>Kubernetes访问配置文件外泄，安全性不高</li>
-</ol>
-<p>这个问题的解决方式——gitops</p>
-<h1 id="选型"><a href="#选型" class="headerlink" title="选型"></a>选型</h1><p>目前三种技术比较流行：argo cd、jenkins x、flux cd，考虑到我们使用gitlab作为版本控制管理工具，还有gitlab kubernetes agent可供考虑。至于怎么选，只是一个CD工具而已，功能大差不差。看起来肯定是gitlab最好，最流行的是argo cd，如果我用jenkins作为流水线，可能会考虑jenkins x。而gitlab kubernetes agent仅是高级版本支持，我们使用了社区版自建，因此无缘。于是顺理成章用到了argo cd。</p>
-<h1 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h1><p>argo cd的手册算是写得很详细，按照手册做，就没问题了。这里只列出值得注意的问题</p>
-<h2 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h2><h3 id="工作原理"><a href="#工作原理" class="headerlink" title="工作原理"></a>工作原理</h3><p>argo cd基于拉模式，是安装在K8S集群内部的，而当实现一个argocd实例管理多个集群时，被管理的外部集群则不需要安装任何argocd组件，因为它是基于RBAC进行访问。</p>
-<p>其工作组件主要如下</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">zouguodong@zouguodongdeMacBook-Pro ~ % kubeoverseas get deployment -n argocd</span><br><span class="line">NAME                               READY   UP-TO-DATE   AVAILABLE   AGE</span><br><span class="line">argocd-applicationset-controller   1/1     1            1           4d17h</span><br><span class="line">argocd-redis                       1/1     1            1           4d17h</span><br><span class="line">argocd-notifications-controller    1/1     1            1           4d17h</span><br><span class="line">argocd-dex-server                  1/1     1            1           4d17h</span><br><span class="line">argocd-repo-server                 1/1     1            1           4d17h</span><br><span class="line">argocd-server                      1/1     1            1           4d17h</span><br></pre></td></tr></table></figure>
-
-<ul>
-<li>argocd-server：中枢</li>
-<li>argocd-repo-server ：git仓库的本地缓存</li>
-<li>argocd-applicationset-controller：一个k8s控制器，用于比较原版本和目标版本</li>
-<li>argocd-dex-server：一个SSO服务</li>
-<li>argocd-redis ：一次性缓存</li>
-<li>argocd-notifications-controller：给用户发送通知</li>
-</ul>
-<h3 id="argocd服务外部访问方式"><a href="#argocd服务外部访问方式" class="headerlink" title="argocd服务外部访问方式"></a>argocd服务外部访问方式</h3><p>端口转发、ingress、slb service。端口转发在我电脑上会出现自动断开的情况，不明原因。ingress倒是可以用，但在没有配置证书时，会出现无线重定向的问题。两个解决方案</p>
-<ul>
-<li>给ingress配置正确的证书</li>
-<li>关闭argocd-server的安全选项，在启动参数添加 –insecure</li>
-</ul>
-<h3 id="引用私有git仓库"><a href="#引用私有git仓库" class="headerlink" title="引用私有git仓库"></a>引用私有git仓库</h3><p>如果manifest文件来自自建git仓库，需要配置两个东西</p>
-<ul>
-<li>私钥</li>
-<li>unknown host</li>
-</ul>
-<p>具体参考<a target="_blank" rel="noopener" href="https://argo-cd.readthedocs.io/en/stable/user-guide/private-repositories/#managing-ssh-known-hosts-using-the-cli">这里</a></p>
-<h3 id="同步逻辑"><a href="#同步逻辑" class="headerlink" title="同步逻辑"></a>同步逻辑</h3><p>默认三分钟从清单仓库同步一次，但还支持UI和命令行的手动同步，以及WebHook同步（可用于CI）</p>
-<h3 id="命名问题"><a href="#命名问题" class="headerlink" title="命名问题"></a>命名问题</h3><p>argocd的应用名全局唯一。下面解释原因</p>
-<ul>
-<li>argocd只对存在于argocd命名空间下的资源进行解析和管理，应用名就是资源名</li>
-<li>根据k8s的命名规则，同一命名空间下的资源名不能相同</li>
-</ul>
-<p>这会造成一个问题：如果想用一个argocd实例管理对应两个环境的两个集群，它们是平行的世界，按理来说对应的argocd应用名也应该一致，然而现实却无法做到。因此你只能为它们添加前缀进行区分。</p>
-<h3 id="忘记密码"><a href="#忘记密码" class="headerlink" title="忘记密码"></a>忘记密码</h3><p>如果忘记管理员密码</p>
-<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath=&quot;&#123;.data.password&#125;&quot; | base64 -d; echo</span><br></pre></td></tr></table></figure>
-
-<h2 id="最佳实践"><a href="#最佳实践" class="headerlink" title="最佳实践"></a>最佳实践</h2><h3 id="使用app-of-apps"><a href="#使用app-of-apps" class="headerlink" title="使用app-of-apps"></a>使用app-of-apps</h3><p>这是官方推荐的应用安装方式。这儿有一篇<a target="_blank" rel="noopener" href="https://medium.com/dzerolabs/turbocharge-argocd-with-app-of-apps-pattern-and-kustomized-helm-ea4993190e7c">相关文章</a></p>
-<blockquote>
-<p>说白了，<a target="_blank" rel="noopener" href="https://argoproj.github.io/argo-cd/operator-manual/cluster-bootstrapping/#app-of-apps-pattern">App of Apps Pattern</a>让我们定义了一个根 ArgoCD Application（Root App）。根应用程序不是指向应用程序清单，而是指向一个文件夹，该文件夹包含Application应用程序包（子应用程序）指向的每个微服务的 YAML 定义。然后，每个微服务的ApplicationYAML 指向一个包含应用程序清单的目录。</p>
-</blockquote>
-<p>实际体验下来，这种方式最大的方便，就是只需要手动创建父应用，子应用就能够声明式创建。</p>
-<h3 id="secrets的存放方式"><a href="#secrets的存放方式" class="headerlink" title="secrets的存放方式"></a>secrets的存放方式</h3><p>k8s的secret资源，肯定是不能明文存放在版本库的。推荐使用<a target="_blank" rel="noopener" href="https://github.com/bitnami-labs/sealed-secrets">sealed-secrets</a>。它通过CRD+Server+Client的方式工作，Server负责秘钥分发、CRD转Secret资源；Client负责本地加密并创建CRD。加密时需要从Server处获取秘钥。</p>
-<h3 id="CI脚本"><a href="#CI脚本" class="headerlink" title="CI脚本"></a>CI脚本</h3><p>对gitlab ci，可以使用扩展+模板的方式达成。如下主要关注脚本修改版本库文件和kustomize edit命令的使用。需要了解git over http。且它要在docker类型的gitlab runner运行，否则会污染本地git配置</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">variables:</span></span><br><span class="line">  <span class="comment"># 用户密码在环境变量中给出</span></span><br><span class="line">  <span class="attr">GITOPS_USERNAME:</span> <span class="string">xxx</span></span><br><span class="line">  <span class="attr">GITOPS_PASSWORD:</span> <span class="string">xxx</span></span><br><span class="line">  <span class="comment"># 应用名、环境、镜像需要用户给出</span></span><br><span class="line">  <span class="attr">GITOPS_APP_NAME:</span> <span class="string">demo</span></span><br><span class="line">  <span class="attr">GITOPS_ENVIRONMENT:</span> <span class="string">prod</span></span><br><span class="line">  <span class="attr">IMAGE:</span> <span class="string">xxx</span></span><br><span class="line"></span><br><span class="line"><span class="string">.deploy-k8s:</span></span><br><span class="line">  <span class="attr">stage:</span> <span class="string">deploy</span></span><br><span class="line">  <span class="attr">image:</span> <span class="string">cnych/kustomize:v1.0</span></span><br><span class="line">  <span class="attr">tags:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">docker</span></span><br><span class="line">  <span class="attr">before_script:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">git</span> <span class="string">clone</span> <span class="string">https://$&#123;GITOPS_USERNAME&#125;:$&#123;GITOPS_PASSWORD&#125;@git.mampod.work/g1/platform/kubernetes-manifest.git</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">git</span> <span class="string">config</span> <span class="string">--global</span> <span class="string">user.name</span> <span class="string">&quot;gitops&quot;</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">git</span> <span class="string">config</span> <span class="string">--global</span> <span class="string">user.email</span> <span class="string">&quot;gitops@mampod.com&quot;</span></span><br><span class="line">  <span class="attr">script:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">git</span> <span class="string">checkout</span> <span class="string">-B</span> <span class="string">master</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">cd</span> <span class="string">kubernetes-manifest/kustomize/$&#123;GITOPS_APP_NAME&#125;/overlays/$&#123;GITOPS_ENVIRONMENT&#125;</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">kustomize</span> <span class="string">edit</span> <span class="string">set</span> <span class="string">image</span> <span class="string">$&#123;GITOPS_APP_NAME&#125;=$&#123;IMAGE&#125;:$&#123;CI_COMMIT_SHORT_SHA&#125;</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">cat</span> <span class="string">kustomization.yaml</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">git</span> <span class="string">commit</span> <span class="string">-am</span> <span class="string">&quot;[skip ci] update image of app $&#123;GITOPS_APP_NAME&#125; - $&#123;GITOPS_ENVIRONMENT&#125; to $IMAGE:$CI_COMMIT_SHORT_SHA&quot;</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">git</span> <span class="string">push</span> <span class="string">origin</span> <span class="string">master</span></span><br><span class="line"></span><br></pre></td></tr></table></figure>
-
-<h3 id="kustomize最佳实践"><a href="#kustomize最佳实践" class="headerlink" title="kustomize最佳实践"></a>kustomize最佳实践</h3><ul>
-<li>base不要有多级，一来违反kustomize默认规则，二来层数过多应用间耦合加深，也不好管理</li>
-<li>base仅定义最通用的，差异配置放overlays，方便调试，典型的差异配置如下<ul>
-<li>ingress域名、证书等</li>
-<li>deployment的亲和性、健康检查等待时间、资源分配大小等</li>
-</ul>
-</li>
-</ul>
-<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421164003128.png" alt="image-20220421164003128"></p>
-<h3 id="多集群管理"><a href="#多集群管理" class="headerlink" title="多集群管理"></a>多集群管理</h3><p>考虑到命名问题，个人认为argocd比较适合多集群分别对应不同应用的场景，而不是多集群对应不同环境；如果不介意命名，则所有场景都可以用。</p>
-<p>多集群管理时要结合project工作，能够起到资源隔离的效果。每个project，有单独的可用仓库、目标集群、角色。</p>
-<h3 id="关于datree"><a href="#关于datree" class="headerlink" title="关于datree"></a>关于datree</h3><p>datree是用于检查清单文件正确性的技术，可以直接检查kustomize。但在调试时因为遇到网络问题，检查过慢，且经常检查失败，无疾而终。</p>
-<p>不过从其作用来看，如果复杂度上去，是可以考虑引入的。</p>
-<h2 id="更大的潜力"><a href="#更大的潜力" class="headerlink" title="更大的潜力"></a>更大的潜力</h2><p>翻看argocd手册，列举了支持的功能。看起来，它能做SSO集成、能做权限管理、能查看应用启停状态、能方便地查看日志。<strong>那是不是对普通开发人员，可以用它对k8s做屏蔽</strong>🤔。</p>
-<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421170307442.png" alt="image-20220421170307442" style="zoom:80%;" />
-
-
-
-<h1 id="知识地图"><a href="#知识地图" class="headerlink" title="知识地图"></a>知识地图</h1><p>按照下面的路线学习了解，能够对使用argo cd搭建gitops有比较形象的认识。</p>
-<h2 id="gitops"><a href="#gitops" class="headerlink" title="gitops"></a>gitops</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://www.gitops.tech/">官网</a> </li>
-<li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=f5EpcWp0THw">Nana的视频介绍</a> </li>
-</ul>
-<h2 id="argo-cd"><a href="#argo-cd" class="headerlink" title="argo cd"></a>argo cd</h2><ul>
-<li><a target="_blank" rel="noopener" href="https://argo-cd.readthedocs.io/en/stable/">官方手册（建议通篇浏览）</a> </li>
-<li><a target="_blank" rel="noopener" href="https://www.youtube.com/watch?v=MeU5_k9ssrs">Nana的视频介绍</a></li>
-</ul>
-<h2 id="gitlab-kubernetes-agent"><a href="#gitlab-kubernetes-agent" class="headerlink" title="gitlab kubernetes agent"></a>gitlab kubernetes agent</h2><p>资料较少，如果只看官方手册会让人发晕，加上下面列举的两篇文章会好得多。</p>
-<p>重点是明白它的架构和工作原理，否则根本不知道在配置什么</p>
-<ul>
-<li><a target="_blank" rel="noopener" href="https://docs.gitlab.com/ee/user/clusters/agent/gitops.html">官方手册</a></li>
-<li><a target="_blank" rel="noopener" href="https://xie.infoq.cn/article/45bfd162146b3b5bf47ae0faf">写的不错的文章1</a></li>
-<li><a target="_blank" rel="noopener" href="https://xie.infoq.cn/article/45bfd162146b3b5bf47ae0faf">写的不错的文章2</a></li>
-</ul>
-
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2022/04/21/gitops%E5%AE%9E%E8%B7%B5%E6%80%BB%E7%BB%93/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
