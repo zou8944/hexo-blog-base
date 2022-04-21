@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="记一记k3s+rancher搭建遇到的问题，使用感受。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="k3s+rancher初体验">
+<meta property="og:url" content="https://zou8944.com/2022/04/21/k3s-rancher%E5%88%9D%E4%BD%93%E9%AA%8C/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="记一记k3s+rancher搭建遇到的问题，使用感受。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421185559558.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421185707248.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421185748342.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421191229102.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421191549227.png">
+<meta property="article:published_time" content="2022-04-21T09:16:44.000Z">
+<meta property="article:modified_time" content="2022-04-21T11:19:58.463Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="rancher">
+<meta property="article:tag" content="k3s">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421185559558.png">
+
+<link rel="canonical" href="https://zou8944.com/2022/04/21/k3s-rancher%E5%88%9D%E4%BD%93%E9%AA%8C/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>k3s+rancher初体验 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">104</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">30</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">76</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2022/04/21/k3s-rancher%E5%88%9D%E4%BD%93%E9%AA%8C/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          k3s+rancher初体验
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-04-21 17:16:44 / 修改时间：19:19:58" itemprop="dateCreated datePublished" datetime="2022-04-21T17:16:44+08:00">2022-04-21</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%90%E7%BB%B4/" itemprop="url" rel="index"><span itemprop="name">运维</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2022/04/21/k3s-rancher%E5%88%9D%E4%BD%93%E9%AA%8C/" class="post-meta-item leancloud_visitors" data-flag-title="k3s+rancher初体验" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>记一记k3s+rancher搭建遇到的问题，使用感受。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="事情经过"><a href="#事情经过" class="headerlink" title="事情经过"></a>事情经过</h1><p>因为一个临时的发布需求，购买了一台临时的海外ECS。虽然都在阿里云上，但由于不同地域，因此并不能将其加到现有ACK管理，于是我有以下几种选择</p>
+<ul>
+<li><p>方案一：ECS裸用，使用进程管理工具如superctl对应用发布进行管理；或者直接用docker管理</p>
+</li>
+<li><p>方案二：新建同地域ACK，将ECS作为工作节点加入</p>
+</li>
+<li><p>方案三：也别用ECS了，直接建一个该地域的ASK吧</p>
+</li>
+<li><p>方案四：自建K8s，但要足够轻量</p>
+</li>
+</ul>
+<p>方案一不好管控，不停机方案比较难搞；方案二、方案三的附加费用可能比这台ECS还高；方案四，有k3s这种易于安装，占用资源低的k8s版本，值得一试。</p>
+<p>ACK有Web UI，新建的k3s也得有一个UI管理界面吧，不然命令行管理可不大人道。于是又有几个选择</p>
+<ul>
+<li>lens</li>
+<li>rancher</li>
+<li>kubesphere</li>
+</ul>
+<p>lens的优点在于简洁，但它是本地客户端，无法给别人使用，且资源编辑时只能编辑yaml文件，不够友好；rancher和阿里云提供的Web UI类似，将k8s资源一一映射为具体的UI组件；kubesphere更加抽象，对无k8s基础的人来过更加友好。</p>
+<p>rancher和k3s是一家，选用rancher。至此，我们有了k3s+rancher这对组合</p>
+<h1 id="手册"><a href="#手册" class="headerlink" title="手册"></a>手册</h1><p>使用前先读手册，可以避免绝大多数坑，不要想一下子成功，那样只会花费更多时间，还会怀疑自己的智商，或者抱怨设计不易用。易用不易用，你已经用了。</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.rancher.cn/docs/k3s/_index/">K3S</a> ，重点关注几个点<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.rancher.cn/docs/k3s/quick-start/_index">安装方式</a> ，注意有国内安装方式</li>
+<li>安装好后的<a target="_blank" rel="noopener" href="https://docs.rancher.cn/docs/k3s/cluster-access/_index">集群访问方式</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.rancher.cn/docs/k3s/storage/_index">卷和存储</a> ：了解如何使用本地磁盘作为存储卷（而不是云盘）</li>
+<li><a target="_blank" rel="noopener" href="https://docs.rancher.cn/docs/k3s/networking/_index">网络</a>：了解如何使用本地端口暴露一个Service（而不是负载均衡）</li>
+</ul>
+</li>
+<li><a target="_blank" rel="noopener" href="https://docs.rancher.cn/rancher2.5/">Rancher</a> ，关注以下<ul>
+<li><a target="_blank" rel="noopener" href="https://docs.rancher.cn/docs/rancher2.5/overview/architecture/_index">Rancher是什么</a>：Rancher是一个容器编排管理平台——管理管理容器的平台。核心优势是能够托管多个平台的K8s</li>
+<li><a target="_blank" rel="noopener" href="https://docs.rancher.cn/docs/rancher2.5/installation/other-installation-methods/single-node-docker/_index/">裸机安装，直接docker run</a></li>
+<li><a target="_blank" rel="noopener" href="https://docs.rancher.cn/docs/rancher2.5/installation/install-rancher-on-k8s/_index/">安装在k8s集群内</a></li>
+</ul>
+</li>
+</ul>
+<h1 id="安装"><a href="#安装" class="headerlink" title="安装"></a>安装</h1><h2 id="安装K3s"><a href="#安装K3s" class="headerlink" title="安装K3s"></a>安装K3s</h2><p>一键安装，但要注意的是加上安装节点所在的IP地址，否则在导出kubeconfig使用时会报证书不可用</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl -sLS https://get.k3s.io | INSTALL_K3S_EXEC=&#x27;server --tls-san 198.11.180.138&#x27; sh -</span><br></pre></td></tr></table></figure>
+
+<h2 id="安装Rancher"><a href="#安装Rancher" class="headerlink" title="安装Rancher"></a>安装Rancher</h2><p>同样是一键安装，没有特殊注意事项。</p>
+<p>如果是安装在集群，需要用ingress将rancher-server暴露出来。</p>
+<p>不过我的安装过程是，安装在k3s -&gt; 卸载后安装rancher agent -&gt; rancher server安装在单独的机器，因此遇到过一些问题，下一节记录</p>
+<h2 id="问题记录"><a href="#问题记录" class="headerlink" title="问题记录"></a>问题记录</h2><p><strong>问题：从集群中删除rancher server时，几个命名空间无法删除</strong></p>
+<p>参考<a target="_blank" rel="noopener" href="https://www.xtplayer.cn/kubernetes/forces-delete-terminated-namespace/#rancher-%E8%87%AA%E5%AE%9A%E4%B9%89-k8s-%E9%9B%86%E7%BE%A4%E6%88%96%E8%80%85%E5%AF%BC%E5%85%A5-rancher-%E7%AE%A1%E7%90%86%E7%9A%84-k8s-%E9%9B%86%E7%BE%A4">这篇文章</a>解决。因为卡在依赖资源的删除上。</p>
+<p><strong>问题：删除rancher-server，重新安装rancher-agent时，报错，报错内容如下</strong></p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Error from server (InternalError): error when creating &quot;STDIN&quot;: Internal error occurred: failed calling webhook &quot;rancher.cattle.io&quot;: failed to call webhook: Post &quot;https://rancher-webhook.cattle-system.svc:443/v1/webhook/mutation?timeout=10s&quot;: service &quot;rancher-webhook&quot; not found</span><br></pre></td></tr></table></figure>
+
+<p>参考<a target="_blank" rel="noopener" href="https://forums.rancher.com/t/rancher-webhook-fails-due-to-not-existing-rancher-webhook-tls-secret/36211/2">这篇文章</a>解决，主要是重新安装时有一个资源不会被重建，这里删除然后重新执行安装命令。</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl delete -n cattle-system MutatingWebhookConfiguration rancher.cattle.io</span><br></pre></td></tr></table></figure>
+
+<p>这一问题在官方手册得以佐证：<a target="_blank" rel="noopener" href="https://docs.rancher.cn/docs/rancher2.5/releases/v2.5.12/">https://docs.rancher.cn/docs/rancher2.5/releases/v2.5.12/</a></p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421185559558.png" alt="image-20220421185559558"></p>
+<p><strong>问题：安装rancher-agent启动时提示ca token找不到</strong></p>
+<p>再次执行rancher删除命令，完成后重新安装</p>
+<p><strong>问题：安装rancher-agent启动时提示<code>the server could not find the requested resource</code></strong></p>
+<p>是rancher 2.5.12不支持k8s 1.21及以上：<a target="_blank" rel="noopener" href="https://forums.rancher.com/t/install-fail-the-server-could-not-find-the-requested-resource/20974/2">https://forums.rancher.com/t/install-fail-the-server-could-not-find-the-requested-resource/20974/2</a></p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421185707248.png" alt="image-20220421185707248"></p>
+<p>解决方法是切换到rancher 2.6</p>
+<p><strong>问题：rancher 2.6没有切换中文的按钮</strong></p>
+<p>自己添加cookie</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421185748342.png" alt="image-20220421185748342"></p>
+<h1 id="使用体验"><a href="#使用体验" class="headerlink" title="使用体验"></a>使用体验</h1><h2 id="K3s"><a href="#K3s" class="headerlink" title="K3s"></a>K3s</h2><p>如果我们把k3s当做单机的增强，那它简直是完美，应用管理用的k8s的方式，端口、ip地址等却还是依照单机的方式，还要啥自行车。目前为止，使用下来唯一的不便是traefik ingress controller替换nginx ingress controller带来的，需要使用Middleware进行路径前缀截断。</p>
+<h2 id="Racher"><a href="#Racher" class="headerlink" title="Racher"></a>Racher</h2><p>类似各大云厂商的Web UI，Rancher的UI与K8s资源基本上是一一对应的，差别就在于呈现方式了。算是风格问题，这方面，我认为优缺点如下</p>
+<ul>
+<li><p>优点：多命名空间可同页展示</p>
+</li>
+<li><p>优点：控制台和日志同页显示，查看方便</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421191229102.png" alt="image-20220421191229102"></p>
+</li>
+<li><p>缺点：页面跳转太多，一些短小配置的编写如ingress都要跳转新的页面，使用者容易失焦，不如阿里云</p>
+</li>
+<li><p>缺点：页面没有按照资源的从属关系引导，如从deployment进入pod，没有按钮回到deployment页</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220421191549227.png" alt="image-20220421191549227" style="zoom:80%;" /></li>
+<li><p>缺点：应用页面显示内容太少，仅显示了应用引用的资源，未显示引用应用的资源如service、ingress（有，但是不显示），不如阿里云</p>
+</li>
+</ul>
+<p><strong>总的来说，就是操作链不完整，中途会断</strong></p>
+<h1 id="所有集群都用Rancher统一管理好不好"><a href="#所有集群都用Rancher统一管理好不好" class="headerlink" title="所有集群都用Rancher统一管理好不好"></a>所有集群都用Rancher统一管理好不好</h1><p>首先，我觉得rancher并不好用。用不用都看情况。</p>
+<p>如果用Rancher统一管理，我能想到的理由是</p>
+<ul>
+<li>跨云平台统一管理K8s，减少登录多个云账号的麻烦</li>
+</ul>
+<p>如果不用Rancher管理，我能想到的理由是</p>
+<ul>
+<li>UI交互不够友好</li>
+<li>各云厂商有针对自己的K8s实现在Web UI上做优化，使用Rancher可能抹平这个优点</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/rancher/" rel="tag"># rancher</a>
+              <a href="/tags/k3s/" rel="tag"># k3s</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/04/21/gitops%E5%AE%9E%E8%B7%B5%E6%80%BB%E7%BB%93/" rel="prev" title="gitops实践总结">
+      <i class="fa fa-chevron-left"></i> gitops实践总结
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BA%8B%E6%83%85%E7%BB%8F%E8%BF%87"><span class="nav-number">1.</span> <span class="nav-text">事情经过</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%89%8B%E5%86%8C"><span class="nav-number">2.</span> <span class="nav-text">手册</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%AE%89%E8%A3%85"><span class="nav-number">3.</span> <span class="nav-text">安装</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85K3s"><span class="nav-number">3.1.</span> <span class="nav-text">安装K3s</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%89%E8%A3%85Rancher"><span class="nav-number">3.2.</span> <span class="nav-text">安装Rancher</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%97%AE%E9%A2%98%E8%AE%B0%E5%BD%95"><span class="nav-number">3.3.</span> <span class="nav-text">问题记录</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%BD%BF%E7%94%A8%E4%BD%93%E9%AA%8C"><span class="nav-number">4.</span> <span class="nav-text">使用体验</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#K3s"><span class="nav-number">4.1.</span> <span class="nav-text">K3s</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Racher"><span class="nav-number">4.2.</span> <span class="nav-text">Racher</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%89%80%E6%9C%89%E9%9B%86%E7%BE%A4%E9%83%BD%E7%94%A8Rancher%E7%BB%9F%E4%B8%80%E7%AE%A1%E7%90%86%E5%A5%BD%E4%B8%8D%E5%A5%BD"><span class="nav-number">5.</span> <span class="nav-text">所有集群都用Rancher统一管理好不好</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">104</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">30</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">76</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
