@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="TL;DR; 2021年10月，苹果发布了StoreKit2。新API和流程看起来更加简化，但是苹果官方文档并没有让开发者接入变得简单，调试起来也是各种问题，这方便和StoreKit1一样做的不好。梳理是必要的。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="IAP StoreKit2后端开发完全指南">
+<meta property="og:url" content="https://zou8944.com/2022/05/13/IAP-StoreKit2%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="TL;DR; 2021年10月，苹果发布了StoreKit2。新API和流程看起来更加简化，但是苹果官方文档并没有让开发者接入变得简单，调试起来也是各种问题，这方便和StoreKit1一样做的不好。梳理是必要的。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220514172920979.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/IMG_5914.PNG">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/IMG_5915.PNG">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220516143502001.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220516143816984.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220516144209209.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220516145506230.png">
+<meta property="article:published_time" content="2022-05-13T08:02:44.000Z">
+<meta property="article:modified_time" content="2022-05-16T07:32:36.982Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="IAP">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220514172920979.png">
+
+<link rel="canonical" href="https://zou8944.com/2022/05/13/IAP-StoreKit2%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>IAP StoreKit2后端开发完全指南 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">106</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">31</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">77</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2022/05/13/IAP-StoreKit2%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          IAP StoreKit2后端开发完全指南
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-05-13 16:02:44" itemprop="dateCreated datePublished" datetime="2022-05-13T16:02:44+08:00">2022-05-13</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-05-16 15:32:36" itemprop="dateModified" datetime="2022-05-16T15:32:36+08:00">2022-05-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E4%B8%9A%E5%8A%A1/" itemprop="url" rel="index"><span itemprop="name">业务</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2022/05/13/IAP-StoreKit2%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/" class="post-meta-item leancloud_visitors" data-flag-title="IAP StoreKit2后端开发完全指南" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>TL;DR;</p>
+<p>2021年10月，苹果发布了StoreKit2。新API和流程看起来更加简化，但是苹果官方文档并没有让开发者接入变得简单，调试起来也是各种问题，这方便和StoreKit1一样做的不好。梳理是必要的。</p>
+</blockquote>
+<span id="more"></span>
+
+<h1 id="文档研读"><a href="#文档研读" class="headerlink" title="文档研读"></a>文档研读</h1><h2 id="文档目录"><a href="#文档目录" class="headerlink" title="文档目录"></a>文档目录</h2><p>官方文档虽然有组织结构，但并不清晰，按照如下结构去看，能够比较系统地了解。通读它们，是必要的。</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://developer.apple.com/cn/in-app-purchase/">概览页</a></p>
+</li>
+<li><p>购买项目配置</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://help.apple.com/app-store-connect/?lang=zh-cn#/devb57be10e7">配置流程</a></li>
+<li><a target="_blank" rel="noopener" href="https://help.apple.com/app-store-connect/?lanng=zh-cn#/devae49fb316">创建购买项目</a></li>
+</ul>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://developer.apple.com/cn/storekit/">StoreKit2概览</a></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/storekit">客户端StoreKit SDK</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreserverapi">服务端API概览</a></li>
+</ul>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreservernotifications">服务端通知</a></p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://help.apple.com/app-store-connect/?lang=zh-cn#/dev0067a330b">在App Store Connect中配置回调URL</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreservernotifications/app_store_server_notifications_changelog">服务端通知 Changelog</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreservernotifications/receiving_app_store_server_notifications">通知接收概览</a><ul>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreservernotifications/responsebodyv2decodedpayload">通知的数据结构</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreservernotifications/responding_to_app_store_server_notifications">如何响应通知（重要：阐述了通知重试机制、通知丢失的补救措施）</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreserverapi">服务端API概览（没错，和上面重复了，这里提出来凸显重要性）</a></p>
+<ul>
+<li><p>访问Apple Server API的凭证 </p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreserverapi/creating_api_keys_to_use_with_the_app_store_server_api">创建API Key</a></li>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreserverapi/generating_tokens_for_api_requests">构建JWT Token</a></li>
+</ul>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreserverapi/get_transaction_history">获取交易历史</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreserverapi/get_all_subscription_statuses">获取所有订阅状态</a></p>
+</li>
+</ul>
+</li>
+<li><p>如何测试</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://developer.apple.com/cn/documentation/storekit/in-app_purchase/testing_in-app_purchases_with_sandbox/">在沙盒中测试</a></li>
+</ul>
+</li>
+</ul>
+<p>总体来说，阅读步骤应该如下</p>
+<ol>
+<li><p>阅读概览页，将对IAP有初步认识，了解购买项目类型、如何在App Store Connect控制台进行配置、如何使用StoreKit进行开发、如何使用沙盒环境进行测试等。</p>
+</li>
+<li><p>阅读StoreKit2的客户端SDK和服务端API。</p>
+<p>将了解到客户端如何操作，而作为后端，我们要关心的是服务端在操作完成后会得到一个Transaction，而在StoreKit2中，该Transaction和回调通知中的Transation、以及交易历史中的Transation是同样的结构和内容，也就是说，我们的APP可以直接将其发送到业务后端进行验证。</p>
+<p>也会了解到服务端API其实主要就提供两个接口：获取交易历史、获取订阅状态</p>
+</li>
+<li><p>阅读服务端通知。将了解到通知的数据结构、类型，以及安全机制。这一点很重要。</p>
+</li>
+<li><p>详细阅读服务端API，将了解访问API的凭证如何生成，交易历史的结构、订阅状态的结构等</p>
+</li>
+<li><p>阅读沙盒测试。了解如何在沙盒环境中测试。</p>
+</li>
+</ol>
+<blockquote>
+<p>在Apple文档阅读过程中，由于来回跳转，很可能会去到StoreKit1的文档，它们可能描述了交易流程、支付收据、收据验证等流程，这和StoreKit2的流程不一样，十分容易对我们造成困惑，注意区分。区分StoreKit1的主要方式，是带StoreKit1或Original API这类关键字的文档，可以肯定是StoreKit1，请忽略它们。</p>
+</blockquote>
+<blockquote>
+<p>Apple文档的不合理之处在于——没有目录、没有支付流程说明、没有demo、没有专门针对后端人员的说明（我们很可能对客户端并不熟悉）</p>
+</blockquote>
+<h2 id="信息提取"><a href="#信息提取" class="headerlink" title="信息提取"></a>信息提取</h2><p>下面针对文档中的关键信息进行说明</p>
+<h3 id="商品类型"><a href="#商品类型" class="headerlink" title="商品类型"></a>商品类型</h3><p>IAP中，可供购买的商品类型分为如下四种。</p>
+<ul>
+<li><p>消耗型：购买后，一次使用即失效</p>
+</li>
+<li><ul>
+<li>可重复购买</li>
+<li>例：金币</li>
+</ul>
+</li>
+<li><p>非消耗型：一次购买，永不过期</p>
+</li>
+<li><ul>
+<li>例：照相软件的某一款滤镜</li>
+</ul>
+</li>
+<li><p>自动续期订阅：购买后一段时间内有效</p>
+</li>
+<li><ul>
+<li>到期后会自动续期</li>
+<li>例：腾讯视频会员</li>
+</ul>
+</li>
+<li><p>非续期订阅：购买后一段时间内有效</p>
+<ul>
+<li>到期后不会自动续期</li>
+<li>例：没用过🤔</li>
+</ul>
+</li>
+</ul>
+<p>本文的讨论，几种在自动续期订阅的商品类型。</p>
+<h3 id="理解交易（Transaction）"><a href="#理解交易（Transaction）" class="headerlink" title="理解交易（Transaction）"></a>理解交易（Transaction）</h3><p>Transation，交易。<a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/storekit/transaction">官方手册</a>说：Transaction代表了app中对某个产品的购买。用户的每次购买或续费都会产生一个新的Transation对象，看起来已经说得够清楚了。但在开发中从头到尾都在和Transaction打交道，有时候它出现的地方会让人产生困惑，比如回调通知中必然会带有交易信息，但像降级、退订这种通知的交易信息的意义何在呢？我们如何知道它代表着什么呢？</p>
+<p>交易要点1：<strong>只要用户发生了扣费，就会产生一个新的Transaction —— 扣费=交易</strong>。穷举所有会产生扣费的场景</p>
+<ul>
+<li><p>订阅成功，包括如下</p>
+<ul>
+<li>初次订阅</li>
+<li>过期后重新订阅</li>
+<li>自动续期的订阅到期时自动续订</li>
+</ul>
+</li>
+<li><p>订阅升级成功</p>
+<p>IAP中，几个产品组成一个订阅组，产品之间可以设置等级，用户可以再同一个订阅组内的产品之间互相切换，当从低级产品切换到高级产品时，马上生效（将原低级产品为使用的部分折算成钱退回账户，马上产生对高级产品的订阅，即扣费）</p>
+</li>
+</ul>
+<p>对同一个App，一个用户（体现为一个Apple ID账号）可能因为上述操作产生多个交易，这些交易组成了交易历史。</p>
+<p>交易要点2：<strong>一个用户针对同一个App的交易历史中，只有最近一条是有效的</strong>。这个可以证明，在上述会产生扣费的场景中，订阅成功的case都是建立在前一个订阅失效的前提下；订阅升级的case中，前一个低级订阅会因为马上退款而失效。因此，产生的众多交易中，有且仅有最近的那条交易是有效的。</p>
+<p>交易要点3：<strong>一个用户针对同一个App的所有交易中，originalTransactionId是一样的</strong>。这里第一次出现originalTransactionId，它是第一次购买时的交易ID，今后用户的所有交易，都是基于它串成交易历史。</p>
+<h3 id="交易历史"><a href="#交易历史" class="headerlink" title="交易历史"></a>交易历史</h3><p>交易历史作为Apple提供的唯二客户端API之一，需要注意如下几点</p>
+<ul>
+<li>消耗型商品的交易不会出现在交易历史中</li>
+<li>手册宣称默认按照购买时间从早到晚排序，但实测并不严格，拿到后还是要自己排一次</li>
+<li>如上所说，最近一条才是有效的。开发时应以最近一条作为判断依据</li>
+</ul>
+<h3 id="订阅升降级"><a href="#订阅升降级" class="headerlink" title="订阅升降级"></a>订阅升降级</h3><p>对于自动续期订阅的产品，可以设定订阅顺序，如下截图App Store Connect控制台的设置例子</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220514172920979.png" style="zoom: 40%;" />
+
+<p>要点</p>
+<ul>
+<li><p>等级越高越靠前，上面高级会员顺序为1，普通会员顺序为2，用户由普通会员切换到高级会员为升级，反之则为降级</p>
+</li>
+<li><p>同一等级能够设置多个商品。同一等级内商品之间切换不算升降级，只会改变当前订阅到期后下次自动续订的产品。</p>
+<p>举例：用户购买了包月高级会员，但一天后，通过设置切换为了包年高级会员。则此时用户的订阅状态依旧是包月高级会员，待一个月后，包月会员过期，App Store会自动为用户续费包年高级会员。</p>
+</li>
+</ul>
+<p>那么，用户如何能够在不同产品之间切换呢？有两个途径</p>
+<ul>
+<li>App暴露的UI</li>
+<li>设置 - 用户设置页面 - 订阅 - 具体App</li>
+</ul>
+<p>前者一般仅用于初次订阅，订阅后会将订阅按钮隐藏；后者则可以任意切换。</p>
+<p>前者以知乎为例，如下</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/IMG_5914.PNG" alt="IMG_5914" style="zoom:25%;" />
+
+<p>在设置中呈现如下</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/IMG_5915.PNG" alt="IMG_5915" style="zoom:25%;" />
+
+<h3 id="支付流程"><a href="#支付流程" class="headerlink" title="支付流程"></a>支付流程</h3><p>如果只有客户端，那么支付流程如下</p>
+<ol>
+<li>客户端通过StoreKit SDK拉起支付</li>
+<li>用户输入密码或FaceID完成支付</li>
+<li>StoreKit回调客户端并传入Transaction</li>
+<li>客户端校验该Transaction，校验通过后发放权益</li>
+</ol>
+<p>如果有服务端，权益发放在服务端，则流程如下</p>
+<ul>
+<li>客户端流程<ol>
+<li>客户端通过StoreKit SDK拉起支付</li>
+<li>用户输入密码或FaceID完成支付</li>
+<li>StoreKit回调客户端并传入Transaction</li>
+<li>客户端校验该Transaction，校验通过后，将Transaction发送给服务端</li>
+</ol>
+</li>
+<li>服务端流程1<ol>
+<li>接收来自客户端的Transaction并校验，校验通过后，为用户发放权益</li>
+</ol>
+</li>
+<li>服务端流程2<ol>
+<li>接收来自Apple Server的回调通知，根据通知的内容，对用户发放权益</li>
+</ol>
+</li>
+<li>服务端流程3<ol>
+<li>定期调用交易历史查询接口，为在回调通知漏掉的交易补发权益。</li>
+</ol>
+</li>
+</ul>
+<p>其中，服务端流程1和流程2是分开并行存在的，且流程1可选（回调通知较慢，加上流程1能够提升用户体验）；流程2必须有，是唯一能够及时知悉所有交易发生的时机；流程3用于补单或者恢复购买。</p>
+<blockquote>
+<p>注意事项：对于服务端流程3，由于交易历史查询接口需要输入originalTransactionId，所以如果用户的首次交易被一楼，是没有办法查询的。所以它需要客户端协助：客户端获取当前Apple ID的任意一条交易上传服务端，服务端取其中的originalTransactionId查询交易历史，再取交易历史的最近一条交易作为发放权益的依据。</p>
+</blockquote>
+<h3 id="通知类型"><a href="#通知类型" class="headerlink" title="通知类型"></a>通知类型</h3><p>回调通知通过notificationType和subType两个字段区分，自动续期订阅相关通知如下</p>
+<table>
+<thead>
+<tr>
+<th>notificationType</th>
+<th>subType</th>
+<th>说明</th>
+<th>弄？</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>DID_CHANGE_RENEWAL_PREF</td>
+<td>DOWNGRADE</td>
+<td>降级，降级下个周期生效</td>
+<td>v</td>
+</tr>
+<tr>
+<td>DID_CHANGE_RENEWAL_PREF</td>
+<td>UPGRADE</td>
+<td>升级，升级马上生效</td>
+<td>v</td>
+</tr>
+<tr>
+<td>DID_CHANGE_RENEWAL_PREF</td>
+<td></td>
+<td>取消降级</td>
+<td>v</td>
+</tr>
+<tr>
+<td>DID_CHANGE_RENEWAL_STATUS</td>
+<td>AUTO_RENEW_ENABLED</td>
+<td>开启自动续期</td>
+<td></td>
+</tr>
+<tr>
+<td>DID_CHANGE_RENEWAL_STATUS</td>
+<td>AUTO_RENEW_DISABLED</td>
+<td>关闭自动续期；退款后也会发送这个通知</td>
+<td></td>
+</tr>
+<tr>
+<td>DID_FAIL_TO_RENEW</td>
+<td>GRACE_PERIOD</td>
+<td>自动续期失败，因为卡里没钱了，但在宽限期内还是提供服务</td>
+<td></td>
+</tr>
+<tr>
+<td>DID_RENEW</td>
+<td></td>
+<td>续订成功</td>
+<td>v</td>
+</tr>
+<tr>
+<td>DID_RENEW</td>
+<td>BILLING_RECOVERY</td>
+<td>开始付费失败，后来恢复订阅了</td>
+<td>v</td>
+</tr>
+<tr>
+<td>EXPIRED</td>
+<td>VOLUNTARY</td>
+<td>因为用户关闭自动续期而过期</td>
+<td></td>
+</tr>
+<tr>
+<td>EXPIRED</td>
+<td>BILLING_RETRY</td>
+<td>尝试扣费失败而过期</td>
+<td></td>
+</tr>
+<tr>
+<td>EXPIRED</td>
+<td>PRICE_INCREASE</td>
+<td>用户不同意涨价而过期</td>
+<td></td>
+</tr>
+<tr>
+<td>GRACE_PERIOD_EXPIRED</td>
+<td></td>
+<td>宽限期已过</td>
+<td></td>
+</tr>
+<tr>
+<td>PRICE_INCREASE</td>
+<td>PENDING</td>
+<td>涨价，用户还没同意</td>
+<td></td>
+</tr>
+<tr>
+<td>PRICE_INCREASE</td>
+<td>ACCEPTED</td>
+<td>涨价，用户已同意</td>
+<td></td>
+</tr>
+<tr>
+<td>REFUND</td>
+<td></td>
+<td>用户退款成功</td>
+<td>v</td>
+</tr>
+<tr>
+<td>REFUND_DECLINED</td>
+<td></td>
+<td>苹果商店拒绝退款(来自开发者)</td>
+<td></td>
+</tr>
+<tr>
+<td>RENEWAL_EXTENDED</td>
+<td></td>
+<td>苹果商店延长了订阅的续订日期(来自开发者)</td>
+<td></td>
+</tr>
+<tr>
+<td>REVOKE</td>
+<td></td>
+<td>订阅购买者撤销了家庭共享</td>
+<td></td>
+</tr>
+<tr>
+<td>SUBSCRIBED</td>
+<td>INITIAL_BUY</td>
+<td>初次购买</td>
+<td>v</td>
+</tr>
+<tr>
+<td>SUBSCRIBED</td>
+<td>RESUBSCRIBE</td>
+<td>再次订阅之前订阅的内容/或通过家庭共享得到之前订阅的内容</td>
+<td>v</td>
+</tr>
+</tbody></table>
+<p><strong>理解不同类型通知中交易信息的含义</strong></p>
+<p>每个通知中都会携带交易信息，位于 data -&gt; signedTransactionInfo 字段，它总是此刻（发送通知那一刻）生效的交易，举例</p>
+<ul>
+<li>初次购买时，携带的购买成功的交易信息</li>
+<li>升级时，携带的升级之后，购买的高级商品的交易信息。原低级产品需要自己通过交易历史查询得到</li>
+<li>降级时，不会马上生效，携带的是上次购买成功的交易信息</li>
+<li>关闭自动续费时，携带的是上次购买成功的交易信息</li>
+<li>退款时，携带的是上次购买成功的交易信息（这是我猜的，没有实测过，因为无法触发退款通知）</li>
+</ul>
+<blockquote>
+<p>你可能会想，区分这么多通知类型有什么用？的确，对于发放权益来说，大多数通知都是没用的，但如果加上推广、用户留存、营销就很有用了。比如检测到用户关闭自动订阅，可以定点向该用户推送营销信息，或者推出专门的优惠套餐等。</p>
+</blockquote>
+<h1 id="技术点"><a href="#技术点" class="headerlink" title="技术点"></a>技术点</h1><h2 id="业务用户识别"><a href="#业务用户识别" class="headerlink" title="业务用户识别"></a>业务用户识别</h2><p>Apple服务的回调通知中，并不会携带Apple ID信息，因此无法区分该通知属于哪个具体业务用户。Apple的提供的方式是appAccountToken字段，该字段在客户端发起支付时指定，在通知中携带，以便业务后端区分。关于它注意几个点</p>
+<ul>
+<li>appAccountToken由业务后端自己生成维护</li>
+<li>如果用户自行在控制台操作，可能出现回调通知不带appAccountToken的情况。此时可以从交易历史中查询（第一条交易一定会带appAccountToken，因为首次发起购买一定是从我们的APP客户端，就一定会设置）</li>
+</ul>
+<h2 id="JWS签名验证"><a href="#JWS签名验证" class="headerlink" title="JWS签名验证"></a>JWS签名验证</h2><p>StoreKit2的一个重要变化是，大部分信息都采用JWS进行组织。Transaction是JWS、通知也是JWS。上面说的交易流程中，客户端交易成功上传Transaction时，后端需要验证其有效性；接收到通知时，也要验证其有效性。</p>
+<blockquote>
+<p>注意这是JWS并非JWT，二者的差别在于，JWT是基于JWS构建的，赋予了更多的业务意义，即Token的意义，主要体现在payload中的字段，JWT定义了标准的字段如aud、exp等，具体可以参考我的<a href="https://zou8944.com/2021/12/20/JWT/">这篇文章</a>。而JWS并未对payload的内容做出约束，只定义了Header.Payload.Signature的组成方式、定义了Header中加密字段的含义。</p>
+<p>值得一提的是，Sign In with Apple就用的JWT作为登录成功后的Token。</p>
+<p>至于使用的库嘛，使用一般的JWT库都可以，只不过在验证整个加密字符串时，验证Claims咩有作用，此时关注的是验证Signature。</p>
+</blockquote>
+<h3 id="客户端上传交易信息的验证"><a href="#客户端上传交易信息的验证" class="headerlink" title="客户端上传交易信息的验证"></a>客户端上传交易信息的验证</h3><p>对于后端的处理，官方并没有规定一定要将客户端得到的Transaction传到服务端，加这一步只是我们为了实时性而做的。此时的签名就要我们自己来处理了。其实是有两种方式进行确认的</p>
+<ol>
+<li>在业务系统已有的安全传输条件下直接传输交易信息，比如业务系统已有登录鉴权，可以相信经过登录后传输的信息是可信的</li>
+<li>将整个原始的Transaction JWS传输给后端，后端自己验证，验证逻辑同下文“通知的签名验证”一致。</li>
+</ol>
+<h3 id="通知的签名验证"><a href="#通知的签名验证" class="headerlink" title="通知的签名验证"></a>通知的签名验证</h3><p>这一点是最多人搞不清楚的，我们观察任意一个通知的Header如下。没有kid字段，取而代之的是x5c，这代表提供验证公钥的是一个证书X.509证书链。我们需要先验证证书链的正确性，再用证书链提供的公钥验证整个JWS的正确性。</p>
+<figure class="highlight json"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line">&#123;</span><br><span class="line">  <span class="attr">&quot;alg&quot;</span>: <span class="string">&quot;ES256&quot;</span>,</span><br><span class="line">  <span class="attr">&quot;x5c&quot;</span>: [</span><br><span class="line">    <span class="string">&quot;MIIEMDCCA7agAwIBAgIQaPoPldvpSoEH0lBrjDPv9jAKBggqhkjOPQQDAzB1MUQwQgYDVQQDDDtBcHBsZSBXb3JsZHdpZGUgRGV2ZWxvcGVyIFJlbGF0aW9ucyBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTELMAkGA1UECwwCRzYxEzARBgNVBAoMCkFwcGxlIEluYy4xCzAJBgNVBAYTAlVTMB4XDTIxMDgyNTAyNTAzNFoXDTIzMDkyNDAyNTAzM1owgZIxQDA+BgNVBAMMN1Byb2QgRUNDIE1hYyBBcHAgU3RvcmUgYW5kIGlUdW5lcyBTdG9yZSBSZWNlaXB0IFNpZ25pbmcxLDAqBgNVBAsMI0FwcGxlIFdvcmxkd2lkZSBEZXZlbG9wZXIgUmVsYXRpb25zMRMwEQYDVQQKDApBcHBsZSBJbmMuMQswCQYDVQQGEwJVUzBZMBMGByqGSM49AgEGCCqGSM49AwEHA0IABOoTcaPcpeipNL9eQ06tCu7pUcwdCXdN8vGqaUjd58Z8tLxiUC0dBeA+euMYggh1/5iAk+FMxUFmA2a1r4aCZ8SjggIIMIICBDAMBgNVHRMBAf8EAjAAMB8GA1UdIwQYMBaAFD8vlCNR01DJmig97bB85c+lkGKZMHAGCCsGAQUFBwEBBGQwYjAtBggrBgEFBQcwAoYhaHR0cDovL2NlcnRzLmFwcGxlLmNvbS93d2RyZzYuZGVyMDEGCCsGAQUFBzABhiVodHRwOi8vb2NzcC5hcHBsZS5jb20vb2NzcDAzLXd3ZHJnNjAyMIIBHgYDVR0gBIIBFTCCAREwggENBgoqhkiG92NkBQYBMIH+MIHDBggrBgEFBQcCAjCBtgyBs1JlbGlhbmNlIG9uIHRoaXMgY2VydGlmaWNhdGUgYnkgYW55IHBhcnR5IGFzc3VtZXMgYWNjZXB0YW5jZSBvZiB0aGUgdGhlbiBhcHBsaWNhYmxlIHN0YW5kYXJkIHRlcm1zIGFuZCBjb25kaXRpb25zIG9mIHVzZSwgY2VydGlmaWNhdGUgcG9saWN5IGFuZCBjZXJ0aWZpY2F0aW9uIHByYWN0aWNlIHN0YXRlbWVudHMuMDYGCCsGAQUFBwIBFipodHRwOi8vd3d3LmFwcGxlLmNvbS9jZXJ0aWZpY2F0ZWF1dGhvcml0eS8wHQYDVR0OBBYEFCOCmMBq//1L5imvVmqX1oCYeqrMMA4GA1UdDwEB/wQEAwIHgDAQBgoqhkiG92NkBgsBBAIFADAKBggqhkjOPQQDAwNoADBlAjEAl4JB9GJHixP2nuibyU1k3wri5psGIxPME05sFKq7hQuzvbeyBu82FozzxmbzpogoAjBLSFl0dZWIYl2ejPV+Di5fBnKPu8mymBQtoE/H2bES0qAs8bNueU3CBjjh1lwnDsI=&quot;</span>,</span><br><span class="line">    <span class="string">&quot;MIIDFjCCApygAwIBAgIUIsGhRwp0c2nvU4YSycafPTjzbNcwCgYIKoZIzj0EAwMwZzEbMBkGA1UEAwwSQXBwbGUgUm9vdCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UECgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwHhcNMjEwMzE3MjAzNzEwWhcNMzYwMzE5MDAwMDAwWjB1MUQwQgYDVQQDDDtBcHBsZSBXb3JsZHdpZGUgRGV2ZWxvcGVyIFJlbGF0aW9ucyBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTELMAkGA1UECwwCRzYxEzARBgNVBAoMCkFwcGxlIEluYy4xCzAJBgNVBAYTAlVTMHYwEAYHKoZIzj0CAQYFK4EEACIDYgAEbsQKC94PrlWmZXnXgtxzdVJL8T0SGYngDRGpngn3N6PT8JMEb7FDi4bBmPhCnZ3/sq6PF/cGcKXWsL5vOteRhyJ45x3ASP7cOB+aao90fcpxSv/EZFbniAbNgZGhIhpIo4H6MIH3MBIGA1UdEwEB/wQIMAYBAf8CAQAwHwYDVR0jBBgwFoAUu7DeoVgziJqkipnevr3rr9rLJKswRgYIKwYBBQUHAQEEOjA4MDYGCCsGAQUFBzABhipodHRwOi8vb2NzcC5hcHBsZS5jb20vb2NzcDAzLWFwcGxlcm9vdGNhZzMwNwYDVR0fBDAwLjAsoCqgKIYmaHR0cDovL2NybC5hcHBsZS5jb20vYXBwbGVyb290Y2FnMy5jcmwwHQYDVR0OBBYEFD8vlCNR01DJmig97bB85c+lkGKZMA4GA1UdDwEB/wQEAwIBBjAQBgoqhkiG92NkBgIBBAIFADAKBggqhkjOPQQDAwNoADBlAjBAXhSq5IyKogMCPtw490BaB677CaEGJXufQB/EqZGd6CSjiCtOnuMTbXVXmxxcxfkCMQDTSPxarZXvNrkxU3TkUMI33yzvFVVRT4wxWJC994OsdcZ4+RGNsYDyR5gmdr0nDGg=&quot;</span>,</span><br><span class="line">    <span class="string">&quot;MIICQzCCAcmgAwIBAgIILcX8iNLFS5UwCgYIKoZIzj0EAwMwZzEbMBkGA1UEAwwSQXBwbGUgUm9vdCBDQSAtIEczMSYwJAYDVQQLDB1BcHBsZSBDZXJ0aWZpY2F0aW9uIEF1dGhvcml0eTETMBEGA1UECgwKQXBwbGUgSW5jLjELMAkGA1UEBhMCVVMwHhcNMTQwNDMwMTgxOTA2WhcNMzkwNDMwMTgxOTA2WjBnMRswGQYDVQQDDBJBcHBsZSBSb290IENBIC0gRzMxJjAkBgNVBAsMHUFwcGxlIENlcnRpZmljYXRpb24gQXV0aG9yaXR5MRMwEQYDVQQKDApBcHBsZSBJbmMuMQswCQYDVQQGEwJVUzB2MBAGByqGSM49AgEGBSuBBAAiA2IABJjpLz1AcqTtkyJygRMc3RCV8cWjTnHcFBbZDuWmBSp3ZHtfTjjTuxxEtX/1H7YyYl3J6YRbTzBPEVoA/VhYDKX1DyxNB0cTddqXl5dvMVztK517IDvYuVTZXpmkOlEKMaNCMEAwHQYDVR0OBBYEFLuw3qFYM4iapIqZ3r6966/ayySrMA8GA1UdEwEB/wQFMAMBAf8wDgYDVR0PAQH/BAQDAgEGMAoGCCqGSM49BAMDA2gAMGUCMQCD6cHEFl4aXTQY2e3v9GwOAEZLuN+yRhHFD/3meoyhpmvOwgPUnPWTxnS4at+qIxUCMG1mihDK1A3UT82NQz60imOlM27jbdoXt2QfyFMm+YhidDkLF1vLUagM6BgD56KyKA==&quot;</span></span><br><span class="line">  ]</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>验证逻辑如下</p>
+<ol>
+<li>从<a href="https://link.juejin.cn/?target=https://www.apple.com/certificateauthority/AppleRootCA-G3.cer">Apple官网</a>下载根证书</li>
+<li>取证书链的最后一个，和上述下载的根证书对比，如果不同则验证失败</li>
+<li>验证证书链：第一个证书用第二个证书验证、第二个用第三个验证、以此类推，全都成功才算通过</li>
+<li>从第一个证书取得公钥</li>
+<li>用上一步得到的公钥验证整个JWS</li>
+</ol>
+<p>库使用<code>com.auth0:java-jwt:3.18.2</code>，编程语言使用Kotlin，验证逻辑如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">val</span> appleRootCert = PathMatchingResourcePatternResolver()</span><br><span class="line">        .getResources(<span class="string">&quot;classpath:cert/AppleRootCA-G3.cer&quot;</span>).first().inputStream.readBytes()</span><br><span class="line"></span><br><span class="line"><span class="comment">// 解码并验证时接收到的通知</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">decodeAndVerifyAppleNotification</span><span class="params">(rawNotification: <span class="type">String</span>)</span></span>: AppleNotificationPayload &#123;</span><br><span class="line">  <span class="keyword">try</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> JWT.decode(rawNotification)</span><br><span class="line">    .apply &#123; verifyAppleNotificationSignature(verifyAppleNotificationCertsThenReturnPublicKey(<span class="keyword">this</span>), <span class="keyword">this</span>) &#125;</span><br><span class="line">    .getPayload(AppleNotificationPayload::<span class="keyword">class</span>.java)</span><br><span class="line">  &#125; <span class="keyword">catch</span> (e: Exception) &#123;</span><br><span class="line">    <span class="keyword">throw</span> Exception(<span class="string">&quot;<span class="subst">$&#123;e.message&#125;</span>\nnotificationPayload: <span class="variable">$rawNotification</span>&quot;</span>, e)</span><br><span class="line">  &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">verifyAppleNotificationCertsThenReturnPublicKey</span><span class="params">(jwt: <span class="type">DecodedJWT</span>)</span></span>: PublicKey &#123;</span><br><span class="line">  <span class="keyword">val</span> certFactory = CertificateFactory.getInstance(<span class="string">&quot;X.509&quot;</span>)</span><br><span class="line">  <span class="keyword">val</span> appleRootCert = certFactory.generateCertificate(ByteArrayInputStream(appleRootCert)) <span class="keyword">as</span> X509Certificate</span><br><span class="line">  <span class="keyword">val</span> jwsCertChain = jwt.getHeaderClaim(<span class="string">&quot;x5c&quot;</span>).asList(String::<span class="keyword">class</span>.java).map &#123;</span><br><span class="line">    certFactory.generateCertificate(ByteArrayInputStream(Base64.getDecoder().decode(it)))</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 关键点1：验证根证书</span></span><br><span class="line">  <span class="keyword">if</span> (jwsCertChain.last() != appleRootCert) <span class="keyword">throw</span> Exception(<span class="string">&quot;根证书错误&quot;</span>)</span><br><span class="line">  <span class="comment">// 关键点2：验证证书链</span></span><br><span class="line">  <span class="keyword">for</span> (index <span class="keyword">in</span> <span class="number">0.</span>.jwsCertChain.size - <span class="number">2</span>) &#123;</span><br><span class="line">    jwsCertChain[index].verify(jwsCertChain[index + <span class="number">1</span>].publicKey)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 关键点3：第一个证书的公钥即为验证整个JWS的公钥</span></span><br><span class="line">  <span class="keyword">return</span> jwsCertChain.first().publicKey</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">verifyAppleNotificationSignature</span><span class="params">(publicKey: <span class="type">PublicKey</span>, jwt: <span class="type">DecodedJWT</span>)</span></span> &#123;</span><br><span class="line">  <span class="comment">// 这里做了API转换，证书用的是javax.security的API，而JWT验证用的是引入的java-jwt的API</span></span><br><span class="line">  <span class="keyword">val</span> keyProvider = <span class="keyword">object</span> : ECDSAKeyProvider &#123;</span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">getPublicKeyById</span><span class="params">(keyId: <span class="type">String</span>?)</span></span>: ECPublicKey &#123;</span><br><span class="line">      <span class="keyword">val</span> keyFactory = KeyFactory.getInstance(publicKey.algorithm)</span><br><span class="line">      <span class="keyword">return</span> keyFactory.generatePublic(X509EncodedKeySpec(publicKey.encoded)) <span class="keyword">as</span> ECPublicKey</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">getPrivateKey</span><span class="params">()</span></span>: ECPrivateKey &#123;</span><br><span class="line">      <span class="keyword">throw</span> NotImplementedError()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">override</span> <span class="function"><span class="keyword">fun</span> <span class="title">getPrivateKeyId</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">      <span class="keyword">throw</span> NotImplementedError()</span><br><span class="line">    &#125;</span><br><span class="line">  &#125;</span><br><span class="line">  JWT.require(Algorithm.ECDSA256(keyProvider)).build().verify(jwt)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>官方文档并没有较为明确的阐述，如下两个文档可以作为参考</p>
+<ul>
+<li><p><a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/36832100">X.509 数字证书的基本原理及应用</a></p>
+</li>
+<li><p><a target="_blank" rel="noopener" href="https://juejin.cn/post/7039970403770433544">JWS X.509证书链验证</a></p>
+</li>
+</ul>
+</blockquote>
+<h2 id="Apple服务端点访问凭证"><a href="#Apple服务端点访问凭证" class="headerlink" title="Apple服务端点访问凭证"></a>Apple服务端点访问凭证</h2><p>需要访问Apple Server的交易历史接口，而Apple Server的所有API访问时都需要携带凭证。步骤如下</p>
+<ol>
+<li>在App Store Connect控制台中生成并下载Private Key，步骤参考<a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreserverapi/creating_api_keys_to_use_with_the_app_store_server_api">官方文档</a></li>
+<li>按照<a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/appstoreserverapi/generating_tokens_for_api_requests">官方文档</a> 指定的方式构建JWT。其实就是JWT的标准生成方式，但需要注意的是各字段的填充，<strong>该JWT不只是访问的凭证，还有部分字段会参与查询</strong>。遇到过一个问题：bid字段设置错误，和真实的bundleId不一致，访问交易历史接口时，响应正常，但signedTranstions字段始终是空数组，该问题阻拦了我大半天。</li>
+<li>访问时，将其放在bear token中，即添加头部 Authorization bear ${your token}</li>
+</ol>
+<p>生成JWT代码如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">constructJWT4IAP</span><span class="params">()</span></span>: String &#123;</span><br><span class="line">  <span class="keyword">val</span> header: MutableMap&lt;String, Any&gt; = HashMap()</span><br><span class="line">  header[<span class="string">&quot;alg&quot;</span>] = <span class="string">&quot;ES256&quot;</span></span><br><span class="line">  header[<span class="string">&quot;kid&quot;</span>] = <span class="string">&quot;<span class="subst">$&#123;下载的Private Key ID&#125;</span>&quot;</span></span><br><span class="line">  header[<span class="string">&quot;typ&quot;</span>] = <span class="string">&quot;JWT&quot;</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">val</span> payload: MutableMap&lt;String, Any&gt; = HashMap()</span><br><span class="line">  payload[<span class="string">&quot;iss&quot;</span>] = <span class="string">&quot;<span class="subst">$&#123;申请Private Key时同时生成的issuer ID&#125;</span>&quot;</span></span><br><span class="line">  payload[<span class="string">&quot;iat&quot;</span>] = DateUtils.currentSecond()</span><br><span class="line">  payload[<span class="string">&quot;exp&quot;</span>] = DateUtils.currentSecondPlusMinute($&#123;token有效期时间&#125;)</span><br><span class="line">  payload[<span class="string">&quot;aud&quot;</span>] = <span class="string">&quot;appstoreconnect-v1&quot;</span></span><br><span class="line">  payload[<span class="string">&quot;nonce&quot;</span>] = UUID.randomUUID().toString()</span><br><span class="line">  payload[<span class="string">&quot;bid&quot;</span>] = <span class="string">&quot;<span class="subst">$&#123;App的Bundle ID&#125;</span>&quot;</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">val</span> algorithm = Algorithm.ECDSA256(ES256KeyProviderBuilder.build($&#123;下载的Private Key&#125;, $&#123;下载的Private Key ID&#125;))</span><br><span class="line">  </span><br><span class="line">  <span class="keyword">return</span> JWT.create().withIssuer(prop.jwt.issuerId)</span><br><span class="line">  .withHeader(header)</span><br><span class="line">  .withPayload(payload)</span><br><span class="line">  .sign(algorithm)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<p>以访问交易历史来说，在Spring Boot的RestTemplate API下的使用方式如下</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br></pre></td><td class="code"><pre><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">listAppleTransactionHistory</span><span class="params">(appleEnv: <span class="type">AppleEnvironment</span>, originalTransactionId: <span class="type">Long</span>)</span></span>: List&lt;AppleTransactionInfo&gt; &#123;</span><br><span class="line">  <span class="keyword">val</span> bearerToken = constructJWT4IAP()</span><br><span class="line">  <span class="keyword">val</span> baseUrl = <span class="keyword">when</span> (appleEnv) &#123;</span><br><span class="line">    AppleEnvironment.Production -&gt; BusinessConstants.APPLE_PAY_SERVER_GET_TRANSACTION_HISTORY_URL</span><br><span class="line">    AppleEnvironment.Sandbox -&gt; BusinessConstants.APPLE_PAY_SANDBOX_SERVER_GET_TRANSACTION_HISTORY_URL</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">val</span> rawUrl = <span class="string">&quot;<span class="subst">$&#123;baseUrl.trimEnd(<span class="string">&#x27;/&#x27;</span>)&#125;</span>/<span class="variable">$originalTransactionId</span>&quot;</span></span><br><span class="line"></span><br><span class="line">  <span class="keyword">val</span> signedTransactions = mutableListOf&lt;String&gt;()</span><br><span class="line">  <span class="keyword">var</span> revision: String? = <span class="literal">null</span></span><br><span class="line">  <span class="keyword">do</span> &#123;</span><br><span class="line">    <span class="keyword">val</span> transactionHistoryResponse = listAppleTransactionHistory(bearerToken, rawUrl, revision)</span><br><span class="line">    signedTransactions.addAll(transactionHistoryResponse.signedTransactions)</span><br><span class="line">    revision = transactionHistoryResponse.revision</span><br><span class="line">  &#125; <span class="keyword">while</span> (transactionHistoryResponse.hasMore)</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> signedTransactions.map &#123; JwtHelper.decodeAppleTransaction(it) &#125;.sortedBy &#123; it.purchaseDate &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">listAppleTransactionHistory</span><span class="params">(token: <span class="type">String</span>, rawUrl: <span class="type">String</span>, revision: <span class="type">String</span>?)</span></span>: GetTransactionHistoryVO &#123;</span><br><span class="line">  <span class="keyword">val</span> url = <span class="keyword">if</span> (revision == <span class="literal">null</span>) rawUrl <span class="keyword">else</span> <span class="string">&quot;<span class="variable">$rawUrl</span>?revision=<span class="variable">$revision</span>&quot;</span></span><br><span class="line">  <span class="keyword">val</span> headers = org.springframework.http.HttpHeaders().apply &#123;</span><br><span class="line">    <span class="comment">// 关键点：JWT的使用方式</span></span><br><span class="line">    <span class="keyword">this</span>.add(<span class="string">&quot;Authorization&quot;</span>, <span class="string">&quot;Bearer <span class="variable">$token</span>&quot;</span>)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">val</span> entity = HttpEntity&lt;String&gt;(headers)</span><br><span class="line">  <span class="keyword">val</span> res = retry &#123;</span><br><span class="line">    restTemplate.exchange(url, HttpMethod.GET, entity, GetTransactionHistoryVO::<span class="keyword">class</span>.java)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">if</span> (!res.statusCode.is2xxSuccessful) &#123;</span><br><span class="line">    logger.error(<span class="string">&quot;apple server 访问失败. <span class="variable">$res</span>&quot;</span>)</span><br><span class="line">    <span class="keyword">throw</span> BusinessException(ResErrCode.COMM_ERROR)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="keyword">return</span> res.body!!</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h1 id="业务接入"><a href="#业务接入" class="headerlink" title="业务接入"></a>业务接入</h1><p>上面描述了简单的流程，这里考虑加入业务场景——<a target="_blank" rel="noopener" href="https://apps.apple.com/cn/app/%E6%AF%8F%E8%AE%B0/id1572586388">每记APP</a>的自动续期订阅。简要描述值得注意的</p>
+<blockquote>
+<p>广告时间：“小小日记，大大不同”，每记是一款操作简单、功能强大的日记应用，目前已迭代到2.0版本，基本功能成熟可用，未来还有更多惊喜功能等着搭建，欢迎大家加入到每记用户的大家庭。</p>
+</blockquote>
+<h2 id="需求及分析"><a href="#需求及分析" class="headerlink" title="需求及分析"></a>需求及分析</h2><p>需要增加自动续期订阅功能。需要有两种级别——普通、高级；两种周期——包月、包年。</p>
+<p>于是在IAP中，我们需要建立四个商品，并将他们放在同一个订阅组下，设置两个优先级，普通转高级算升级；高级转普通算降级。</p>
+<ul>
+<li>高级包月，优先级设置1</li>
+<li>高级包年，优先级设置1</li>
+<li>普通包月，优先级设置2</li>
+<li>普通包年，优先级设置2</li>
+</ul>
+<h2 id="交易流程"><a href="#交易流程" class="headerlink" title="交易流程"></a>交易流程</h2><p>相比上面提到的交易流程，修正如下</p>
+<ol>
+<li>客户端从服务端请求当前登录用户对应的appAccountToken</li>
+<li>客户端从服务端请求当前App已经在App Store Connect中配置好的商品信息</li>
+<li>客户端用上面两个信息拉起支付</li>
+<li>剩下和前面提到的流程一致</li>
+</ol>
+<p>服务端和上面提到的流程一致。</p>
+<h2 id="订阅周期、扣费周期、权益周期"><a href="#订阅周期、扣费周期、权益周期" class="headerlink" title="订阅周期、扣费周期、权益周期"></a>订阅周期、扣费周期、权益周期</h2><p>分析产品功能时，我们说有包年、包月；查看IAP手册时候，我们知道自动续期订阅有按月、按钮扣费；默认情况下，我们认为它们是相同的，称作订阅周期。实际是不一样的，即时它们表现得一样，也是我们主动处理的结果。我更愿意将前者称作权益周期、后者称作扣费周期。</p>
+<p><strong>扣费周期</strong>：来自IAP，开发者不可干预，一般来说时间很准，什么时候自动续期扣费，Apple说了算，我们只能被动接受通知</p>
+<p><strong>权益周期</strong>：来自APP，由开发者全权控制，我们也可以设置其开始结束时间完全和扣费周期一致（Transaction信息中purchaseDate作为周期起点，ExpireDate作为周期终点）。但实际操作时并不建议这么做</p>
+<ul>
+<li><p>因为在沙盒环境下，一个月可被设置为3分钟，年也有对应缩短，意味着权益周期也会相应缩短，这样不便于测试真实日期的计算方式。而且每记是一个跨端应用，目前我们有IOS、Mac OS、Android三端应用，支付平台需要有IAP、微信、支付宝。支付服务和业务服务必须解绑，支付只负责扣费，权益发放交给业务，职责清晰。</p>
+</li>
+<li><p>当出现服务器宕机等情况，服务端未能及时处理用户续期支付成功的通知，理论上可以延迟数小时到数天不等，如果此时还按照Transaction中的过期时间作为权益周期的过期时间，则用户会凭空损失与延迟时间相等的会员权益。这样是不大好的。</p>
+</li>
+</ul>
+<p>而因为支付成功通知的延迟处理（多多少少都会有些延迟），可能造成权益周期比扣费周期整体延后，我称之为周期偏移。要注意到这个现象的存在。</p>
+<h2 id="可靠性考量"><a href="#可靠性考量" class="headerlink" title="可靠性考量"></a>可靠性考量</h2><h3 id="服务器宕机"><a href="#服务器宕机" class="headerlink" title="服务器宕机"></a>服务器宕机</h3><p>如果因为服务端宕机或代码bug等原因，为能正确处理Apple Server通知，Apple Server会进行重试。重试时间分别是：在上一次尝试的基础上间隔1, 12, 24, 48, 72小时。也就是说，6天13小时后，将放弃通知重试，这期间还没能正确处理通知，将发生掉单。</p>
+<p>此外，如果等不及通知重试，也可以主动查询交易历史进行补单。</p>
+<blockquote>
+<p>注意：交易历史查询接口需要originalTransactionId作为路径参数，所以如果是丢了初次购买的交易信息，是无法补单的。</p>
+</blockquote>
+<h3 id="通知乱序"><a href="#通知乱序" class="headerlink" title="通知乱序"></a>通知乱序</h3><p>理论上通知存在乱序的可能：初次订阅，此时服务器未能正确处理交易信息，接着客户马上在设置界面升级，触发升级通知。会出现先收到升级通知，再收到初次订阅通知的情况。正确的处理方式是以升级通知的交易为准，忽略初次订阅通知。</p>
+<p>为保证无论什么时候来通知，都能正确处理，可以在每次回调时都先查询交易历史，如果通知中的交易信息是最新的，则处理，否则忽略。</p>
+<h3 id="恢复购买"><a href="#恢复购买" class="headerlink" title="恢复购买"></a>恢复购买</h3><p>前面说，丢了初次订阅信息的单光靠服务端是找不回来的，此时需要客户端通过恢复购买操作拿到之前购买的交易信息，然后传递给服务端，服务端提取originalTransactionId再调用交易历史进行查询。</p>
+<h1 id="测试姿势"><a href="#测试姿势" class="headerlink" title="测试姿势"></a>测试姿势</h1><h2 id="熟悉App-Store-Connect控制台"><a href="#熟悉App-Store-Connect控制台" class="headerlink" title="熟悉App Store Connect控制台"></a>熟悉App Store Connect控制台</h2><p>要调试IAP，必须熟悉App Store Connect控制台，这个自己上去东点西点就能熟悉了。这里提两个点</p>
+<ol>
+<li><p>添加测试用户时，电子邮件不要是已经注册过Apple ID的，否则会提示邮箱已经被使用，也不必是真实的电子邮件，不会接收验证码，在沙盒环境登录时，只需要输入电子邮件和密码即可。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220516143502001.png" alt="image-20220516143502001"></p>
+</li>
+<li><p>重新测试时，最好将测试账号的购买历史记录清除，这样最接近真实情况。而历史记录的清除可能需要好几分钟，因此注册多个测试账号，切换测试会比较方便。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220516143816984.png" alt="image-20220516143816984"></p>
+</li>
+<li><p>自动续期订阅的设置在 App - 具体App - 功能 - 订阅 中设置，而不是在App 内购买项目设置</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220516144209209.png" alt="image-20220516144209209" style="zoom:80%;" /></li>
+</ol>
+<h2 id="沙盒环境"><a href="#沙盒环境" class="headerlink" title="沙盒环境"></a>沙盒环境</h2><p>IAP测试阶段只能通过沙盒环境进行测试。从客户端SDK到服务端Apple Server，都有沙盒对应的版本。对客户端，它是另外的API，对服务端，它是另外的端点。对用户端，需要在手机端进行设置。</p>
+<p>手机端登录：设置 - App Store - 沙盒账户。点击 沙盒账户 - 管理，能够进入当前App的购买项目管理界面（购买过一次后才会出现），这里可以测试左右横跳。</p>
+<h2 id="日志是个好东西"><a href="#日志是个好东西" class="headerlink" title="日志是个好东西"></a>日志是个好东西</h2><p>诚然，我们可以通过将Apple的通知回调URL设置为本地的内网穿透地址，但直接设到测试服地址，再将必要信息输出到日志存储系统才是长久的解决方式。对每个通知，至少需要这几样日志</p>
+<ul>
+<li>通知的原始信息，遇到问题时候可以直接复制到本地调试</li>
+<li>解析后的通知信息，方便查看通知类型</li>
+<li>解析后的交易信息，方便查看交易信息</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220516145506230.png" alt="image-20220516145506230"></p>
+<h2 id="测试场景列举"><a href="#测试场景列举" class="headerlink" title="测试场景列举"></a>测试场景列举</h2><p>列举能够遇到的场景</p>
+<ul>
+<li>订阅成功<ul>
+<li>初次订阅成功</li>
+<li>到期后续订成功</li>
+<li>过期后重新订阅成功</li>
+</ul>
+</li>
+<li>订阅失败<ul>
+<li>因扣款问题导致订阅失败，可在App Store Connect控制台模拟</li>
+</ul>
+</li>
+<li>订阅到期<ul>
+<li>用户关闭自动续期后到期</li>
+</ul>
+</li>
+<li>订阅商品切换<ul>
+<li>同等级切换</li>
+<li>低级升高级</li>
+<li>高级降低级</li>
+<li>等级恢复：先降级再升级。（先升级再降级不属于订阅恢复，因为升级马上生效，降级要本周期到期后生效）</li>
+</ul>
+</li>
+</ul>
+<h2 id="无法测试的场景"><a href="#无法测试的场景" class="headerlink" title="无法测试的场景"></a>无法测试的场景</h2><p>退款是通过IAP售后申请，非常规渠道，无法测试。</p>
+<h2 id="测试数据demo"><a href="#测试数据demo" class="headerlink" title="测试数据demo"></a>测试数据demo</h2><p>看IAP手册最困惑的地方就是没有真实数据作参考，这里给出一些</p>
+<h3 id="通知"><a href="#通知" class="headerlink" title="通知"></a>通知</h3><ul>
+<li>原始信息：<a target="_blank" rel="noopener" href="https://gist.github.com/zou8944/7e223ba95c312abd95dc9bc70d171719#file-iap-storekit2-notification-raw-json-json">iap-storekit2-notification-raw-json</a></li>
+<li>解密信息：<a target="_blank" rel="noopener" href="https://gist.github.com/zou8944/7e223ba95c312abd95dc9bc70d171719#file-iap-storekit2-notification-json-json">iap-storekit2-notification-json</a></li>
+<li>data.signedTransactionInfo：<a target="_blank" rel="noopener" href="https://gist.github.com/zou8944/7e223ba95c312abd95dc9bc70d171719#file-iap-storekit2-notification-data-signedtransactioninfo-json">iap-storekit2-notification-data-signedtransactioninfo-json</a></li>
+<li>data.signedRenewalInfo：<a target="_blank" rel="noopener" href="https://gist.github.com/zou8944/7e223ba95c312abd95dc9bc70d171719#file-iap-storekit2-notification-data-signedrenewalinfo-json">iap-storekit2-notification-data-signedrenewalinfo-json</a></li>
+</ul>
+<h3 id="交易历史-1"><a href="#交易历史-1" class="headerlink" title="交易历史"></a>交易历史</h3><ul>
+<li><a target="_blank" rel="noopener" href="https://gist.github.com/zou8944/7e223ba95c312abd95dc9bc70d171719#file-iap-storekit2-transaction-history-json">iap-storekit2-transaction-history-json</a></li>
+</ul>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>StoreKit2说起来算是简单的，了解了以下几点，开发时才会相对顺利</p>
+<ul>
+<li>了解基础知识：JWS、JWT、X.509证书及验证</li>
+<li>正确理解交易、交易历史的概念</li>
+<li>正确理解商品间相互切换时对应的订阅切换逻辑</li>
+<li>熟知用户对IAP的操作入口</li>
+<li>应考虑到一些关乎安全性的边缘case</li>
+<li>要有明确的测试方式，如果只在本地debug不大方便</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/IAP/" rel="tag"># IAP</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/04/25/Kubernetes%E5%BA%94%E7%94%A8%E8%B5%84%E6%BA%90%E7%AE%A1%E7%90%86%E5%AE%9E%E8%B7%B5/" rel="prev" title="Kubernetes应用资源管理实践">
+      <i class="fa fa-chevron-left"></i> Kubernetes应用资源管理实践
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%96%87%E6%A1%A3%E7%A0%94%E8%AF%BB"><span class="nav-number">1.</span> <span class="nav-text">文档研读</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%96%87%E6%A1%A3%E7%9B%AE%E5%BD%95"><span class="nav-number">1.1.</span> <span class="nav-text">文档目录</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BF%A1%E6%81%AF%E6%8F%90%E5%8F%96"><span class="nav-number">1.2.</span> <span class="nav-text">信息提取</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%95%86%E5%93%81%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.2.1.</span> <span class="nav-text">商品类型</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E7%90%86%E8%A7%A3%E4%BA%A4%E6%98%93%EF%BC%88Transaction%EF%BC%89"><span class="nav-number">1.2.2.</span> <span class="nav-text">理解交易（Transaction）</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%A4%E6%98%93%E5%8E%86%E5%8F%B2"><span class="nav-number">1.2.3.</span> <span class="nav-text">交易历史</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AE%A2%E9%98%85%E5%8D%87%E9%99%8D%E7%BA%A7"><span class="nav-number">1.2.4.</span> <span class="nav-text">订阅升降级</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%94%AF%E4%BB%98%E6%B5%81%E7%A8%8B"><span class="nav-number">1.2.5.</span> <span class="nav-text">支付流程</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E7%9F%A5%E7%B1%BB%E5%9E%8B"><span class="nav-number">1.2.6.</span> <span class="nav-text">通知类型</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%8A%80%E6%9C%AF%E7%82%B9"><span class="nav-number">2.</span> <span class="nav-text">技术点</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%B8%9A%E5%8A%A1%E7%94%A8%E6%88%B7%E8%AF%86%E5%88%AB"><span class="nav-number">2.1.</span> <span class="nav-text">业务用户识别</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#JWS%E7%AD%BE%E5%90%8D%E9%AA%8C%E8%AF%81"><span class="nav-number">2.2.</span> <span class="nav-text">JWS签名验证</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%AE%A2%E6%88%B7%E7%AB%AF%E4%B8%8A%E4%BC%A0%E4%BA%A4%E6%98%93%E4%BF%A1%E6%81%AF%E7%9A%84%E9%AA%8C%E8%AF%81"><span class="nav-number">2.2.1.</span> <span class="nav-text">客户端上传交易信息的验证</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E7%9F%A5%E7%9A%84%E7%AD%BE%E5%90%8D%E9%AA%8C%E8%AF%81"><span class="nav-number">2.2.2.</span> <span class="nav-text">通知的签名验证</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Apple%E6%9C%8D%E5%8A%A1%E7%AB%AF%E7%82%B9%E8%AE%BF%E9%97%AE%E5%87%AD%E8%AF%81"><span class="nav-number">2.3.</span> <span class="nav-text">Apple服务端点访问凭证</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E4%B8%9A%E5%8A%A1%E6%8E%A5%E5%85%A5"><span class="nav-number">3.</span> <span class="nav-text">业务接入</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%9C%80%E6%B1%82%E5%8F%8A%E5%88%86%E6%9E%90"><span class="nav-number">3.1.</span> <span class="nav-text">需求及分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BA%A4%E6%98%93%E6%B5%81%E7%A8%8B"><span class="nav-number">3.2.</span> <span class="nav-text">交易流程</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E8%AE%A2%E9%98%85%E5%91%A8%E6%9C%9F%E3%80%81%E6%89%A3%E8%B4%B9%E5%91%A8%E6%9C%9F%E3%80%81%E6%9D%83%E7%9B%8A%E5%91%A8%E6%9C%9F"><span class="nav-number">3.3.</span> <span class="nav-text">订阅周期、扣费周期、权益周期</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%AF%E9%9D%A0%E6%80%A7%E8%80%83%E9%87%8F"><span class="nav-number">3.4.</span> <span class="nav-text">可靠性考量</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%9C%8D%E5%8A%A1%E5%99%A8%E5%AE%95%E6%9C%BA"><span class="nav-number">3.4.1.</span> <span class="nav-text">服务器宕机</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E7%9F%A5%E4%B9%B1%E5%BA%8F"><span class="nav-number">3.4.2.</span> <span class="nav-text">通知乱序</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%81%A2%E5%A4%8D%E8%B4%AD%E4%B9%B0"><span class="nav-number">3.4.3.</span> <span class="nav-text">恢复购买</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E5%A7%BF%E5%8A%BF"><span class="nav-number">4.</span> <span class="nav-text">测试姿势</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%86%9F%E6%82%89App-Store-Connect%E6%8E%A7%E5%88%B6%E5%8F%B0"><span class="nav-number">4.1.</span> <span class="nav-text">熟悉App Store Connect控制台</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B2%99%E7%9B%92%E7%8E%AF%E5%A2%83"><span class="nav-number">4.2.</span> <span class="nav-text">沙盒环境</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A5%E5%BF%97%E6%98%AF%E4%B8%AA%E5%A5%BD%E4%B8%9C%E8%A5%BF"><span class="nav-number">4.3.</span> <span class="nav-text">日志是个好东西</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E5%9C%BA%E6%99%AF%E5%88%97%E4%B8%BE"><span class="nav-number">4.4.</span> <span class="nav-text">测试场景列举</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%97%A0%E6%B3%95%E6%B5%8B%E8%AF%95%E7%9A%84%E5%9C%BA%E6%99%AF"><span class="nav-number">4.5.</span> <span class="nav-text">无法测试的场景</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%B5%8B%E8%AF%95%E6%95%B0%E6%8D%AEdemo"><span class="nav-number">4.6.</span> <span class="nav-text">测试数据demo</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E9%80%9A%E7%9F%A5"><span class="nav-number">4.6.1.</span> <span class="nav-text">通知</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E4%BA%A4%E6%98%93%E5%8E%86%E5%8F%B2-1"><span class="nav-number">4.6.2.</span> <span class="nav-text">交易历史</span></a></li></ol></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">5.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">106</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">31</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">77</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
