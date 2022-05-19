@@ -129,7 +129,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">106</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">107</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
@@ -197,6 +197,96 @@
 
           <div class="content index posts-expand">
             
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/11/16/Spring%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-ApplicationContext/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2021/11/16/Spring%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-ApplicationContext/" class="post-title-link" itemprop="url">Spring源码解析 - ApplicationContext</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2021-11-16 20:29:39" itemprop="dateCreated datePublished" datetime="2021-11-16T20:29:39+08:00">2021-11-16</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-11-30 14:47:52" itemprop="dateModified" datetime="2021-11-30T14:47:52+08:00">2021-11-30</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Spring/" itemprop="url" rel="index"><span itemprop="name">Spring</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2021/11/16/Spring%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-ApplicationContext/" class="post-meta-item leancloud_visitors" data-flag-title="Spring源码解析 - ApplicationContext" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="Spring源码剖析-ApplicationContext"><a href="#Spring源码剖析-ApplicationContext" class="headerlink" title="Spring源码剖析 - ApplicationContext"></a>Spring源码剖析 - ApplicationContext</h1><h2 id="前言"><a href="#前言" class="headerlink" title="前言"></a>前言</h2><p>实话说，Spring虽火，但我的使用经验却不多。这和我的实际工作经历有一定关系，前几年初入软件这行，项目使用Struts1，第一次使用Spring，还是在同时期的外快项目，非常表面。换公司后直接转向Vertx技术栈，近一年多虽然又转向Spring，但手上的Spring项目并不复杂，也没抽时间好好过一遍Spring。于是，Spring成了心病，你可以说它千万好坏，但首先得掌握它，这一点我做的不好，所以是时候研究一下它。</p>
+<p>Spring说简单也简单，本质上就一个依赖注入、面向切面的框架；Spring MVC也只是针对Web应用场景的抽象，会定义Controller、Servier、Repository就会用；Spring Boot就是一个快捷启动方式。说复杂也复杂，Spring太大了，人们常说Spring上手容易，精通难，没错，但有点废话，我印象中没有几门技术精通起来是容易的。</p>
+<p>Spring的大，一是体现在功能的全面，同一件事提供多种处理方式，对老手是利器，对新手就抓瞎；二是体现在源码上，Spring的源码很大，抽象层次很多：比如BeanFactory有ConfiurableBeanFactory、HierarchicalBeanFactory等抽象，ApplicationContext也有很多。基础知识涉及也较多：如果要了解Spring Web的工作配置原理，首先要了解Servlet规范；要了解AOP，首先要了解JDK动态代理、CGLib的区别，最好还了解一下ASM，因为Spring读取Bean时也有用到；要了解资源国际化，你首先要了解JDK提供的ResourceBundle；三也体现在手册上，Spring的手册写得很好，但是很长，有尝试过通过读手册来学习Spring，但手册大而全，没有重点，不会讲原理，用的时候翻翻还行，深入探究就不管用了。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2021/11/16/Spring%E6%BA%90%E7%A0%81%E8%A7%A3%E6%9E%90-ApplicationContext/#more" rel="contents">
+                阅读全文 &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
       
   
   
@@ -1592,89 +1682,6 @@
   
   
 
-      
-  
-  
-  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
-    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2021/09/12/HTTP2%E9%87%8D%E7%82%B9PICK-http2-zhong-dian-pick/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
-      <meta itemprop="name" content="果冻">
-      <meta itemprop="description" content="果冻的碎碎念">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="半中二青年">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          
-            <a href="/2021/09/12/HTTP2%E9%87%8D%E7%82%B9PICK-http2-zhong-dian-pick/" class="post-title-link" itemprop="url">HTTP2重点PICK</a>
-        </h2>
-
-        <div class="post-meta">
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-calendar"></i>
-              </span>
-              <span class="post-meta-item-text">发表于</span>
-
-              <time title="创建时间：2021-09-12 23:59:01" itemprop="dateCreated datePublished" datetime="2021-09-12T23:59:01+08:00">2021-09-12</time>
-            </span>
-            <span class="post-meta-item">
-              <span class="post-meta-item-icon">
-                <i class="far fa-folder"></i>
-              </span>
-              <span class="post-meta-item-text">分类于</span>
-                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
-                  <a href="/categories/%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80/" itemprop="url" rel="index"><span itemprop="name">网络基础</span></a>
-                </span>
-            </span>
-
-          
-            <span id="/2021/09/12/HTTP2%E9%87%8D%E7%82%B9PICK-http2-zhong-dian-pick/" class="post-meta-item leancloud_visitors" data-flag-title="HTTP2重点PICK" title="阅读次数">
-              <span class="post-meta-item-icon">
-                <i class="fa fa-eye"></i>
-              </span>
-              <span class="post-meta-item-text">阅读次数：</span>
-              <span class="leancloud-visitors-count"></span>
-            </span>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-
-      
-          <blockquote>
-<p>花了两天时间读完HTTP2的<a target="_blank" rel="noopener" href="https://www.rfc-editor.org/rfc/pdfrfc/rfc7540.txt.pdf">RFC</a>，揭开HTTP2的神秘面纱，驱散心中迷雾，它比HTTP1.1，到底改变了什么。</p>
-</blockquote>
-          <!--noindex-->
-            <div class="post-button">
-              <a class="btn" href="/2021/09/12/HTTP2%E9%87%8D%E7%82%B9PICK-http2-zhong-dian-pick/#more" rel="contents">
-                阅读全文 &raquo;
-              </a>
-            </div>
-          <!--/noindex-->
-        
-      
-    </div>
-
-    
-    
-    
-      <footer class="post-footer">
-        <div class="post-eof"></div>
-      </footer>
-  </article>
-  
-  
-  
-
 
   
   <nav class="pagination">
@@ -1746,7 +1753,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">106</span>
+          <span class="site-state-item-count">107</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
