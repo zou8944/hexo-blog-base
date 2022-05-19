@@ -20,12 +20,12 @@
     var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="TL;DR; 2021年10月，苹果发布了StoreKit2。新API和流程看起来更加简化，但是苹果官方文档并没有让开发者接入变得简单，调试起来也是各种问题，这方便和StoreKit1一样做的不好。梳理是必要的。">
+  <meta name="description" content="TL;DR; 2021年10月，苹果发布了StoreKit2。新API和流程看起来更加简化，但是苹果官方文档并没有让开发者接入变得简单，调试起来也是各种问题，这方面和StoreKit1一样做的不好。梳理是必要的。">
 <meta property="og:type" content="article">
 <meta property="og:title" content="IAP StoreKit2后端开发完全指南">
 <meta property="og:url" content="https://zou8944.com/2022/05/13/IAP-StoreKit2%E5%90%8E%E7%AB%AF%E5%BC%80%E5%8F%91%E6%8C%87%E5%8D%97/index.html">
 <meta property="og:site_name" content="半中二青年">
-<meta property="og:description" content="TL;DR; 2021年10月，苹果发布了StoreKit2。新API和流程看起来更加简化，但是苹果官方文档并没有让开发者接入变得简单，调试起来也是各种问题，这方便和StoreKit1一样做的不好。梳理是必要的。">
+<meta property="og:description" content="TL;DR; 2021年10月，苹果发布了StoreKit2。新API和流程看起来更加简化，但是苹果官方文档并没有让开发者接入变得简单，调试起来也是各种问题，这方面和StoreKit1一样做的不好。梳理是必要的。">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220514172920979.png">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/IMG_5914.PNG">
@@ -35,7 +35,7 @@
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220516144209209.png">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220516145506230.png">
 <meta property="article:published_time" content="2022-05-13T08:02:44.000Z">
-<meta property="article:modified_time" content="2022-05-16T07:37:40.217Z">
+<meta property="article:modified_time" content="2022-05-19T06:14:14.396Z">
 <meta property="article:author" content="果冻">
 <meta property="article:tag" content="IAP">
 <meta name="twitter:card" content="summary">
@@ -242,7 +242,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-05-16 15:37:40" itemprop="dateModified" datetime="2022-05-16T15:37:40+08:00">2022-05-16</time>
+                <time title="修改时间：2022-05-19 14:14:14" itemprop="dateModified" datetime="2022-05-19T14:14:14+08:00">2022-05-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -281,11 +281,11 @@
       
         <blockquote>
 <p>TL;DR;</p>
-<p>2021年10月，苹果发布了StoreKit2。新API和流程看起来更加简化，但是苹果官方文档并没有让开发者接入变得简单，调试起来也是各种问题，这方便和StoreKit1一样做的不好。梳理是必要的。</p>
+<p>2021年10月，苹果发布了StoreKit2。新API和流程看起来更加简化，但是苹果官方文档并没有让开发者接入变得简单，调试起来也是各种问题，这方面和StoreKit1一样做的不好。梳理是必要的。</p>
 </blockquote>
 <span id="more"></span>
 
-<h1 id="文档研读"><a href="#文档研读" class="headerlink" title="文档研读"></a>文档研读</h1><h2 id="文档目录"><a href="#文档目录" class="headerlink" title="文档目录"></a>文档目录</h2><p>官方文档虽然有组织结构，但并不清晰，按照如下结构去看，能够比较系统地了解。通读它们，是必要的。</p>
+<h1 id="文档研读"><a href="#文档研读" class="headerlink" title="文档研读"></a>文档研读</h1><h2 id="文档目录"><a href="#文档目录" class="headerlink" title="文档目录"></a>文档目录</h2><p>官方文档虽然有组织结构，但不清晰，按照如下结构去通读，还是很有必要的。</p>
 <ul>
 <li><a target="_blank" rel="noopener" href="https://developer.apple.com/cn/in-app-purchase/">概览页</a></li>
 <li>购买项目配置<ul>
@@ -325,11 +325,11 @@
 </ul>
 <p>总体来说，阅读步骤应该如下</p>
 <ol>
-<li><p>阅读概览页，将对IAP有初步认识，了解购买项目类型、如何在App Store Connect控制台进行配置、如何使用StoreKit进行开发、如何使用沙盒环境进行测试等。</p>
+<li><p>概览页，对IAP有初步认识，了解购买项目类型、在App Store Connect控制台 配置、使用StoreKit开发、使用沙盒环境测试等。</p>
 </li>
-<li><p>阅读StoreKit2的客户端SDK和服务端API。</p>
-<p>将了解到客户端如何操作，而作为后端，我们要关心的是服务端在操作完成后会得到一个Transaction，而在StoreKit2中，该Transaction和回调通知中的Transation、以及交易历史中的Transation是同样的结构和内容，也就是说，我们的APP可以直接将其发送到业务后端进行验证。</p>
-<p>也会了解到服务端API其实主要就提供两个接口：获取交易历史、获取订阅状态</p>
+<li><p>StoreKit2的客户端SDK和服务端API。</p>
+<p>了解客户端如何操作，作为后端，要关心的是服务端在操作完成后会得到一个Transaction，于StoreKit2，该Transaction和回调通知中的Transation、以及交易历史中的Transation具有同样的结构和内容，也就是说，我们的APP可以直接将其发送到业务后端进行验证。</p>
+<p>还能了解到服务端API其实主要就提供两个接口：获取交易历史、获取订阅状态</p>
 </li>
 <li><p>阅读服务端通知。将了解到通知的数据结构、类型，以及安全机制。这一点很重要。</p>
 </li>
@@ -339,7 +339,7 @@
 </li>
 </ol>
 <blockquote>
-<p>在Apple文档阅读过程中，由于来回跳转，很可能会去到StoreKit1的文档，它们可能描述了交易流程、支付收据、收据验证等流程，这和StoreKit2的流程不一样，十分容易对我们造成困惑，注意区分。区分StoreKit1的主要方式，是带StoreKit1或Original API这类关键字的文档，可以肯定是StoreKit1，请忽略它们。</p>
+<p>文档阅读过程中，由于来回跳转，很可能会去到StoreKit1的文档，它们也可能描述交易流程、支付收据、收据验证等信息，非常容易和StoreKit2混淆，注意区分。区分的主要方式：StoreKit1或Original API这俩关键字</p>
 </blockquote>
 <blockquote>
 <p>Apple文档的不合理之处在于——没有目录、没有支付流程说明、没有demo、没有专门针对后端人员的说明（我们很可能对客户端并不熟悉）</p>
@@ -368,7 +368,8 @@
 </li>
 </ul>
 <p>本文的讨论，几种在自动续期订阅的商品类型。</p>
-<h3 id="理解交易（Transaction）"><a href="#理解交易（Transaction）" class="headerlink" title="理解交易（Transaction）"></a>理解交易（Transaction）</h3><p>Transation，交易。<a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/storekit/transaction">官方手册</a>说：Transaction代表了app中对某个产品的购买。用户的每次购买或续费都会产生一个新的Transation对象，看起来已经说得够清楚了。但在开发中从头到尾都在和Transaction打交道，有时候它出现的地方会让人产生困惑，比如回调通知中必然会带有交易信息，但像降级、退订这种通知的交易信息的意义何在呢？我们如何知道它代表着什么呢？</p>
+<h3 id="理解交易（Transaction）"><a href="#理解交易（Transaction）" class="headerlink" title="理解交易（Transaction）"></a>理解交易（Transaction）</h3><p>Transation，交易。<a target="_blank" rel="noopener" href="https://developer.apple.com/documentation/storekit/transaction">官方手册</a>说：Transaction代表了app中对某个产品的购买。用户的每次购买或续费都会产生一个新的Transation对象，看起来已经说得够清楚了，但还不够，它只说了定义，没有说不通场景下的含义。有时候它出现的地方会让人困惑，比如回调通知中必然会带有交易信息，但像降级、退订这种通知的交易信息的意义何在呢？我们如何知道它代表着什么呢？</p>
+<p>为此，我总结了三个关于交易的要点。</p>
 <p>交易要点1：<strong>只要用户发生了扣费，就会产生一个新的Transaction —— 扣费=交易</strong>。穷举所有会产生扣费的场景</p>
 <ul>
 <li><p>订阅成功，包括如下</p>
@@ -385,10 +386,10 @@
 <p>对同一个App，一个用户（体现为一个Apple ID账号）可能因为上述操作产生多个交易，这些交易组成了交易历史。</p>
 <p>交易要点2：<strong>一个用户针对同一个App的交易历史中，只有最近一条是有效的</strong>。这个可以证明，在上述会产生扣费的场景中，订阅成功的case都是建立在前一个订阅失效的前提下；订阅升级的case中，前一个低级订阅会因为马上退款而失效。因此，产生的众多交易中，有且仅有最近的那条交易是有效的。</p>
 <p>交易要点3：<strong>一个用户针对同一个App的所有交易中，originalTransactionId是一样的</strong>。这里第一次出现originalTransactionId，它是第一次购买时的交易ID，今后用户的所有交易，都是基于它串成交易历史。</p>
-<h3 id="交易历史"><a href="#交易历史" class="headerlink" title="交易历史"></a>交易历史</h3><p>交易历史作为Apple提供的唯二客户端API之一，需要注意如下几点</p>
+<h3 id="交易历史"><a href="#交易历史" class="headerlink" title="交易历史"></a>交易历史</h3><p>交易历史作为Apple提供的唯二API之一，需要注意如下几点</p>
 <ul>
 <li>消耗型商品的交易不会出现在交易历史中</li>
-<li>手册宣称默认按照购买时间从早到晚排序，但实测并不严格，拿到后还是要自己排一次</li>
+<li>手册宣称默认按照购买时间从早到晚排序，但实测并不严格，可能出现局部顺序不对的情况，拿到后还是要自己排一次</li>
 <li>如上所说，最近一条才是有效的。开发时应以最近一条作为判断依据</li>
 </ul>
 <h3 id="订阅升降级"><a href="#订阅升降级" class="headerlink" title="订阅升降级"></a>订阅升降级</h3><p>对于自动续期订阅的产品，可以设定订阅顺序，如下截图App Store Connect控制台的设置例子</p>
@@ -408,7 +409,7 @@
 <li>设置 - 用户设置页面 - 订阅 - 具体App</li>
 </ul>
 <p>前者一般仅用于初次订阅，订阅后会将订阅按钮隐藏；后者则可以任意切换。</p>
-<p>前者以知乎为例，如下</p>
+<p>以知乎为例，App暴露的购买API如下</p>
 <img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/IMG_5914.PNG" alt="IMG_5914" style="zoom:25%;" />
 
 <p>在设置中呈现如下</p>
@@ -417,7 +418,7 @@
 <h3 id="支付流程"><a href="#支付流程" class="headerlink" title="支付流程"></a>支付流程</h3><p>如果只有客户端，那么支付流程如下</p>
 <ol>
 <li>客户端通过StoreKit SDK拉起支付</li>
-<li>用户输入密码或FaceID完成支付</li>
+<li>用户输入密码或Face ID完成支付</li>
 <li>StoreKit回调客户端并传入Transaction</li>
 <li>客户端校验该Transaction，校验通过后发放权益</li>
 </ol>
@@ -454,7 +455,7 @@
 <th>notificationType</th>
 <th>subType</th>
 <th>说明</th>
-<th>弄？</th>
+<th>要处理吗？</th>
 </tr>
 </thead>
 <tbody><tr>
@@ -579,10 +580,10 @@
 </tr>
 </tbody></table>
 <p><strong>理解不同类型通知中交易信息的含义</strong></p>
-<p>每个通知中都会携带交易信息，位于 data -&gt; signedTransactionInfo 字段，它总是此刻（发送通知那一刻）生效的交易，举例</p>
+<p>每个通知中都会携带交易信息，位于 data -&gt; signedTransactionInfo 字段，它总是当时（发送通知那一刻）生效的交易，举例</p>
 <ul>
 <li>初次购买时，携带的购买成功的交易信息</li>
-<li>升级时，携带的升级之后，购买的高级商品的交易信息。原低级产品需要自己通过交易历史查询得到</li>
+<li>升级时，携带的升级之后，购买的高级商品的交易信息。原低级产品需要自己通过交易历史才能查询得到</li>
 <li>降级时，不会马上生效，携带的是上次购买成功的交易信息</li>
 <li>关闭自动续费时，携带的是上次购买成功的交易信息</li>
 <li>退款时，携带的是上次购买成功的交易信息（这是我猜的，没有实测过，因为无法触发退款通知）</li>
@@ -661,7 +662,7 @@
 <li>剩下和前面提到的流程一致</li>
 </ol>
 <p>服务端和上面提到的流程一致。</p>
-<h2 id="订阅周期、扣费周期、权益周期"><a href="#订阅周期、扣费周期、权益周期" class="headerlink" title="订阅周期、扣费周期、权益周期"></a>订阅周期、扣费周期、权益周期</h2><p>分析产品功能时，我们说有包年、包月；查看IAP手册时候，我们知道自动续期订阅有按月、按钮扣费；默认情况下，我们认为它们是相同的，称作订阅周期。实际是不一样的，即时它们表现得一样，也是我们主动处理的结果。我更愿意将前者称作权益周期、后者称作扣费周期。</p>
+<h2 id="订阅周期、扣费周期、权益周期"><a href="#订阅周期、扣费周期、权益周期" class="headerlink" title="订阅周期、扣费周期、权益周期"></a>订阅周期、扣费周期、权益周期</h2><p>分析产品功能时，我们说有包年、包月；查看IAP手册，我们知道自动续期订阅有按月、按年扣费；默认情况下，我们认为这二者是相同的，称作订阅周期。实际不一样，即使它们表现得一样，也是我们主动处理的结果。我更愿意将前者称作权益周期、后者称作扣费周期。</p>
 <p><strong>扣费周期</strong>：来自IAP，开发者不可干预，一般来说时间很准，什么时候自动续期扣费，Apple说了算，我们只能被动接受通知</p>
 <p><strong>权益周期</strong>：来自APP，由开发者全权控制，我们也可以设置其开始结束时间完全和扣费周期一致（Transaction信息中purchaseDate作为周期起点，ExpireDate作为周期终点）。但实际操作时并不建议这么做</p>
 <ul>
