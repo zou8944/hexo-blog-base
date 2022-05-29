@@ -354,6 +354,16 @@ root@10-9-175-15:/home/ubuntu/docker-learn# docker run --name ubuntu-entrypoint 
 /usr/bin/touch: /usr/bin/touch: cannot execute binary file
 ```
 
+### 小问题
+
+- 注意不同启动方式的影响，参考[这篇文章](https://zou8944.com/2022/05/19/Kubernetes%E9%85%8D%E7%BD%AE%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%E5%AE%B9%E5%99%A8%E5%86%85%E9%83%A8%E4%B8%8D%E7%94%9F%E6%95%88/)
+
+- 如何在容器启动时执行两条命令？
+
+  使用`shell`格式启动，比如`CMD ["sh", "-c", "command1 && command2"]`
+
+  要注意的是，command1必须是能结束的命令，否则command2不会执行。
+
 ## <未完待续>
 
 Dockerfile肯定不止这么写指令，但这几个是最重要的内容，能够正确实用Dockerfile的关键，其它等有需要时再添加
