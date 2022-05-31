@@ -20,15 +20,15 @@
     var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
   </script>
 
-  <meta name="description" content="Kotlin与Java完美互操作，但在很多依赖于JVM特性的框架的使用中，并不是那么平滑完美，Spring就是其中之一。有必要总结一下。 用Kotlin写SpringSpring关于Kotlin的支持在这个手册中有所阐述，总结起来有这么几点 注意事项Kotlin写Spring，用起来真开心，但有一些小细节，用起来总是觉得有些别扭。 var还是val空安全的取舍默认final的问题data clas">
+  <meta name="description" content="Kotlin与Java百分百互操作，顺理成章，Spring开发也可以用Kotlin。可以享受到Kotlin的简洁语法。二者结合的大部分特点，在尝试之后都能体会。本文列举一些实际开发中最容易遇到的问题。 关于POJODTO、VO、BO、MyBatis的Entity、Spring配置文件对应的PropertiesBean，各种Bean的组装与传输。直觉告诉我们，最好定义成data class，属性最好">
 <meta property="og:type" content="article">
-<meta property="og:title" content="用Kotlin写Spring的正确方式">
+<meta property="og:title" content="Spring 和 Kotlin">
 <meta property="og:url" content="https://zou8944.com/2022/03/19/Spring%E5%AF%B9Kotlin%E7%9A%84%E4%B8%8D%E5%8F%8B%E5%A5%BD/index.html">
 <meta property="og:site_name" content="半中二青年">
-<meta property="og:description" content="Kotlin与Java完美互操作，但在很多依赖于JVM特性的框架的使用中，并不是那么平滑完美，Spring就是其中之一。有必要总结一下。 用Kotlin写SpringSpring关于Kotlin的支持在这个手册中有所阐述，总结起来有这么几点 注意事项Kotlin写Spring，用起来真开心，但有一些小细节，用起来总是觉得有些别扭。 var还是val空安全的取舍默认final的问题data clas">
+<meta property="og:description" content="Kotlin与Java百分百互操作，顺理成章，Spring开发也可以用Kotlin。可以享受到Kotlin的简洁语法。二者结合的大部分特点，在尝试之后都能体会。本文列举一些实际开发中最容易遇到的问题。 关于POJODTO、VO、BO、MyBatis的Entity、Spring配置文件对应的PropertiesBean，各种Bean的组装与传输。直觉告诉我们，最好定义成data class，属性最好">
 <meta property="og:locale" content="zh_CN">
 <meta property="article:published_time" content="2022-03-19T09:05:05.000Z">
-<meta property="article:modified_time" content="2022-04-03T02:29:41.614Z">
+<meta property="article:modified_time" content="2022-05-30T11:26:01.106Z">
 <meta property="article:author" content="果冻">
 <meta property="article:tag" content="Spring">
 <meta property="article:tag" content="Kotlin">
@@ -47,7 +47,7 @@
   };
 </script>
 
-  <title>用Kotlin写Spring的正确方式 | 半中二青年</title>
+  <title>Spring 和 Kotlin | 半中二青年</title>
   
 
 
@@ -218,7 +218,7 @@
     </span>
       <header class="post-header">
         <h1 class="post-title" itemprop="name headline">
-          用Kotlin写Spring的正确方式
+          Spring 和 Kotlin
         </h1>
 
         <div class="post-meta">
@@ -235,7 +235,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-04-03 10:29:41" itemprop="dateModified" datetime="2022-04-03T10:29:41+08:00">2022-04-03</time>
+                <time title="修改时间：2022-05-30 19:26:01" itemprop="dateModified" datetime="2022-05-30T19:26:01+08:00">2022-05-30</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -248,7 +248,7 @@
             </span>
 
           
-            <span id="/2022/03/19/Spring%E5%AF%B9Kotlin%E7%9A%84%E4%B8%8D%E5%8F%8B%E5%A5%BD/" class="post-meta-item leancloud_visitors" data-flag-title="用Kotlin写Spring的正确方式" title="阅读次数">
+            <span id="/2022/03/19/Spring%E5%AF%B9Kotlin%E7%9A%84%E4%B8%8D%E5%8F%8B%E5%A5%BD/" class="post-meta-item leancloud_visitors" data-flag-title="Spring 和 Kotlin" title="阅读次数">
               <span class="post-meta-item-icon">
                 <i class="fa fa-eye"></i>
               </span>
@@ -272,10 +272,61 @@
     <div class="post-body" itemprop="articleBody">
 
       
-        <p>Kotlin与Java完美互操作，但在很多依赖于JVM特性的框架的使用中，并不是那么平滑完美，Spring就是其中之一。有必要总结一下。</p>
-<h1 id="用Kotlin写Spring"><a href="#用Kotlin写Spring" class="headerlink" title="用Kotlin写Spring"></a>用Kotlin写Spring</h1><p>Spring关于Kotlin的支持在<a target="_blank" rel="noopener" href="https://docs.spring.io/spring-boot/docs/2.0.x/reference/html/boot-features-kotlin.html">这个手册</a>中有所阐述，总结起来有这么几点</p>
-<h1 id="注意事项"><a href="#注意事项" class="headerlink" title="注意事项"></a>注意事项</h1><p>Kotlin写Spring，用起来真开心，但有一些小细节，用起来总是觉得有些别扭。</p>
-<h2 id="var还是val"><a href="#var还是val" class="headerlink" title="var还是val"></a>var还是val</h2><h2 id="空安全的取舍"><a href="#空安全的取舍" class="headerlink" title="空安全的取舍"></a>空安全的取舍</h2><h2 id="默认final的问题"><a href="#默认final的问题" class="headerlink" title="默认final的问题"></a>默认final的问题</h2><h2 id="data-class的各种限制"><a href="#data-class的各种限制" class="headerlink" title="data class的各种限制"></a>data class的各种限制</h2><h2 id="getter、setter、property"><a href="#getter、setter、property" class="headerlink" title="getter、setter、property"></a>getter、setter、property</h2><h1 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h1><ul>
+        <p>Kotlin与Java百分百互操作，顺理成章，Spring开发也可以用Kotlin。可以享受到Kotlin的简洁语法。二者结合的大部分特点，在尝试之后都能体会。本文列举一些实际开发中最容易遇到的问题。</p>
+<h2 id="关于POJO"><a href="#关于POJO" class="headerlink" title="关于POJO"></a>关于POJO</h2><p>DTO、VO、BO、MyBatis的Entity、Spring配置文件对应的PropertiesBean，各种Bean的组装与传输。直觉告诉我们，最好定义成data class，属性最好是val，最好是不可空，但不可一概而论，需按情况分析。</p>
+<ul>
+<li><p>与前端交互的Bean：由于需要在前后端进行传输，需要设置为var的可空类型，且需要有一个不带任何参数的构造方法，有几点原因</p>
+<ul>
+<li><p>var：以@RequestBody为例，Spring框架会先创建传输对象，再进行赋值</p>
+</li>
+<li><p>可空：无法预测前端输入是否为空，且Spring Validate是先构建对象、为属性赋值、再进行验证，即时我们以@NotNull注释了，还是可能在赋值时报不可空的类型赋值错误，而不是@NotNull引起的验证错误</p>
+</li>
+<li><p>不带参的构造方法：构建空对象 - 属性赋值，是Spring框架内部的常规操作，这也广泛存在于Java的其它三方库，因为Java默认存在无参构造，但Kotlin没有，需要显式构建。这又有两种方法</p>
+<ul>
+<li><p>所有属性写构造方法，但都是可控类型，且赋予了默认值null</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">data</span> <span class="class"><span class="keyword">class</span> <span class="title">AppleLoginReq</span></span>(</span><br><span class="line">    <span class="meta">@ApiModelProperty(<span class="meta-string">&quot;OICD的idToken&quot;</span>, required = true)</span></span><br><span class="line">    <span class="meta">@NotBlank</span></span><br><span class="line">    <span class="keyword">var</span> identityToken: String? = <span class="literal">null</span></span><br><span class="line">)</span><br></pre></td></tr></table></figure></li>
+<li><p>真无参构造</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AppleLoginReq</span> </span>&#123;</span><br><span class="line">    <span class="meta">@ApiModelProperty(<span class="meta-string">&quot;OICD的idToken&quot;</span>, required = true)</span></span><br><span class="line">    <span class="meta">@NotBlank</span></span><br><span class="line">    <span class="keyword">var</span> identityToken: String? = <span class="literal">null</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure></li>
+</ul>
+</li>
+</ul>
+</li>
+<li><p>业务内传输Bean：业务内可控，依据实际需要定义为data class + val属性 + 不可空或可空类型，构造方法如实即可</p>
+</li>
+<li><p>配置对应的Bean：Spring<a target="_blank" rel="noopener" href="https://docs.spring.io/spring-boot/docs/2.0.x/reference/html/boot-features-kotlin.html#boot-features-kotlin-configuration-properties">手册</a>中特别提到，可以用data class + lateinit var的形式，不过还是得有无参构造方法</p>
+</li>
+<li><p>ORM的Table对应的Bean：虽然数据表是我们定义的，但将ORM对应的Bean属性的可空性和数据表字段的可空性对齐是一件非常繁琐的事。且涉及到日后维护问题，因此建议和前端交互Bean一样，var + 可空类型 + 无参构造方法</p>
+</li>
+</ul>
+<h2 id="val和var"><a href="#val和var" class="headerlink" title="val和var"></a>val和var</h2><p>项目中，纯业务代码能够依照Kotlin建议尽量使用val，但在与框架交互的代码中，使用var经常是唯一选择，主要原因是框架常常采用先创建对象再赋值的形式进行初始化。且赋值可能使用属性字段，也可能使用setter方法，因此，还得是var。常见的注入声明也变成了如下形式</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@DisplayName(<span class="meta-string">&quot;接口鉴权测试&quot;</span>)</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">AuthenticationTest</span> </span>&#123;</span><br><span class="line"></span><br><span class="line">  <span class="comment">// 注意这里是lateinit var</span></span><br><span class="line">  <span class="meta">@Autowired</span></span><br><span class="line">  <span class="keyword">private</span> <span class="keyword">lateinit</span> <span class="keyword">var</span> mockMvc: MockMvc</span><br></pre></td></tr></table></figure>
+
+<h2 id="属性复制"><a href="#属性复制" class="headerlink" title="属性复制"></a>属性复制</h2><p>字段太多怎么办，属性赋值方法挺不错。考虑到原理，要求源对象的属性必须有getter方法，且，目标对象的属性必须有setter方法，否则复制不会成功</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">/**</span></span><br><span class="line"><span class="comment"> * 将类S的同名属性填充到D中</span></span><br><span class="line"><span class="comment"> * 要求源对象的属性必须有getter方法，且，目标对象的属性必须有setter方法，否则复制不会成功</span></span><br><span class="line"><span class="comment"> */</span></span><br><span class="line"><span class="meta">@Suppress(<span class="meta-string">&quot;NULLABILITY_MISMATCH_BASED_ON_JAVA_ANNOTATIONS&quot;</span>)</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="type">&lt;S, D&gt;</span> D.<span class="title">fillWith</span><span class="params">(source: <span class="type">S</span>)</span></span>: D = apply &#123;</span><br><span class="line">    BeanUtils.copyProperties(source!!, <span class="keyword">this</span>!!)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="默认final的问题"><a href="#默认final的问题" class="headerlink" title="默认final的问题"></a>默认final的问题</h2><p>Spring中用到动态代理或CGLib，要求类可继承，而Kotlin具有默认final的原则，常见方式是手动标注该类为open，使用open关键字。<a target="_blank" rel="noopener" href="https://kotlinlang.org/docs/all-open-plugin.html#gradle">Kotlin提供了一个插件</a>，用注解替代open。我们可以将已有注解放在这里，就啥也不必加了。</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">allOpen &#123;</span><br><span class="line">    <span class="keyword">annotation</span>(<span class="string">&quot;io.swagger.annotations.ApiModel&quot;</span>)</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="Kotlin的Spring插件"><a href="#Kotlin的Spring插件" class="headerlink" title="Kotlin的Spring插件"></a>Kotlin的Spring插件</h2><p>针对Spring的特殊要求，Kotlin提供了五个插件：三个已成熟、两个实验中</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://kotlinlang.org/docs/no-arg-plugin.html">自动生成无参构造方法</a></li>
+<li><a target="_blank" rel="noopener" href="https://kotlinlang.org/docs/all-open-plugin.html">自动为类加上open效果</a></li>
+<li><a target="_blank" rel="noopener" href="https://kotlinlang.org/docs/sam-with-receiver-plugin.html">将SAM当成lambda表达式使用</a></li>
+</ul>
+<h2 id="MyBatis-Plus的Kotlin支持"><a href="#MyBatis-Plus的Kotlin支持" class="headerlink" title="MyBatis Plus的Kotlin支持"></a>MyBatis Plus的Kotlin支持</h2><p>注意MyBatis Plus支持的kotlin DSL的使用，会简单很多，不要再手动创建QueryWrapper了、不要再手动指定字段名了</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Repository</span></span><br><span class="line"><span class="class"><span class="keyword">class</span> <span class="title">BoardDao</span> : <span class="type">ServiceImpl</span>&lt;<span class="type">BoardMapper, BoardModel</span>&gt;</span>() &#123;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">getBySn</span><span class="params">(ownerId: <span class="type">Long</span>, sn: <span class="type">String</span>)</span></span>: BoardModel &#123;</span><br><span class="line">        <span class="keyword">return</span> ktQuery().eq(BoardModel::ownerId, ownerId).eq(BoardModel::sn, sn).one()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="function"><span class="keyword">fun</span> <span class="title">listByOwner</span><span class="params">(ownerId: <span class="type">Long</span>)</span></span>: List&lt;BoardModel&gt; &#123;</span><br><span class="line">        <span class="keyword">return</span> ktQuery().eq(BoardModel::ownerId, ownerId).list()</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<blockquote>
+<p>这一点放在这里有点突兀，但体现了其重要性，值得强调</p>
+</blockquote>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>Spring切换Kotlin遇到的最大问题还是框架本身大量使用反射、动态代理等技术带来的，究其原因，它是依据Java特性开发的框架。这就导致并不能在Spring中非常完美地使用Kotlin的各种特性，只能发挥Kotlin **90%**的简介特性。不那么Kotlin的点，总结下就是</p>
+<ul>
+<li>经常使用var</li>
+<li>经常使用平台类型</li>
+<li>出于对值的未知不得不使用可空类型</li>
+<li>必须有的无参构造、class的open关键字</li>
+</ul>
+<h2 id="参考"><a href="#参考" class="headerlink" title="参考"></a>参考</h2><ul>
 <li><a target="_blank" rel="noopener" href="https://docs.spring.io/spring-boot/docs/2.0.x/reference/html/boot-features-kotlin.html">Spring Kotlin Support</a></li>
 <li><a target="_blank" rel="noopener" href="https://github.com/sdeleuze/spring-kotlin-deepdive">Spring Kotlin Deepdive</a></li>
 <li><a target="_blank" rel="noopener" href="https://github.com/sdeleuze/spring-boot-kotlin-demo">Spring Boot Kotlin Demo</a></li>
@@ -371,7 +422,7 @@
 
       <!--noindex-->
       <div class="post-toc-wrap sidebar-panel">
-          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-1"><a class="nav-link" href="#%E7%94%A8Kotlin%E5%86%99Spring"><span class="nav-number">1.</span> <span class="nav-text">用Kotlin写Spring</span></a></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E6%B3%A8%E6%84%8F%E4%BA%8B%E9%A1%B9"><span class="nav-number">2.</span> <span class="nav-text">注意事项</span></a><ol class="nav-child"><li class="nav-item nav-level-2"><a class="nav-link" href="#var%E8%BF%98%E6%98%AFval"><span class="nav-number">2.1.</span> <span class="nav-text">var还是val</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%A9%BA%E5%AE%89%E5%85%A8%E7%9A%84%E5%8F%96%E8%88%8D"><span class="nav-number">2.2.</span> <span class="nav-text">空安全的取舍</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%BB%98%E8%AE%A4final%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">2.3.</span> <span class="nav-text">默认final的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#data-class%E7%9A%84%E5%90%84%E7%A7%8D%E9%99%90%E5%88%B6"><span class="nav-number">2.4.</span> <span class="nav-text">data class的各种限制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#getter%E3%80%81setter%E3%80%81property"><span class="nav-number">2.5.</span> <span class="nav-text">getter、setter、property</span></a></li></ol></li><li class="nav-item nav-level-1"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">3.</span> <span class="nav-text">参考</span></a></li></ol></div>
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B3%E4%BA%8EPOJO"><span class="nav-number">1.</span> <span class="nav-text">关于POJO</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#val%E5%92%8Cvar"><span class="nav-number">2.</span> <span class="nav-text">val和var</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%B1%9E%E6%80%A7%E5%A4%8D%E5%88%B6"><span class="nav-number">3.</span> <span class="nav-text">属性复制</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E9%BB%98%E8%AE%A4final%E7%9A%84%E9%97%AE%E9%A2%98"><span class="nav-number">4.</span> <span class="nav-text">默认final的问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#Kotlin%E7%9A%84Spring%E6%8F%92%E4%BB%B6"><span class="nav-number">5.</span> <span class="nav-text">Kotlin的Spring插件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#MyBatis-Plus%E7%9A%84Kotlin%E6%94%AF%E6%8C%81"><span class="nav-number">6.</span> <span class="nav-text">MyBatis Plus的Kotlin支持</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">7.</span> <span class="nav-text">总结</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8F%82%E8%80%83"><span class="nav-number">8.</span> <span class="nav-text">参考</span></a></li></ol></div>
       </div>
       <!--/noindex-->
 
