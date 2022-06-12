@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="我每篇博客的书写都是有动机的，它们或是对一段时间的工作总结、或是对某个事物的感悟。这次要写X.509的博客，是因接入IAP时，从网上搜索的各种问题发现一个惊人的事实：很多人不知道X.509证书的验证方式，当然也包括我。">
+<meta property="og:type" content="article">
+<meta property="og:title" content="换个角度看X.509证书">
+<meta property="og:url" content="https://zou8944.com/2022/06/12/%E6%8D%A2%E4%B8%AA%E8%A7%92%E5%BA%A6%E7%9C%8BX-509%E8%AF%81%E4%B9%A6/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="我每篇博客的书写都是有动机的，它们或是对一段时间的工作总结、或是对某个事物的感悟。这次要写X.509的博客，是因接入IAP时，从网上搜索的各种问题发现一个惊人的事实：很多人不知道X.509证书的验证方式，当然也包括我。">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://pic1.zhimg.com/v2-9b7cbd5eb1b56c6e6632f1ccb1c4a448_r.jpg">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612151129845.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612151246083.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612151643845.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612151609922.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612151628066.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612152408807.png">
+<meta property="article:published_time" content="2022-06-12T03:03:36.000Z">
+<meta property="article:modified_time" content="2022-06-12T07:53:47.044Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="X.509">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://pic1.zhimg.com/v2-9b7cbd5eb1b56c6e6632f1ccb1c4a448_r.jpg">
+
+<link rel="canonical" href="https://zou8944.com/2022/06/12/%E6%8D%A2%E4%B8%AA%E8%A7%92%E5%BA%A6%E7%9C%8BX-509%E8%AF%81%E4%B9%A6/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>换个角度看X.509证书 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">110</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">33</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">79</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2022/06/12/%E6%8D%A2%E4%B8%AA%E8%A7%92%E5%BA%A6%E7%9C%8BX-509%E8%AF%81%E4%B9%A6/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          换个角度看X.509证书
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+              
+
+              <time title="创建时间：2022-06-12 11:03:36 / 修改时间：15:53:47" itemprop="dateCreated datePublished" datetime="2022-06-12T11:03:36+08:00">2022-06-12</time>
+            </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%8D%8F%E8%AE%AE/" itemprop="url" rel="index"><span itemprop="name">协议</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2022/06/12/%E6%8D%A2%E4%B8%AA%E8%A7%92%E5%BA%A6%E7%9C%8BX-509%E8%AF%81%E4%B9%A6/" class="post-meta-item leancloud_visitors" data-flag-title="换个角度看X.509证书" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>我每篇博客的书写都是有动机的，它们或是对一段时间的工作总结、或是对某个事物的感悟。这次要写X.509的博客，是因接入IAP时，从网上搜索的各种问题发现一个惊人的事实：很多人不知道X.509证书的验证方式，当然也包括我。</p>
+</blockquote>
+<span id="more"></span>
+
+<p>初识X.509证书，多半是HTTPS协议，SSL或TLS握手阶段，需要用证书传输公钥，建立加密的传输信道。于是在印象中X.509就和HTTPS绑定在了一起。这种绑定有些许先入为主。实际上X.509证书的用途不止如此。</p>
+<h2 id="现成的知识"><a href="#现成的知识" class="headerlink" title="现成的知识"></a>现成的知识</h2><p>网上已经很多写得好的文章，推荐一篇：<a target="_blank" rel="noopener" href="https://zhuanlan.zhihu.com/p/36832100">X.509数字证书的基本原理及应用</a>。从中我们可以总结出几个要点</p>
+<ul>
+<li>数字证书的目的在于安全地分发公钥</li>
+<li>数字证书 = 公钥 + 公钥所属实体 + 签名</li>
+<li>数字证书分多级，一般有根证书、中间证书、叶子证书，根证书安装在系统中，叶子证书和中间证书需要根证书进行验证</li>
+</ul>
+<p>除此之外，没有更多的理论信息。博客的输出往往只是作者知识学习过程的输出，常很片面，仅能作为知识交流和了解的方式，不能作为严肃学习的主要来源（包括我这篇）。优秀如此文，看完也还是虚空之感，因为我们不知道还有多少相关知识是不知道的。</p>
+<h2 id="原材料"><a href="#原材料" class="headerlink" title="原材料"></a>原材料</h2><p>学习X.509的误区之一，是将它与HTTPS、TLS等协议结合在一起，然后被这些协议的其它知识点搞得头昏目眩。就像JWT，如果只是和登录鉴权结合在一起，就会忽略它本身的特性。</p>
+<blockquote>
+<p>我们往往对一个技术的支撑技术缺乏了解，甚至缺乏了解的耐心。</p>
+</blockquote>
+<p>最好的方式还是阅读RFC，相关文档如下</p>
+<ul>
+<li><a target="_blank" rel="noopener" href="https://datatracker.ietf.org/doc/html/rfc5280">RFC5280</a>：主协议，描述X.509用途、结构、验证方式等</li>
+<li><a target="_blank" rel="noopener" href="https://datatracker.ietf.org/doc/html/rfc2560#legend">RFC2560</a>：OCSP协议，在线证书状态协议，描述如何实时获取证书的状态，即有效性</li>
+<li><a target="_blank" rel="noopener" href="https://datatracker.ietf.org/doc/html/rfc4491">RFC4491</a>、<a target="_blank" rel="noopener" href="https://datatracker.ietf.org/doc/html/rfc3279#legend">RFC3279</a>、<a target="_blank" rel="noopener" href="https://datatracker.ietf.org/doc/html/rfc4055#legend">RFC4055</a>：附加协议，描述了在证书中使用的加密算法</li>
+</ul>
+<p>其中，RFC5280需要认真阅读，其它协议选读，了解即可。</p>
+<h2 id="RFC5280"><a href="#RFC5280" class="headerlink" title="RFC5280"></a>RFC5280</h2><h3 id="基础"><a href="#基础" class="headerlink" title="基础"></a>基础</h3><ul>
+<li><p>证书是什么</p>
+<p>全面地说应该叫做公钥证书，它是一种数据结构，用来绑定公钥值，该绑定加上了CA签名让它变得可信。CA通过技术手段使得这种可信变得有保证。一般来说，这种技术手段是操作系统内置根证书+证书的路径验证。</p>
+</li>
+<li><p>用途</p>
+<ul>
+<li><p>网站通信，即常规的HTTPS</p>
+</li>
+<li><p>电子邮件</p>
+</li>
+<li><p>用户鉴权，可参考JWS的x5c字段</p>
+</li>
+<li><p>IPsec</p>
+</li>
+</ul>
+</li>
+<li><p>证书生命周期</p>
+<p>证书的证书的生命周期，是根据它的签名内容而定的，即证书并不是永久的。因为证书可能被仿冒。</p>
+<blockquote>
+<p>现在很多以年为单位，这可能只是业务上的生命周期，并不一定是技术上的生命周期，理论上说这有一定的安全隐患。</p>
+</blockquote>
+</li>
+<li><p><strong>证书path</strong></p>
+<p>用户拿到证书，如果不拥有颁发该证书的CA的可信的公钥，此时需要另一个证书来获取该CA的可信公钥。这样可以形成一个证书链，这叫做证书路径。</p>
+</li>
+<li><p>证书分类</p>
+<ul>
+<li><p><strong>CA证书</strong></p>
+<ul>
+<li>交叉证书：签发方和证书主体来自不同的实体。用于描述两个CA的互信关系</li>
+<li>自签发证书：签发方和证书主体是同一个实体</li>
+<li>自签名证书：属于自签发证书的一种，它的签名可以用证书自带的公钥验证。这个用在证书路径的根部，即根证书</li>
+</ul>
+</li>
+<li><p>终端实体证书</p>
+<p>颁发给无权颁发证书的实体</p>
+</li>
+</ul>
+</li>
+<li><p>证书撤回</p>
+<p>签发的证书在实际有效期前可以被撤销，是通过Certificate Revoke List的方式，即CA定期发布CRL，使用证书的系统，除了验证证书本身的有效性，还需要检查证书是不是在CRL，如果在，则证书不可用。</p>
+<blockquote>
+<p>一些情况下，客户端需要马上知道证书的有效性，如金融和证券行业，CRL无法满足这个实时性需求，于是有了OCSP，它提供在线查询某个证书是否有效的服务</p>
+</blockquote>
+</li>
+</ul>
+<h3 id="证书结构"><a href="#证书结构" class="headerlink" title="证书结构"></a>证书结构</h3><p>协议中的结构描述过于严谨和复杂，这里借用前面提到的博客的截图，比较易于理解。</p>
+<img src="https://pic1.zhimg.com/v2-9b7cbd5eb1b56c6e6632f1ccb1c4a448_r.jpg" alt="preview" style="zoom:50%;" />
+
+<h3 id="证书验证方式"><a href="#证书验证方式" class="headerlink" title="证书验证方式"></a>证书验证方式</h3><p>RFC5280第六小结阐述了客户端如何处理证书路径的算法，所有使用证书的客户端都必须实现该算法。</p>
+<p><strong>路径验证的主要目标是根据信任目标的公钥验证证书主题的名称（或备用名称）和证书主题公钥之间的绑定</strong>。具体来说，验证的是路径是否满足如下条件</p>
+<ol>
+<li>对于{1, …, n-1} 中的所有 x ，证书x的主题是证书x+1的颁发者</li>
+<li>证书1由信任目标颁发，即我们常说的根证书，一般是提前下载到操作系统</li>
+<li>证书n是要验证的目标证书，即叶子证书</li>
+<li>对于所有证书x，都必须在有效时间内</li>
+</ol>
+<p>现实应用的举例：</p>
+<ul>
+<li><p>在JWS规定的头部中的x5c字段，会将整个证书路径全部给出，根据这些证书我们可以验证1、3、4条件，至于2，则是根据具体厂商的不同而不同，比如IAP Storekit2提供的JWS，就需要我们从apple开发者网站手动下载可信的根证书。</p>
+</li>
+<li><p>DNS证书是我们接触得最多的证书，其本身是一个叶子证书，证书内部指明了签发该证书的中间证书，中间证书指向安装在本地的根证书，由三个证书构成一条路径，验证可完全满足上述条件。</p>
+<p>以知乎为例，查看其证书信息</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612151129845.png" alt="image-20220612151129845" style="zoom:50%;" />
+
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612151246083.png" alt="image-20220612151246083" style="zoom:40%;" />
+
+<blockquote>
+<p>还可以看到，DNS证书的域名是主题名称和备用名称的并集，比如RFC官网的证书，域名是datatracker.ietf.org，主题名称却是sni.cloudflaressl.com，备用名称是datatracker.ietf.org</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612151643845.png" alt="image-20220612151643845" style="zoom:50%;" />
+
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612151609922.png" alt="image-20220612151609922" style="zoom:50%;" />
+
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612151628066.png" alt="image-20220612151628066" style="zoom:50%;" />
+</blockquote>
+<blockquote>
+<p>可以多看几个证书的结构，加深印象</p>
+</blockquote>
+</li>
+<li><p>抓包工具fiddler或charles，如果需要抓取HTTPS，需要自己安装根证书，解决的就是受信的问题。</p>
+</li>
+</ul>
+<h3 id="CA机构之间的关系"><a href="#CA机构之间的关系" class="headerlink" title="CA机构之间的关系"></a>CA机构之间的关系</h3><p><strong>为什么会有中间证书</strong>？</p>
+<p>证书需求量巨大，根证书处理不过来，于是将部分证书签发的权限分发给其它CA供应商。这种结构在RFC5280第三节中的管理协议和操作协议中有所阐述，即PKI各个实体之前的关系</p>
+<ul>
+<li>CA可以授权给下一级CA，也可以授权给RA</li>
+<li>RA即注册授权机构，只能颁发证书，其证书签发者是上层CA</li>
+<li>CA可以颁发证书和CRL，签发者可以是自己（根证书），也可以是上层CA</li>
+<li>CRL签发机构，权限来自上层CA下放，只能颁发CRL</li>
+</ul>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220612152408807.png" alt="image-20220612152408807" style="zoom:50%;" />
+
+<blockquote>
+<p><strong>什么是PKI？</strong></p>
+<p>即Public Key Infrastructure，公钥基础设施，即利用公开秘钥机制建立起来的基础设施，上图就描述了PKI的主要组成部分。</p>
+<p>PKI users即普通个人或公司，用终端实体表示，我们申请证书的机构就是RA或CA，CA又是有层级的。这一堆东西，构成了当前网络访问的安全基础设施。因此，PKI指的是整个证书分发机制构成的宏大系统。</p>
+</blockquote>
+<h2 id="其它协议"><a href="#其它协议" class="headerlink" title="其它协议"></a>其它协议</h2><p>其它协议都很短，RFC2560看看摘要就知道什么是OCSP了，就是一个普通的状态查询接口。</p>
+<h2 id="实践"><a href="#实践" class="headerlink" title="实践"></a>实践</h2><p>这里展示代码验证IAP证书路径的过程（暂时忽略了有效期的验证）</p>
+<figure class="highlight kotlin"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> <span class="keyword">val</span> appleRootCert = PathMatchingResourcePatternResolver()</span><br><span class="line">        .getResources(<span class="string">&quot;classpath:cert/AppleRootCA-G3.cer&quot;</span>).first().inputStream.readBytes()</span><br><span class="line"></span><br><span class="line"><span class="comment">// 解码并验证时接收到的通知</span></span><br><span class="line"><span class="function"><span class="keyword">fun</span> <span class="title">decodeAndVerifyAppleNotification</span><span class="params">(rawNotification: <span class="type">String</span>)</span></span>: AppleNotificationPayload &#123;</span><br><span class="line">  ... ...</span><br><span class="line">  <span class="comment">// 验证证书链，并获取叶子证书携带的公钥</span></span><br><span class="line">  <span class="keyword">val</span> targetPublicKey = verifyAppleNotificationCertsThenReturnPublicKey(<span class="keyword">this</span>)</span><br><span class="line">  ... ...</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="function"><span class="keyword">fun</span> <span class="title">verifyAppleNotificationCertsThenReturnPublicKey</span><span class="params">(jwt: <span class="type">DecodedJWT</span>)</span></span>: PublicKey &#123;</span><br><span class="line">  <span class="keyword">val</span> certFactory = CertificateFactory.getInstance(<span class="string">&quot;X.509&quot;</span>)</span><br><span class="line">  <span class="comment">// 根证书，已经提前下好了</span></span><br><span class="line">  <span class="keyword">val</span> appleRootCert = certFactory.generateCertificate(ByteArrayInputStream(appleRootCert)) <span class="keyword">as</span> X509Certificate</span><br><span class="line">  <span class="comment">// 放在x5c字段中的证书链</span></span><br><span class="line">  <span class="keyword">val</span> jwsCertChain = jwt.getHeaderClaim(<span class="string">&quot;x5c&quot;</span>).asList(String::<span class="keyword">class</span>.java).map &#123;</span><br><span class="line">    certFactory.generateCertificate(ByteArrayInputStream(Base64.getDecoder().decode(it)))</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 关键点1：验证根证书</span></span><br><span class="line">  <span class="keyword">if</span> (jwsCertChain.last() != appleRootCert) <span class="keyword">throw</span> Exception(<span class="string">&quot;根证书错误&quot;</span>)</span><br><span class="line">  <span class="comment">// 关键点2：验证证书链，证书x签发了证书x+1</span></span><br><span class="line">  <span class="keyword">for</span> (index <span class="keyword">in</span> <span class="number">0.</span>.jwsCertChain.size - <span class="number">2</span>) &#123;</span><br><span class="line">    jwsCertChain[index].verify(jwsCertChain[index + <span class="number">1</span>].publicKey)</span><br><span class="line">  &#125;</span><br><span class="line">  <span class="comment">// 关键点3：第叶子证书的公钥即为验证整个JWS的公钥</span></span><br><span class="line">  <span class="keyword">return</span> jwsCertChain.first().publicKey</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>写得再好的博客文章，都是经过别人消化系统呈现的冰山一角，会经历知识衰减。永远比不上一手资料，即使是不仔细看的一手资料。</p>
+<p>回到X.509证书本身，抓住几个重点</p>
+<ol>
+<li>证书结构：主题（包括主题机构、名、公钥信息）、签发者、有效期、签名（又叫做指纹）</li>
+<li>证书路径：通过主题名或主题备用名与签发者串联，能够产生证书路径，即证书链</li>
+<li>证书如何使用：通过证书路径验证即可保证证书是可信的，使用的目标是证书携带的公钥（证书只是安全携带公钥的工具而已）</li>
+<li>众多CA、RA共同构成了PKI</li>
+</ol>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/X-509/" rel="tag"># X.509</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/06/01/K8S%E5%81%9A%E7%81%B0%E5%BA%A6%E5%8F%91%E5%B8%83/" rel="prev" title="K8S如何灰度发布">
+      <i class="fa fa-chevron-left"></i> K8S如何灰度发布
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%8E%B0%E6%88%90%E7%9A%84%E7%9F%A5%E8%AF%86"><span class="nav-number">1.</span> <span class="nav-text">现成的知识</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%8E%9F%E6%9D%90%E6%96%99"><span class="nav-number">2.</span> <span class="nav-text">原材料</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#RFC5280"><span class="nav-number">3.</span> <span class="nav-text">RFC5280</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E5%9F%BA%E7%A1%80"><span class="nav-number">3.1.</span> <span class="nav-text">基础</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%81%E4%B9%A6%E7%BB%93%E6%9E%84"><span class="nav-number">3.2.</span> <span class="nav-text">证书结构</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%AF%81%E4%B9%A6%E9%AA%8C%E8%AF%81%E6%96%B9%E5%BC%8F"><span class="nav-number">3.3.</span> <span class="nav-text">证书验证方式</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#CA%E6%9C%BA%E6%9E%84%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">3.4.</span> <span class="nav-text">CA机构之间的关系</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%85%B6%E5%AE%83%E5%8D%8F%E8%AE%AE"><span class="nav-number">4.</span> <span class="nav-text">其它协议</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AE%9E%E8%B7%B5"><span class="nav-number">5.</span> <span class="nav-text">实践</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">110</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">33</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">79</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
