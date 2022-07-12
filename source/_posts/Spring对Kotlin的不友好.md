@@ -10,6 +10,8 @@ date: 2022-03-19 17:05:05
 
 Kotlin与Java百分百互操作，顺理成章，Spring开发也可以用Kotlin。可以享受到Kotlin的简洁语法。二者结合的大部分特点，在尝试之后都能体会。本文列举一些实际开发中最容易遇到的问题。
 
+<!--more-->
+
 ## 关于POJO
 
 DTO、VO、BO、MyBatis的Entity、Spring配置文件对应的PropertiesBean，各种Bean的组装与传输。直觉告诉我们，最好定义成data class，属性最好是val，最好是不可空，但不可一概而论，需按情况分析。
