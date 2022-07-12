@@ -129,7 +129,7 @@
   </li>
         <li class="menu-item menu-item-archives">
 
-    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">110</span></a>
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">111</span></a>
 
   </li>
         <li class="menu-item menu-item-categories">
@@ -139,7 +139,7 @@
   </li>
         <li class="menu-item menu-item-tags">
 
-    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">79</span></a>
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">83</span></a>
 
   </li>
         <li class="menu-item menu-item-about">
@@ -197,6 +197,132 @@
 
           <div class="content index posts-expand">
             
+      
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2018/09/08/Spring%20Webflow%20-%20Action-springwebflow-action/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h2 class="post-title" itemprop="name headline">
+          
+            <a href="/2018/09/08/Spring%20Webflow%20-%20Action-springwebflow-action/" class="post-title-link" itemprop="url">Spring Webflow - Action</a>
+        </h2>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2018-09-08 11:00:00" itemprop="dateCreated datePublished" datetime="2018-09-08T11:00:00+08:00">2018-09-08</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2021-02-16 23:27:25" itemprop="dateModified" datetime="2021-02-16T23:27:25+08:00">2021-02-16</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E5%90%8E%E7%AB%AF/" itemprop="url" rel="index"><span itemprop="name">后端</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2018/09/08/Spring%20Webflow%20-%20Action-springwebflow-action/" class="post-meta-item leancloud_visitors" data-flag-title="Spring Webflow - Action" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+          <h1 id="action-state"><a href="#action-state" class="headerlink" title="action-state"></a>action-state</h1><h2 id="简单使用"><a href="#简单使用" class="headerlink" title="简单使用"></a>简单使用</h2><p>该状态只执行操作，然后根据操作的结果转移到其他state。可以有多个操作，他们依次执行</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">&lt;action-state id=&quot;moreAnswersNeeded&quot;&gt;</span><br><span class="line">	&lt;evaluate expression=&quot;interview.moreAnswersNeeded()&quot; /&gt;</span><br><span class="line">	&lt;transition on=&quot;yes&quot; to=&quot;answerQuestions&quot; /&gt;</span><br><span class="line">	&lt;transition on=&quot;no&quot; to=&quot;finish&quot; /&gt;</span><br><span class="line">&lt;/action-state&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="输出"><a href="#输出" class="headerlink" title="输出"></a>输出</h2><p>在action-state中调用普通java对象的方法，这些方法返回的只是一般的值，但是transition标签需要Event来触发，因此web-flow会将这个普通返回值转换为Event对象，具体转换情况如下:</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">方法返回值类型			映射出来的EventId</span><br><span class="line">java.lang.String		直接以字符串的值作为id</span><br><span class="line">java.lang.Boolean		yes (for true), no (for false)</span><br><span class="line">java.lang.Enum			the Enum name</span><br><span class="line">any other type	    	success</span><br></pre></td></tr></table></figure>
+<h2 id="action-state的操作"><a href="#action-state的操作" class="headerlink" title="action-state的操作"></a>action-state的操作</h2><p>action-state可以有三种方式进行执行操作</p>
+<ul>
+<li>调用POJO</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;evaluate expression=&quot;pojoAction.method(flowRequestContext)&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public class PojoAction &#123;</span><br><span class="line">	public String method(RequestContext context) &#123;</span><br><span class="line">		...</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>实现Action接口，直接调用该action</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;evaluate expression=&quot;customAction&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">public class CustomAction implements Action &#123;</span><br><span class="line">	public Event execute(RequestContext context) &#123;</span><br><span class="line">		...</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>实现MultiAction接口，可以定义多个一连串的方法</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">&lt;evaluate expression=&quot;multiAction.actionMethod1&quot; /&gt;</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">public class CustomMultiAction extends MultiAction &#123;</span><br><span class="line">	public Event actionMethod1(RequestContext context) &#123;</span><br><span class="line">		...</span><br><span class="line">	&#125;</span><br><span class="line"></span><br><span class="line">	public Event actionMethod2(RequestContext context) &#123;</span><br><span class="line">		...</span><br><span class="line">	&#125;</span><br><span class="line">	...</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<h2 id="action的异常处理"><a href="#action的异常处理" class="headerlink" title="action的异常处理"></a>action的异常处理</h2><ul>
+<li>POJO类action的处理方式<br>发生异常时，返回相应的字符串，会映射成Event，在transition中响应就可以了，和普通方法正常返回一样</li>
+<li>MultiAction的处理方式<br>发生异常时，返回Event对象</li>
+</ul>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line">public class BookingAction extends MultiAction &#123;</span><br><span class="line">	public Event makeBooking(RequestContext context) &#123;</span><br><span class="line">		   try &#123;</span><br><span class="line">			   Booking booking = (Booking) context.getFlowScope().get(&quot;booking&quot;);</span><br><span class="line">			   BookingConfirmation confirmation = bookingService.make(booking);</span><br><span class="line">			   context.getFlowScope().put(&quot;confirmation&quot;, confirmation);</span><br><span class="line">			   return success();</span><br><span class="line">		   &#125; catch (RoomNotAvailableException e) &#123;</span><br><span class="line">			   context.getMessageContext().addMessage(new MessageBuilder().error().</span><br><span class="line">				   .defaultText(&quot;No room is available at this hotel&quot;).build());</span><br><span class="line">			   return error();</span><br><span class="line">		   &#125;</span><br><span class="line">	&#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<ul>
+<li>使用<code>exception-handler</code>属性，定义异常处理器</li>
+</ul>
+<h2 id="decision-state"><a href="#decision-state" class="headerlink" title="decision-state"></a>decision-state</h2><p>decision-state是action-state的一种简单替代，在if/else情况时比较好用</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">&lt;decision-state id=&quot;moreAnswersNeeded&quot;&gt;</span><br><span class="line">	&lt;if test=&quot;interview.moreAnswersNeeded()&quot; then=&quot;answerQuestions&quot; else=&quot;finish&quot; /&gt;</span><br><span class="line">&lt;/decision-state&gt;</span><br></pre></td></tr></table></figure>
+<h2 id="action相关标签"><a href="#action相关标签" class="headerlink" title="action相关标签"></a>action相关标签</h2><ol>
+<li><code>&lt;on-start&gt;</code>    flow开始时执行</li>
+<li><code>&lt;on-entry&gt;</code>    state进入时执行</li>
+<li><code>&lt;on-exit&gt;</code>    state退出时执行</li>
+<li><code>&lt;on-end&gt;</code>    flow结束时执行</li>
+<li><code>&lt;on-render&gt;</code>view-state中使用，渲染前执行</li>
+<li><code>&lt;transition&gt;</code>    在转移前执行<h2 id="命名的action"><a href="#命名的action" class="headerlink" title="命名的action"></a>命名的action</h2>如下展示了一个action-state下多个操作执行，为每个操作命名，第二个操作成功后进行转移操作</li>
+</ol>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">&lt;action-state id=&quot;doTwoThings&quot;&gt;</span><br><span class="line">	&lt;evaluate expression=&quot;service.thingOne()&quot;&gt;</span><br><span class="line">		&lt;attribute name=&quot;name&quot; value=&quot;thingOne&quot; /&gt;</span><br><span class="line">	&lt;/evaluate&gt;</span><br><span class="line">	&lt;evaluate expression=&quot;service.thingTwo()&quot;&gt;</span><br><span class="line">		&lt;attribute name=&quot;name&quot; value=&quot;thingTwo&quot; /&gt;</span><br><span class="line">	&lt;/evaluate&gt;</span><br><span class="line">	&lt;transition on=&quot;thingTwo.success&quot; to=&quot;showResults&quot; /&gt;</span><br><span class="line">&lt;/action-state&gt;</span><br></pre></td></tr></table></figure>
+<h1 id="向客户端发送流信息"><a href="#向客户端发送流信息" class="headerlink" title="向客户端发送流信息"></a>向客户端发送流信息</h1><h2 id="应用场景"><a href="#应用场景" class="headerlink" title="应用场景"></a>应用场景</h2><p>客户端请求一个图片文件，此时我们需要直接操作httpresponse进行图片的响应，而不是渲染view。</p>
+<h2 id="解决方案"><a href="#解决方案" class="headerlink" title="解决方案"></a>解决方案</h2><p>通过ExternalContext获取HttpResponse，将图片写入，然后操作ExternalContext对象记录response完成，这样web-flow就不会再渲染view，而是直接返回给浏览器</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">public class PrintBoardingPassAction extends AbstractAction &#123;</span><br><span class="line"></span><br><span class="line">    @Override</span><br><span class="line">    protected Event doExecute(RequestContext context) throws Exception &#123;</span><br><span class="line">        HttpServletResponse response = (HttpServletResponse)context.getExternalContext().getNativeResponse();</span><br><span class="line">        OutputStream os = response.getOutputStream();</span><br><span class="line">        // 在这里操作os，写入流数据</span><br><span class="line">        os.close();</span><br><span class="line">        context.getExternalContext().recordResponseComplete();</span><br><span class="line">        return success();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+      
+    </div>
+
+    
+    
+    
+      <footer class="post-footer">
+        <div class="post-eof"></div>
+      </footer>
+  </article>
+  
+  
+  
+
       
   
   
@@ -826,7 +952,7 @@
       <div class="site-state-item site-state-posts">
           <a href="/archives/">
         
-          <span class="site-state-item-count">110</span>
+          <span class="site-state-item-count">111</span>
           <span class="site-state-item-name">日志</span>
         </a>
       </div>
@@ -839,7 +965,7 @@
       <div class="site-state-item site-state-tags">
             <a href="/tags/">
           
-        <span class="site-state-item-count">79</span>
+        <span class="site-state-item-count">83</span>
         <span class="site-state-item-name">标签</span></a>
       </div>
   </nav>
