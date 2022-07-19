@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="为什么需要学习iptables ?Linux防火墙、NAT、Kuberbetes等很多地方都用到iptables，了解它很重要。   本文主要信息来源是netfilter官网推荐的iptables教程。   本文目的：了解iptables原理；了解iptables配置方法，看懂iptables配置脚本">
+<meta property="og:type" content="article">
+<meta property="og:title" content="iptables详解">
+<meta property="og:url" content="https://zou8944.com/2022/07/18/iptables/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="为什么需要学习iptables ?Linux防火墙、NAT、Kuberbetes等很多地方都用到iptables，了解它很重要。   本文主要信息来源是netfilter官网推荐的iptables教程。   本文目的：了解iptables原理；了解iptables配置方法，看懂iptables配置脚本">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719101624353.png">
+<meta property="og:image" content="https://zou8944.com/Users/zouguodong/Library/Application%20Support/typora-user-images/image-20220719101802699.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719102205190.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103526725.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103605971.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103656948.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103711401.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103900113.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103958646.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719104233033.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719104652695.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719104703558.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719104713873.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719104843440.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719105736501.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719105750559.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719105822180.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719105829871.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719105843772.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719121029628.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719121305203.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719112747161.png">
+<meta property="article:published_time" content="2022-07-18T13:58:43.000Z">
+<meta property="article:modified_time" content="2022-07-19T04:25:27.882Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="iptables">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719101624353.png">
+
+<link rel="canonical" href="https://zou8944.com/2022/07/18/iptables/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>iptables详解 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">112</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">33</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">84</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2022/07/18/iptables/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          iptables详解
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-07-18 21:58:43" itemprop="dateCreated datePublished" datetime="2022-07-18T21:58:43+08:00">2022-07-18</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-07-19 12:25:27" itemprop="dateModified" datetime="2022-07-19T12:25:27+08:00">2022-07-19</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/%E8%BF%90%E7%BB%B4/" itemprop="url" rel="index"><span itemprop="name">运维</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2022/07/18/iptables/" class="post-meta-item leancloud_visitors" data-flag-title="iptables详解" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>为什么需要学习iptables ?<br>Linux防火墙、NAT、Kuberbetes等很多地方都用到iptables，了解它很重要。</p>
+</blockquote>
+<blockquote>
+<p>本文主要信息来源是<a target="_blank" rel="noopener" href="https://www.netfilter.org/projects/iptables/index.html">netfilter官网</a>推荐的<a target="_blank" rel="noopener" href="https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html">iptables教程</a>。</p>
+</blockquote>
+<blockquote>
+<p>本文目的：了解iptables原理；了解iptables配置方法，看懂iptables配置脚本</p>
+</blockquote>
+<span id="more"></span>
+
+<h2 id="什么是iptables"><a href="#什么是iptables" class="headerlink" title="什么是iptables"></a>什么是iptables</h2><p>iptables经常被与netfilter一同提起。</p>
+<p>netfilter是一个工作在Linux内核层面的网络数据包处理框架，提供了包过滤、地址或端口转换、包修改等功能；具体来说，就是在数据包处理路径上的特定位置触发对应的hook，这就是我们常说的5个chain、4个table。</p>
+<p>iptables是一个工作在用户态的命令行工具，用于在上述chain和table上配置规则集，以自定义包过滤规则、地址转换规则等。常见的用途如实现防火墙。</p>
+<h2 id="学习iptables，是在学什么"><a href="#学习iptables，是在学什么" class="headerlink" title="学习iptables，是在学什么"></a>学习iptables，是在学什么</h2><p>首先，学习网络协议栈基础知识，需要精确到数据包结构；其次，学习chain和table的详细组成、写作方式；最后，学习iptables命令的使用方法。</p>
+<h2 id="网络基础-TCP-IP协议栈"><a href="#网络基础-TCP-IP协议栈" class="headerlink" title="网络基础 - TCP/IP协议栈"></a>网络基础 - TCP/IP协议栈</h2><p>TCP/IP是老生常谈了，不过多少次重复都不为过。</p>
+<h3 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h3><p>我们常说的TCP/IP协议栈，或者TCP/IP Stack，指的就是TCP/IP构成的多层模型，在Linux中，就是指内核对该多层模型的实现。该协议到底分为几层，没有一个明确的共识，一般来说是四层，如下:</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719101624353.png" alt="image-20220719101624353"></p>
+<p>也有说五层的，还有OSI标准的7层，它们实际对应关系如下</p>
+<img src="/Users/zouguodong/Library/Application%20Support/typora-user-images/image-20220719101802699.png" alt="image-20220719101802699" style="zoom:80%;" />
+
+<p>理论来说，iptables应该工作在二层，即网络互联层，但实际上它也提供三层（传输层）的跟踪配置能力，因此，我们需要详细了解的协议主要有IP、ICMP、TCP、UDP、SCTP。控制为主，而控制主要集中在数据包头部，因此会详细解析头部字段含义。</p>
+<h3 id="IP协议"><a href="#IP协议" class="headerlink" title="IP协议"></a>IP协议</h3><p>IP是无状态协议，主要解决数据去哪的问题。头部分析如下</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719102205190.png" alt="image-20220719102205190" style="zoom:80%;" />
+
+<p>含义解读如下</p>
+<table>
+<thead>
+<tr>
+<th>段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Version</td>
+<td>版本。0100 - IPV4   0110 IPV6</td>
+</tr>
+<tr>
+<td>IHL</td>
+<td>Internet Header Length，IP头长度，单位：word(即32 bit)。<br />为啥需要这个呢，因为Options的长度可选，所有要用它来确定总长</td>
+</tr>
+<tr>
+<td>TOS/DSCP/ECN</td>
+<td>TOS: Type Od Service, 总共八位，它们主要是在路由器等硬件设施上使用，每位的含义如下<br />0-2：优先字段<br />3：正常或者低延迟<br />4：正常或者高吞吐量<br />5：正常或高可靠性<br />6-7：预留<br /><br />这部分还经过了两个迭代：DSCP和ECN，这里不深入<br />DSCP: Differentiated Services Code Point 差异化服务码点<br />ECN: Explicit Congestion Notification 显式阻塞通知</td>
+</tr>
+<tr>
+<td>Total Length</td>
+<td>整个IP数据包的总长度，包括头部。单位为字节</td>
+</tr>
+<tr>
+<td>Identification</td>
+<td>唯一标识。用于数据分片后再组装时的识别。和Offset结合一起使用</td>
+</tr>
+<tr>
+<td>Flags</td>
+<td>分片标识<br />bit 0：保留<br />bit 1：当前数据包是否可分片。 0-不可分片，1-可分片<br />bit 2：当前数据包是否是分片的最后一片。0-是最后一个，1-后面还有</td>
+</tr>
+<tr>
+<td>Fragment Offset</td>
+<td>分片位移</td>
+</tr>
+<tr>
+<td>Time To Live</td>
+<td>有效期。单位：跳。每经过一次转发，TTL减一，当为0时会被销毁。<br />用于避免一个包陷入死循环转发</td>
+</tr>
+<tr>
+<td>Protocol</td>
+<td>上一层数据的协议。如TCP、UDP等</td>
+</tr>
+<tr>
+<td>Header Checksum</td>
+<td>头部校验和。每经过一跳都会重新计算，因为TTL变了</td>
+</tr>
+<tr>
+<td>Source Address</td>
+<td>源地址</td>
+</tr>
+<tr>
+<td>Destination Address</td>
+<td>目标地址</td>
+</tr>
+<tr>
+<td>Options</td>
+<td>可选项，最长可占40个字节。可以包含时间戳、SACK等</td>
+</tr>
+<tr>
+<td>Padding</td>
+<td>由于头部是按照word为单位的，所以如果Options的长度不足一个word，则需要Padding补齐</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>那么问题来了，Source Address子弹只有四个字节，那么IPV6怎么表示呢？</p>
+<p>IPV6的头部和IPV4不一样，具体来说有两点</p>
+<ul>
+<li>地址字段用128位表示，而不是现在的32位</li>
+<li>Options字段取消了，取而代之的各种扩展头。如TCP扩展头、路由扩展头等，当然从实际作用来说和IPV4差不多</li>
+</ul>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103526725.png" alt="image-20220719103526725"></p>
+</blockquote>
+<h3 id="ICMP协议"><a href="#ICMP协议" class="headerlink" title="ICMP协议"></a>ICMP协议</h3><p>ICMP用于主机到主机或主机到网关之间的基本错误报告。</p>
+<p>ICMP有点特殊，从作用上看，它是构建在IP协议之上，但是其包结构有何IP类似。并且，<strong>ICMP是IP的不可分割的一部分，每个IP的实现都必须包含ICMP</strong>。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103605971.png" alt="image-20220719103605971"></p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>头部字段</td>
+<td>和IP协议的头部字段一样，我们就不再赘述</td>
+</tr>
+<tr>
+<td>Type</td>
+<td>ICMP类型</td>
+</tr>
+<tr>
+<td>Code</td>
+<td>ICMP类型下的具体代码</td>
+</tr>
+</tbody></table>
+<p>Type和Code的组合有很多种，参考附件：<a target="_blank" rel="noopener" href="https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html#ICMPTYPES">https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html#ICMPTYPES</a></p>
+<p>不同的类型拥有不同的报文body，常见的类型如下</p>
+<ul>
+<li><p>Echo</p>
+<p>echo请求type=8，回复type=0</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103656948.png" alt="image-20220719103656948"></p>
+<ul>
+<li>id：echo请求的序列号，恢复时针对序列号恢复</li>
+<li>sn：主机序列号，递增</li>
+<li>data：默认为空。也可以包含用户指定的数据</li>
+</ul>
+</li>
+<li><p>目标不可达</p>
+<p>type=3，Code可能是0-15，代表了各种不可达的原因</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103711401.png" alt="image-20220719103711401"></p>
+</li>
+</ul>
+<h3 id="TCP协议"><a href="#TCP协议" class="headerlink" title="TCP协议"></a>TCP协议</h3><p>TCP是有状态协议，简要描述一下TCP协议的三个过程</p>
+<ul>
+<li>握手：客户端发送SYN包，服务端恢复SYN/ACK表示接收，或者SYN/RST表示拒绝，客户端收到接受的包后，再发送一个ACK数据包。至此连接建立，握手成功</li>
+<li>数据发送：客户端每发送一个数据包，服务端都要响应ACK表示收到，否则客户端会重试</li>
+<li>挥手：一端发送FIN包，表示要结束连接；另一端回复FIN/ACK，此时FIN发送端不能再发送任何数据，但是接收端可以，此时只是关闭了单向数据传送；如果要关闭另一个方向的传送，反向重复上述操作即可。</li>
+</ul>
+<p>要注意，握手是在确定双方都同一传输数据；挥手也是在确定双方都同意关闭连接。而由于挥手时存在半关闭状态，自己的连接是否关闭只有自己说了算（因为只要自己才知道是否还有数据没传输完），所以需要自己发起FIN请求。</p>
+<p>TCP的头部如下</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103900113.png" alt="image-20220719103900113"></p>
+<table>
+<thead>
+<tr>
+<th>段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Source Port</td>
+<td>源端口。端口对应的是进程。IP+Port能够定位到指定主机的指定进程。</td>
+</tr>
+<tr>
+<td>Destination Port</td>
+<td>目标端口</td>
+</tr>
+<tr>
+<td>Sequence Number</td>
+<td>序号，安全传输的保证，标识每一个数据包，接收方响应ACK时带上SN，就知道改包是否被正常接收</td>
+</tr>
+<tr>
+<td>Acknowledgement Number</td>
+<td>与上面的序号对应。这是在响应时候确认那个序号的包被成功接收</td>
+</tr>
+<tr>
+<td>Data Offset</td>
+<td>标识标头长度。它标记的是正文数据Data开始位置的word偏移数量。word即32位</td>
+</tr>
+<tr>
+<td>Reserved</td>
+<td>保留</td>
+</tr>
+<tr>
+<td>cwr</td>
+<td>Congestion Window Reduced，用于发送方通知接收方数据拥塞窗口减小</td>
+</tr>
+<tr>
+<td>ece</td>
+<td>ECN的回声。前面说过，ECN是阻塞通知的意思</td>
+</tr>
+<tr>
+<td>urg</td>
+<td>是否使用紧急指针字段</td>
+</tr>
+<tr>
+<td>ack</td>
+<td>标识这个数据包是对收到的另一个数据包的回复</td>
+</tr>
+<tr>
+<td>psh</td>
+<td>PUSH，告诉中间主机将数据发送给最终目标主机，无论是否发生拥塞</td>
+</tr>
+<tr>
+<td>rst</td>
+<td>RESET，告诉另一端断开TCP连接，主要是异常断开</td>
+</tr>
+<tr>
+<td>syn</td>
+<td>同步序列号位，建立连接时使用</td>
+</tr>
+<tr>
+<td>fin</td>
+<td>发起关闭连接时使用</td>
+</tr>
+<tr>
+<td>Window</td>
+<td>接收方用该字段告诉发送方目前允许接收多少数据。这是在一个ACK报文中一起携带的</td>
+</tr>
+<tr>
+<td>Checksum</td>
+<td>校验和</td>
+</tr>
+<tr>
+<td>urgent Pointer</td>
+<td>如果连接中有重要数据需要接收方立即处理，通过urg标识和紧急指针，后者标识了紧急数据的结束位置</td>
+</tr>
+<tr>
+<td>Options</td>
+<td>选项，有专门的TCP选项</td>
+</tr>
+<tr>
+<td>Padding</td>
+<td>头部不足一个word时，补0</td>
+</tr>
+<tr>
+<td>Data</td>
+<td>正文数据</td>
+</tr>
+</tbody></table>
+<h3 id="UDP协议"><a href="#UDP协议" class="headerlink" title="UDP协议"></a>UDP协议</h3><p>它是无状态的，没有任何的错误检测。适合查询/响应类应用，如DNS。</p>
+<p>TCP协议虽然可靠，但是可靠机制带来了很多开销，相对地，UDP非常地简单，仅包含数据传输，因此我们可以在其上构建我们自己的协议。比如HTTP3.0的QUIC协议，正如其全称 Quick UDP Internet Connection 表示的含义一样。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103958646.png" alt="image-20220719103958646"></p>
+<p>有关QUIC协议和HTTP3.0的内容，这篇文章不错：[<a target="_blank" rel="noopener" href="https://blog.51cto.com/u_6315133/3122045]">https://blog.51cto.com/u_6315133/3122045]</a>(</p>
+<h3 id="SCTP协议"><a href="#SCTP协议" class="headerlink" title="SCTP协议"></a>SCTP协议</h3><p>这也是一个传输层协议，类似TCP和UDP。它也是一个面向连接的可靠的协议，与TCP不同的是，它提供了更高的可靠性。</p>
+<ul>
+<li>SCTP面向消息，支持单个消息称帧。而TCP是面向字节的。</li>
+<li>全双工传输</li>
+<li>多流功能：即常说的多路复用功能，类似HTTP2，分为多个stream，每个stream都由stream id标识，丢包也只会影响该stream的数据，其它stream不受影响。这样可以提高传输效率。</li>
+<li>多宿主功能：指的是一个SCTP端点可以对应多个IP地址，其中有一个为主，其它的为副。当主IP接收失败时，会重发到副IP地址。</li>
+<li>能够通过INIT快防止DoS攻击</li>
+</ul>
+<p>SCTP通讯的三个过程</p>
+<ul>
+<li><p>初始化和关联</p>
+<ul>
+<li>发起方发送INIT，接收方响应INIT-ACK，INIT-ACK中带有Cookie配置信息</li>
+<li>发起方发送COOKIE-ECHO进行初始连线，接收方响应COOKIE-ACK。然后就可以发送数据了。</li>
+</ul>
+<blockquote>
+<p>这里的COOKIE机制可以防止TCP机制的SYN攻击，TCP协议中，发起方发送SYN，接收方响应SYN/ACK后，发起方不回应ACK，此时接收方会等待一段时间。如果发起方发送大量这种请求，就形成了SYNC攻击（DoS攻击的一种）</p>
+</blockquote>
+</li>
+<li><p>数据发送和控制会话</p>
+<ul>
+<li>数据发送时用DATA块，响应时用SACK块。这个和TCP差不多</li>
+<li>HEARTBEAT 和 HEARTBEAT ACK块用于保持连接不断开</li>
+<li>ERROR用于传输过程中的错误通知</li>
+</ul>
+</li>
+<li><p>关闭和中止</p>
+<ul>
+<li>优雅关闭用 SHUTDOWN块。SCTP没有TCP那样的半关闭状态，当一端发起关闭时，另一端就不能发送数据了。取而代之它的关闭流程如下<ul>
+<li>发起方发送所有缓冲区的数据，然后发送SHUTDOWN块</li>
+<li>接收方搜到SHUTDOWN块，发送本地缓冲区所有的数据，发送SHUTDOWN ACK</li>
+<li>发起方收到后，发送SHUTDOWN COMPLETE，至此关闭完成</li>
+</ul>
+</li>
+<li>强制关闭用ABORT块。缓冲区的所有数据被丢球，接收方也一样</li>
+</ul>
+</li>
+</ul>
+<p>SCTP连接和终止图示如下</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719104233033.png" alt="image-20220719104233033" style="zoom:80%;" />
+
+<blockquote>
+<p>怎么看，都有点像四层协议的部分特性下放到三层来了</p>
+</blockquote>
+<p>SCTP的头部分为通用头部和具体块的结构（有多种类型的块，每个块的结构不一样）。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719104652695.png" alt="image-20220719104652695"></p>
+<p>通用头部如下。其中Verification Tag用于验证数据包是否来自正确的发送者。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719104703558.png" alt="image-20220719104703558"></p>
+<p>块结构如下</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719104713873.png" alt="image-20220719104713873"></p>
+<p>块类型如下</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719104843440.png" alt="image-20220719104843440"></p>
+<p>这里列举建立连接时的四个块</p>
+<ul>
+<li><p>INIT</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719105736501.png" alt="image-20220719105736501"></p>
+</li>
+<li><p>INIT ACK</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719105750559.png" alt="image-20220719105750559"></p>
+<p>ACK和INIT完全相同，只是添加了Cookie和一些其它参数。Cookie参数结构如下。可见Cookie就是一个随机二进制值。</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719105822180.png" alt="image-20220719105822180"></p>
+</li>
+<li><p>COOKIE ECHO</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719105829871.png" alt="image-20220719105829871"></p>
+</li>
+<li><p>COOKIE ACK</p>
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719105843772.png" alt="image-20220719105843772"></p>
+</li>
+</ul>
+<h2 id="理解iptables"><a href="#理解iptables" class="headerlink" title="理解iptables"></a>理解iptables</h2><h3 id="IP过滤"><a href="#IP过滤" class="headerlink" title="IP过滤"></a>IP过滤</h3><p>IP过滤就是决定数据包如何处理的过程。Linux操作系统的netfilter/iptables是IP过滤的一种实现，也可以称作防火墙。一些物理网络防火墙设备也是这个原理。</p>
+<p>至于iptables，字面理解，它是工作在IP层执行IP包过滤的，但是实际实现并不严格，它还能根据更高层的TCP等协议和更底层的MAC协议过滤数据包。即跨越了一、二、三层。甚至增加插件后，iptables和netfilter能够在四层进行过滤。这就是iptables远比看起来的复杂。</p>
+<h3 id="概念介绍"><a href="#概念介绍" class="headerlink" title="概念介绍"></a>概念介绍</h3><ul>
+<li><p>chain：即五个hook位置，为什么叫做chain？因为执行到该hook时，实际上是在该位置的rule链上进行遍历。</p>
+<ul>
+<li>PREROUTING</li>
+<li>INPUT</li>
+<li>FORWARD</li>
+<li>OUTPUT</li>
+<li>POSTROUTING</li>
+</ul>
+</li>
+<li><p>table：规定了几个记录rule的表</p>
+<ul>
+<li><p>raw</p>
+<p>只做一件事：为数据包添加标记，表明该包不被跟踪</p>
+</li>
+<li><p>mangle</p>
+<p>如下事项只能在Mangle表中做，其它地方不能做</p>
+<ul>
+<li>TOS：修改IP报文头的TOS字段，这能够影响路由决策。</li>
+<li>TTL：修改IP报文的TTL</li>
+<li>MARK：为报文添加特殊标识，这能够影响路由决策，也可以影响带宽限制</li>
+<li>SECMARK：添加安全标识</li>
+<li>CONNSECMARK：同上，也是一些安全标识</li>
+</ul>
+</li>
+<li><p>nat</p>
+<p>只能用来做地址转换</p>
+<ul>
+<li>DNAT：修改目标IP地址</li>
+<li>SNAT：修改源IP地址，用以隐藏本机地址</li>
+<li>MASQUERADE：类似SNAT，但更耗费性能</li>
+<li>REDIRECT</li>
+</ul>
+</li>
+<li><p>filter</p>
+<p>用于过滤数据包，以任何我们想要的方式。这是我们操作的最多的地方</p>
+</li>
+</ul>
+</li>
+<li><p>rule：一条声明式规则，声明了什么时什么样的包执行什么样的操作</p>
+</li>
+<li><p>match：匹配规则，iptables可以按照各种包的特征进行匹配</p>
+</li>
+</ul>
+<p>用一个图来解释chain和table的关系</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719121029628.png" alt="image-20220719121029628" style="zoom:60%;" />
+
+<p>下面这张图可能是更常见的</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719121305203.png" alt="image-20220719121305203" style="zoom:80%;" />
+
+<h3 id="连接状态跟踪"><a href="#连接状态跟踪" class="headerlink" title="连接状态跟踪"></a>连接状态跟踪</h3><p>这是iptables中的一个特殊部分。在 iptables 中，数据包可以与处于四种不同所谓状态的跟踪连接相关联</p>
+<ul>
+<li>NEW</li>
+<li>ESTABLISHED</li>
+<li>RELATED</li>
+<li>INVALID</li>
+</ul>
+<p>这些是由内核框架conntrack完成的。它实时跟踪记录了传输层连接的状态，<strong>在配置匹配条件时，匹配指定状态的连接的所有数据包</strong>。</p>
+<p>以TCP为例，状态变化如下。</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719112747161.png" alt="image-20220719112747161" style="zoom:50%;" />
+
+<p>如果有开启连接跟踪，在<code>/proc/net/ip_conntrack</code>文件中能够看到信息，比如</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">tcp      6 431999 ESTABLISHED src=192.168.1.5 dst=192.168.1.35 \</span><br><span class="line">     sport=1031 dport=23 src=192.168.1.35 dst=192.168.1.5 \</span><br><span class="line">     sport=23 dport=1031 [ASSURED] use=1</span><br></pre></td></tr></table></figure>
+
+<p>从左到右依次是：协议、一个十进制编码、记录过期时间(s)、状态值、入方向上的地址和端口信息、反向地址和端口信息、预期返回的包数量</p>
+<h3 id="iptables命令"><a href="#iptables命令" class="headerlink" title="iptables命令"></a>iptables命令</h3><figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">iptables [-t table] command [match] [target/jump]</span><br></pre></td></tr></table></figure>
+
+<p>如上是iptables的常见语法。从左到右依次是 表名、命令、匹配规则、目标操作或跳转目标。其中table可选，如果不指定，默认就是filter表。</p>
+<h4 id="命令"><a href="#命令" class="headerlink" title="命令"></a>命令</h4><table>
+<thead>
+<tr>
+<th>命令</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-A <br />–append</td>
+<td>将规则rule到指定chain的最后<br />iptables -A INPUT …</td>
+</tr>
+<tr>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<td>-D <br />–drop</td>
+<td>将rule从执行chain中删除。两种使用方式 <br />1. 指定完整的规则 <br />2. 指定规则的序号：序号chain中从上到下依次递增，1开始 <br />iptables -D INPUT –dport 80 -j DROP, iptables -D INPUT 1</td>
+</tr>
+<tr>
+<td>-R <br />–replace</td>
+<td>替换指定位置的rule <br />iptables -R INPUT 1 -s 192.168.0.1 -j DROP</td>
+</tr>
+<tr>
+<td>-I <br />–insert</td>
+<td>向chain中的指定位置插入rule <br />iptables -I INPUT 1 –dport 80 -j ACCEPT</td>
+</tr>
+<tr>
+<td>-L <br />–list</td>
+<td>列出指定chain中的所有rule <br />iptables -L INPUT</td>
+</tr>
+<tr>
+<td>-F <br />–flush</td>
+<td>清空指定chain上的所有rule，和一条一条删除效果一样，只不过更快 <br />iptables -F INPUT</td>
+</tr>
+<tr>
+<td>-Z <br />–zero</td>
+<td>清空指定chain上的计数器。这些计数器用于计量包数和字节数 <br />iptables -Z INPUT</td>
+</tr>
+<tr>
+<td>-N<br />–new-chain</td>
+<td>创建一个新的chain <br />iptables -N allowed</td>
+</tr>
+<tr>
+<td>-X <br />–delete-chain</td>
+<td>删除置顶chain，只有已经被清空的chain，即没有任何rule的chain才能被删除 <br />内建的chain如INPUT等是无法被删除的 <br />iptables -X allowed</td>
+</tr>
+<tr>
+<td>-P <br />–policy</td>
+<td>为chain设置默认的target或policy，在该chain上，任何没有被rule匹配到的包，都会应用该默认规则。 <br />只有两个合法的target：DROP 和 ACCEPT <br />iptables -P INPUT DROP</td>
+</tr>
+<tr>
+<td>-E <br />–rename-chain</td>
+<td>重命名chain <br />iptables -E allowed disallowed</td>
+</tr>
+</tbody></table>
+<blockquote>
+<p>新建chain有什么用？</p>
+<p>只有前文所述5个chain是内建的，用户自建的chain并不会被自动hook到数据流中。只能通过以jump的形式从一个已有的chain跳入，待执行完后再跳回。所以新建的chain其实就是一个相对独立的规则集而已（这也是它的最大用途），对内核透明。</p>
+</blockquote>
+<h4 id="匹配规则"><a href="#匹配规则" class="headerlink" title="匹配规则"></a>匹配规则</h4><p>match是语法最为复杂的一部分，不同的协议有不同的匹配规则。</p>
+<p><strong>通用match</strong></p>
+<table>
+<thead>
+<tr>
+<th>匹配项</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-p —protocol</td>
+<td>指定协议 <br />- 协议只能是 /etc/protocols 文件中存在的，否则会报错 <br />- 可以正向也可以反向。 <br />iptables -A INPUT -p ! tcp 表示非tcp</td>
+</tr>
+<tr>
+<td>-s  —src  —source</td>
+<td>来源IP，可以有多种形式。也可以用 ! 运算符反向指定 <br />- 单个IP形式 192.168.0.0 <br />- CIDR形式 192.168.0.0/24 <br />- 子网掩码形式  192.168.0.0/255.255.255.0</td>
+</tr>
+<tr>
+<td>-d —dst —destination</td>
+<td>同上，反向而已</td>
+</tr>
+<tr>
+<td>-i —in-interface</td>
+<td>指定包的来源接口，如en0。 <br />- 只能在INPUT FORWARD PREROUTING 三个chain使用 <br />- 允许通配，+表示所有接口,en+表示en开头的所有接口</td>
+</tr>
+<tr>
+<td>-o —out-interface</td>
+<td>同上，反向而已</td>
+</tr>
+<tr>
+<td>-f —fragment</td>
+<td>匹配分段数据包的第二、第三。。。段 <br />如果不指定，就只会匹配未分段的数据包或者分段数据包的第一段</td>
+</tr>
+</tbody></table>
+<p><strong>隐式match</strong></p>
+<ul>
+<li><p>tcp match</p>
+<p>如下匹配仅对 -p tcp 的情况下有效</p>
+<table>
+<thead>
+<tr>
+<th>匹配项</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>-p —protocol</td>
+<td>源端口，可以指定端口号或service，service必须在 /etc/services 文件中存在 <br />可以指定具体端口，也可以指定端口范围 比如 22:80，标识22到80的所有端口 也可以使用取反</td>
+</tr>
+<tr>
+<td>—dport —destination-port</td>
+<td>目标端口，语法同上</td>
+</tr>
+<tr>
+<td>—tcp-flags</td>
+<td>匹配tcp标记，如SYN/RST/ACK/FIN等，也可用ALL、NONE</td>
+</tr>
+<tr>
+<td>—syn</td>
+<td>遗留语法，和 —tcp-flags SYN,FIN,ACK SYN一个效果</td>
+</tr>
+<tr>
+<td>—tcp-option</td>
+<td>根据tcp选项匹配</td>
+</tr>
+</tbody></table>
+</li>
+<li><p>icmp match</p>
+<p>只对 -p icmp 的情况有效，它只有一个参数</p>
+<p>—icmp-type，即匹配icmp类型</p>
+</li>
+<li><p>其它协议的match</p>
+</li>
+</ul>
+<p><strong>显式match</strong></p>
+<p>显示匹配就是需要通过-m 或 —match的形式指定的参数</p>
+<p>比如地址匹配，地址被Linux分为很多类型，根据地址类型的参数有两个，如下</p>
+<ul>
+<li><p>—src-type</p>
+<p>iptables -A INPUT -m addrtype –src-type UNICAST</p>
+</li>
+<li><p>—dst-type</p>
+<p>iptables -A INPUT -m addrtype –dst-type UNICAST</p>
+</li>
+</ul>
+<blockquote>
+<p>还有好多match，如果需要，可以到<a target="_blank" rel="noopener" href="https://www.frozentux.net/iptables-tutorial/iptables-tutorial.html#MATCHES">这里查询</a></p>
+</blockquote>
+<h4 id="目标或跳转"><a href="#目标或跳转" class="headerlink" title="目标或跳转"></a>目标或跳转</h4><p>target/jumps告诉如何处理与规则匹配到的包</p>
+<ul>
+<li><p>什么是target，即两个基本的target：ACCEPT和DROP</p>
+</li>
+<li><p>什么是jump呢？原理：上面介绍过了，用iptables -N能够创建新的chain，可以在新的chain上定义自己的规则集，但这个chain并非内建的几个chain之一，因此不会被自动执行，此时就需要jump，语法如下</p>
+<p>iptables -A INPUT -p tcp -j <your_chain></p>
+<p><strong>上面在INPUT chain中添加了一条rule，将所有tcp协议的包都跳转到自定义chain上，当自定义chain的所有table都执行完成时，它会跳转回原来的chain，即INPUT chain</strong></p>
+</li>
+</ul>
+<p>下面列举所有的target</p>
+<table>
+<thead>
+<tr>
+<th>target</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ACCEPT</td>
+<td>接受，接受的意思就是啥都不做，放它过去<br />一旦一个包被接受了，统一table和同一chain的后续规则将被忽略。<br />但其它table仍然可以对这个包进行处理</td>
+</tr>
+<tr>
+<td>DROP</td>
+<td>直接丢弃</td>
+</tr>
+<tr>
+<td>CLASSIFY</td>
+<td>将包分类，只对mangle表有效<br />iptables -t mangle -A POSTROUTING -p tcp –dport 80 -j CLASSIFY –set-class 20:10</td>
+</tr>
+<tr>
+<td>CONNMARK</td>
+<td>将整个连接都做上标记，所有表都可用<br />iptables -t nat -A PREROUTING -p tcp –dport 80 -j CONNMARK –set-mark 4</td>
+</tr>
+<tr>
+<td>MARK</td>
+<td>标记匹配到的数据包</td>
+</tr>
+<tr>
+<td>DNAT</td>
+<td>指定DNAT的目标地址。只能在nat表的PREROUTING和OUTPUT链中使用<br />iptables -t nat -A PREROUTING -p tcp -d 15.45.23.67 –dport 80 -j DNAT –to-destination 192.168.1.1-192.168.1.10</td>
+</tr>
+<tr>
+<td>SNAT</td>
+<td>指定SNAT的源地址。只能在nat表的PREROUTING链使用</td>
+</tr>
+<tr>
+<td>LOG</td>
+<td>记录日志，日志记录是通过syslogd实现的<br />iptables -t nat -A POSTROUTING -p tcp -o eth0 -j SNAT –to-source 194.236.50.155-194.236.50.160:1024-32000<br />iptables -A FORWARD -p tcp -j LOG –log-level debug<br />iptables -A INPUT -p tcp -j LOG –log-prefix “输入数据包”</td>
+</tr>
+<tr>
+<td>TTL</td>
+<td>设置TTL，只能在mangle表使用<br />iptables -t mangle -A PREROUTING -i eth0 -j TTL –ttl-set 64</td>
+</tr>
+</tbody></table>
+<h2 id="例子分析"><a href="#例子分析" class="headerlink" title="例子分析"></a>例子分析</h2><p>通过<code>iptables-save -c</code>可以将本机的iptables规则集保存到文件，我们将一台布有K3S的机器的规则集贴出来看看</p>
+<figure class="highlight shell"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br><span class="line">55</span><br><span class="line">56</span><br><span class="line">57</span><br><span class="line">58</span><br><span class="line">59</span><br><span class="line">60</span><br><span class="line">61</span><br><span class="line">62</span><br><span class="line">63</span><br><span class="line">64</span><br><span class="line">65</span><br><span class="line">66</span><br><span class="line">67</span><br><span class="line">68</span><br><span class="line">69</span><br><span class="line">70</span><br><span class="line">71</span><br><span class="line">72</span><br><span class="line">73</span><br><span class="line">74</span><br><span class="line">75</span><br><span class="line">76</span><br><span class="line">77</span><br><span class="line">78</span><br><span class="line">79</span><br><span class="line">80</span><br><span class="line">81</span><br><span class="line">82</span><br><span class="line">83</span><br><span class="line">84</span><br><span class="line">85</span><br><span class="line">86</span><br><span class="line">87</span><br><span class="line">88</span><br><span class="line">89</span><br><span class="line">90</span><br><span class="line">91</span><br><span class="line">92</span><br><span class="line">93</span><br><span class="line">94</span><br><span class="line">95</span><br><span class="line">96</span><br><span class="line">97</span><br><span class="line">98</span><br><span class="line">99</span><br><span class="line">100</span><br></pre></td><td class="code"><pre><span class="line">ubuntu@VM-20-5-ubuntu:~$ sudo iptables-save -c</span><br><span class="line"><span class="meta">#</span><span class="bash"> Generated by iptables-save v1.8.4 on Mon Jul 18 11:32:54 2022</span></span><br><span class="line">*raw</span><br><span class="line">:PREROUTING ACCEPT [8488585:2225268588]</span><br><span class="line">:OUTPUT ACCEPT [8430728:2167338664]</span><br><span class="line">COMMIT</span><br><span class="line"><span class="meta">#</span><span class="bash"> Completed on Mon Jul 18 11:32:54 2022</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> Generated by iptables-save v1.8.4 on Mon Jul 18 11:32:54 2022</span></span><br><span class="line">*mangle</span><br><span class="line">:PREROUTING ACCEPT [8703414:2282115687]</span><br><span class="line">:INPUT ACCEPT [8703414:2282115687]</span><br><span class="line">:FORWARD ACCEPT [0:0]</span><br><span class="line">:OUTPUT ACCEPT [8643746:2222781964]</span><br><span class="line">:POSTROUTING ACCEPT [8643746:2222781964]</span><br><span class="line">:KUBE-KUBELET-CANARY - [0:0]</span><br><span class="line">:KUBE-PROXY-CANARY - [0:0]</span><br><span class="line">COMMIT</span><br><span class="line"><span class="meta">#</span><span class="bash"> Completed on Mon Jul 18 11:32:54 2022</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> Generated by iptables-save v1.8.4 on Mon Jul 18 11:32:54 2022</span></span><br><span class="line">*nat</span><br><span class="line">:PREROUTING ACCEPT [542:19886]</span><br><span class="line">:INPUT ACCEPT [542:19886]</span><br><span class="line">:OUTPUT ACCEPT [450:29065]</span><br><span class="line">:POSTROUTING ACCEPT [450:29065]</span><br><span class="line">:DOCKER - [0:0]</span><br><span class="line">:KUBE-KUBELET-CANARY - [0:0]</span><br><span class="line">:KUBE-MARK-DROP - [0:0]</span><br><span class="line">:KUBE-MARK-MASQ - [0:0]</span><br><span class="line">:KUBE-NODEPORTS - [0:0]</span><br><span class="line">:KUBE-POSTROUTING - [0:0]</span><br><span class="line">:KUBE-PROXY-CANARY - [0:0]</span><br><span class="line">:KUBE-SEP-VD5CM36UTN4SSMVL - [0:0]</span><br><span class="line">:KUBE-SERVICES - [0:0]</span><br><span class="line">:KUBE-SVC-NPX46M4PTMTKRN6Y - [0:0]</span><br><span class="line">[402612:15051273] -A PREROUTING -m comment --comment &quot;kubernetes service portals&quot; -j KUBE-SERVICES</span><br><span class="line">[402687:15057430] -A PREROUTING -m addrtype --dst-type LOCAL -j DOCKER</span><br><span class="line">[314443:20327485] -A OUTPUT -m comment --comment &quot;kubernetes service portals&quot; -j KUBE-SERVICES</span><br><span class="line">[1:60] -A OUTPUT ! -d 127.0.0.0/8 -m addrtype --dst-type LOCAL -j DOCKER</span><br><span class="line">[314471:20329366] -A POSTROUTING -m comment --comment &quot;kubernetes postrouting rules&quot; -j KUBE-POSTROUTING</span><br><span class="line">[0:0] -A POSTROUTING -s 172.17.0.0/16 ! -o docker0 -j MASQUERADE</span><br><span class="line">[0:0] -A DOCKER -i docker0 -j RETURN</span><br><span class="line">[0:0] -A KUBE-MARK-DROP -j MARK --set-xmark 0x8000/0x8000</span><br><span class="line">[0:0] -A KUBE-MARK-MASQ -j MARK --set-xmark 0x4000/0x4000</span><br><span class="line">[450:29065] -A KUBE-POSTROUTING -m mark ! --mark 0x4000/0x4000 -j RETURN</span><br><span class="line">[0:0] -A KUBE-POSTROUTING -j MARK --set-xmark 0x4000/0x0</span><br><span class="line">[0:0] -A KUBE-POSTROUTING -m comment --comment &quot;kubernetes service traffic requiring SNAT&quot; -j MASQUERADE --random-fully</span><br><span class="line">[0:0] -A KUBE-SEP-VD5CM36UTN4SSMVL -s 10.0.20.5/32 -m comment --comment &quot;default/kubernetes:https&quot; -j KUBE-MARK-MASQ</span><br><span class="line">[0:0] -A KUBE-SEP-VD5CM36UTN4SSMVL -p tcp -m comment --comment &quot;default/kubernetes:https&quot; -m tcp -j DNAT --to-destination 10.0.20.5:6443</span><br><span class="line">[0:0] -A KUBE-SERVICES -d 10.43.0.1/32 -p tcp -m comment --comment &quot;default/kubernetes:https cluster IP&quot; -m tcp --dport 443 -j KUBE-SVC-NPX46M4PTMTKRN6Y</span><br><span class="line">[596:24001] -A KUBE-SERVICES -m comment --comment &quot;kubernetes service nodeports; NOTE: this must be the last rule in this chain&quot; -m addrtype --dst-type LOCAL -j KUBE-NODEPORTS</span><br><span class="line">[0:0] -A KUBE-SVC-NPX46M4PTMTKRN6Y ! -s 10.42.0.0/16 -d 10.43.0.1/32 -p tcp -m comment --comment &quot;default/kubernetes:https cluster IP&quot; -m tcp --dport 443 -j KUBE-MARK-MASQ</span><br><span class="line">[0:0] -A KUBE-SVC-NPX46M4PTMTKRN6Y -m comment --comment &quot;default/kubernetes:https&quot; -j KUBE-SEP-VD5CM36UTN4SSMVL</span><br><span class="line">COMMIT</span><br><span class="line"><span class="meta">#</span><span class="bash"> Completed on Mon Jul 18 11:32:54 2022</span></span><br><span class="line"><span class="meta">#</span><span class="bash"> Generated by iptables-save v1.8.4 on Mon Jul 18 11:32:54 2022</span></span><br><span class="line">*filter</span><br><span class="line">:INPUT ACCEPT [12408:3022585]</span><br><span class="line">:FORWARD DROP [0:0]</span><br><span class="line">:OUTPUT ACCEPT [12420:3225157]</span><br><span class="line">:DOCKER - [0:0]</span><br><span class="line">:DOCKER-ISOLATION-STAGE-1 - [0:0]</span><br><span class="line">:DOCKER-ISOLATION-STAGE-2 - [0:0]</span><br><span class="line">:DOCKER-USER - [0:0]</span><br><span class="line">:KUBE-EXTERNAL-SERVICES - [0:0]</span><br><span class="line">:KUBE-FIREWALL - [0:0]</span><br><span class="line">:KUBE-FORWARD - [0:0]</span><br><span class="line">:KUBE-KUBELET-CANARY - [0:0]</span><br><span class="line">:KUBE-NODEPORTS - [0:0]</span><br><span class="line">:KUBE-PROXY-CANARY - [0:0]</span><br><span class="line">:KUBE-SERVICES - [0:0]</span><br><span class="line">[8703356:2282095737] -A INPUT -m comment --comment &quot;kubernetes health check service ports&quot; -j KUBE-NODEPORTS</span><br><span class="line">[477049:20536811] -A INPUT -m conntrack --ctstate NEW -m comment --comment &quot;kubernetes externally-visible service portals&quot; -j KUBE-EXTERNAL-SERVICES</span><br><span class="line">[8705941:2283153404] -A INPUT -j KUBE-FIREWALL</span><br><span class="line">[0:0] -A FORWARD -m comment --comment &quot;kubernetes forwarding rules&quot; -j KUBE-FORWARD</span><br><span class="line">[0:0] -A FORWARD -m conntrack --ctstate NEW -m comment --comment &quot;kubernetes service portals&quot; -j KUBE-SERVICES</span><br><span class="line">[0:0] -A FORWARD -m conntrack --ctstate NEW -m comment --comment &quot;kubernetes externally-visible service portals&quot; -j KUBE-EXTERNAL-SERVICES</span><br><span class="line">[0:0] -A FORWARD -j DOCKER-USER</span><br><span class="line">[0:0] -A FORWARD -j DOCKER-ISOLATION-STAGE-1</span><br><span class="line">[0:0] -A FORWARD -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT</span><br><span class="line">[0:0] -A FORWARD -o docker0 -j DOCKER</span><br><span class="line">[0:0] -A FORWARD -i docker0 ! -o docker0 -j ACCEPT</span><br><span class="line">[0:0] -A FORWARD -i docker0 -o docker0 -j ACCEPT</span><br><span class="line">[348158:22886200] -A OUTPUT -m conntrack --ctstate NEW -m comment --comment &quot;kubernetes service portals&quot; -j KUBE-SERVICES</span><br><span class="line">[8646279:2223824877] -A OUTPUT -j KUBE-FIREWALL</span><br><span class="line">[0:0] -A DOCKER-ISOLATION-STAGE-1 -i docker0 ! -o docker0 -j DOCKER-ISOLATION-STAGE-2</span><br><span class="line">[0:0] -A DOCKER-ISOLATION-STAGE-1 -j RETURN</span><br><span class="line">[0:0] -A DOCKER-ISOLATION-STAGE-2 -o docker0 -j DROP</span><br><span class="line">[0:0] -A DOCKER-ISOLATION-STAGE-2 -j RETURN</span><br><span class="line">[0:0] -A DOCKER-USER -j RETURN</span><br><span class="line">[0:0] -A KUBE-FIREWALL -m comment --comment &quot;kubernetes firewall for dropping marked packets&quot; -m mark --mark 0x8000/0x8000 -j DROP</span><br><span class="line">[0:0] -A KUBE-FIREWALL ! -s 127.0.0.0/8 -d 127.0.0.0/8 -m comment --comment &quot;block incoming localnet connections&quot; -m conntrack ! --ctstate RELATED,ESTABLISHED,DNAT -j DROP</span><br><span class="line">[0:0] -A KUBE-FORWARD -m conntrack --ctstate INVALID -j DROP</span><br><span class="line">[0:0] -A KUBE-FORWARD -m comment --comment &quot;kubernetes forwarding rules&quot; -m mark --mark 0x4000/0x4000 -j ACCEPT</span><br><span class="line">[0:0] -A KUBE-FORWARD -m comment --comment &quot;kubernetes forwarding conntrack rule&quot; -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT</span><br><span class="line">[0:0] -A KUBE-SERVICES -d 10.43.0.10/32 -p tcp -m comment --comment &quot;kube-system/kube-dns:dns-tcp has no endpoints&quot; -m tcp --dport 53 -j REJECT --reject-with icmp-port-unreachable</span><br><span class="line">[0:0] -A KUBE-SERVICES -d 10.43.0.10/32 -p tcp -m comment --comment &quot;kube-system/kube-dns:metrics has no endpoints&quot; -m tcp --dport 9153 -j REJECT --reject-with icmp-port-unreachable</span><br><span class="line">[0:0] -A KUBE-SERVICES -d 10.43.0.10/32 -p udp -m comment --comment &quot;kube-system/kube-dns:dns has no endpoints&quot; -m udp --dport 53 -j REJECT --reject-with icmp-port-unreachable</span><br><span class="line">[0:0] -A KUBE-SERVICES -d 10.43.40.11/32 -p tcp -m comment --comment &quot;kube-system/metrics-server:https has no endpoints&quot; -m tcp --dport 443 -j REJECT --reject-with icmp-port-unreachable</span><br><span class="line">COMMIT</span><br><span class="line"><span class="meta">#</span><span class="bash"> Completed on Mon Jul 18 11:32:54 2022</span></span><br></pre></td></tr></table></figure>
+
+<p>解读几个关键语法</p>
+<ul>
+<li><p><code>*raw</code></p>
+<p>声明往下到COMMIT之间的行，都是在raw表中</p>
+</li>
+<li><p><code>:PREROUTING ACCEPT [8488585:2225268588]</code></p>
+<p>这是一个累计状态，表示 PREROUTING这个chain已经接受了 8488585 个数据包，共计2225268588个字节的数据。</p>
+</li>
+<li><p><code>[402612:15051273] -A PREROUTING -m comment --comment &quot;kubernetes service portals&quot; -j KUBE-SERVICES</code></p>
+<p>这是一条规则，前面是匹配这条规则的累计状态<code>[包数:字节数]</code>。</p>
+<p>这条规则说明：经过PREROUTING阶段的的所有数据包，都加上注解，然后跳转到KUBE-SERVICES chain上遍历</p>
+</li>
+</ul>
+<h2 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h2><p>iptables关键点</p>
+<ul>
+<li>TCP/IP协议栈</li>
+<li>数据包在内核中的处理流程</li>
+<li>iptables语法</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/iptables/" rel="tag"># iptables</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/07/12/%E5%87%A0%E7%A7%8D%E5%B8%B8%E7%94%A8%E7%99%BB%E5%BD%95%E7%9A%84%E8%B0%83%E8%AF%95%E6%96%B9%E5%BC%8F/" rel="prev" title="几种常用登录的调试方式">
+      <i class="fa fa-chevron-left"></i> 几种常用登录的调试方式
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BB%80%E4%B9%88%E6%98%AFiptables"><span class="nav-number">1.</span> <span class="nav-text">什么是iptables</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E5%AD%A6%E4%B9%A0iptables%EF%BC%8C%E6%98%AF%E5%9C%A8%E5%AD%A6%E4%BB%80%E4%B9%88"><span class="nav-number">2.</span> <span class="nav-text">学习iptables，是在学什么</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%BD%91%E7%BB%9C%E5%9F%BA%E7%A1%80-TCP-IP%E5%8D%8F%E8%AE%AE%E6%A0%88"><span class="nav-number">3.</span> <span class="nav-text">网络基础 - TCP&#x2F;IP协议栈</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E8%A7%88"><span class="nav-number">3.1.</span> <span class="nav-text">概览</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#IP%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.2.</span> <span class="nav-text">IP协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#ICMP%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.3.</span> <span class="nav-text">ICMP协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#TCP%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.4.</span> <span class="nav-text">TCP协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#UDP%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.5.</span> <span class="nav-text">UDP协议</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#SCTP%E5%8D%8F%E8%AE%AE"><span class="nav-number">3.6.</span> <span class="nav-text">SCTP协议</span></a></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E7%90%86%E8%A7%A3iptables"><span class="nav-number">4.</span> <span class="nav-text">理解iptables</span></a><ol class="nav-child"><li class="nav-item nav-level-3"><a class="nav-link" href="#IP%E8%BF%87%E6%BB%A4"><span class="nav-number">4.1.</span> <span class="nav-text">IP过滤</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E6%A6%82%E5%BF%B5%E4%BB%8B%E7%BB%8D"><span class="nav-number">4.2.</span> <span class="nav-text">概念介绍</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#%E8%BF%9E%E6%8E%A5%E7%8A%B6%E6%80%81%E8%B7%9F%E8%B8%AA"><span class="nav-number">4.3.</span> <span class="nav-text">连接状态跟踪</span></a></li><li class="nav-item nav-level-3"><a class="nav-link" href="#iptables%E5%91%BD%E4%BB%A4"><span class="nav-number">4.4.</span> <span class="nav-text">iptables命令</span></a><ol class="nav-child"><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%91%BD%E4%BB%A4"><span class="nav-number">4.4.1.</span> <span class="nav-text">命令</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E5%8C%B9%E9%85%8D%E8%A7%84%E5%88%99"><span class="nav-number">4.4.2.</span> <span class="nav-text">匹配规则</span></a></li><li class="nav-item nav-level-4"><a class="nav-link" href="#%E7%9B%AE%E6%A0%87%E6%88%96%E8%B7%B3%E8%BD%AC"><span class="nav-number">4.4.3.</span> <span class="nav-text">目标或跳转</span></a></li></ol></li></ol></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E4%BE%8B%E5%AD%90%E5%88%86%E6%9E%90"><span class="nav-number">5.</span> <span class="nav-text">例子分析</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%80%BB%E7%BB%93"><span class="nav-number">6.</span> <span class="nav-text">总结</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">112</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">33</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">84</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
