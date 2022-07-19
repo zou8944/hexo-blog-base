@@ -28,7 +28,7 @@
 <meta property="og:description" content="为什么需要学习iptables ?Linux防火墙、NAT、Kuberbetes等很多地方都用到iptables，了解它很重要。   本文主要信息来源是netfilter官网推荐的iptables教程。   本文目的：了解iptables原理；了解iptables配置方法，看懂iptables配置脚本">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719101624353.png">
-<meta property="og:image" content="https://zou8944.com/Users/zouguodong/Library/Application%20Support/typora-user-images/image-20220719101802699.png">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719122814357.png">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719102205190.png">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103526725.png">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719103605971.png">
@@ -50,7 +50,7 @@
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719121305203.png">
 <meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719112747161.png">
 <meta property="article:published_time" content="2022-07-18T13:58:43.000Z">
-<meta property="article:modified_time" content="2022-07-19T04:25:27.882Z">
+<meta property="article:modified_time" content="2022-07-19T04:28:19.469Z">
 <meta property="article:author" content="果冻">
 <meta property="article:tag" content="iptables">
 <meta name="twitter:card" content="summary">
@@ -257,7 +257,7 @@
                   <i class="far fa-calendar-check"></i>
                 </span>
                 <span class="post-meta-item-text">更新于</span>
-                <time title="修改时间：2022-07-19 12:25:27" itemprop="dateModified" datetime="2022-07-19T12:25:27+08:00">2022-07-19</time>
+                <time title="修改时间：2022-07-19 12:28:19" itemprop="dateModified" datetime="2022-07-19T12:28:19+08:00">2022-07-19</time>
               </span>
             <span class="post-meta-item">
               <span class="post-meta-item-icon">
@@ -313,8 +313,7 @@
 <h3 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h3><p>我们常说的TCP/IP协议栈，或者TCP/IP Stack，指的就是TCP/IP构成的多层模型，在Linux中，就是指内核对该多层模型的实现。该协议到底分为几层，没有一个明确的共识，一般来说是四层，如下:</p>
 <p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719101624353.png" alt="image-20220719101624353"></p>
 <p>也有说五层的，还有OSI标准的7层，它们实际对应关系如下</p>
-<img src="/Users/zouguodong/Library/Application%20Support/typora-user-images/image-20220719101802699.png" alt="image-20220719101802699" style="zoom:80%;" />
-
+<p><img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719122814357.png" alt="image-20220719122814357"></p>
 <p>理论来说，iptables应该工作在二层，即网络互联层，但实际上它也提供三层（传输层）的跟踪配置能力，因此，我们需要详细了解的协议主要有IP、ICMP、TCP、UDP、SCTP。控制为主，而控制主要集中在数据包头部，因此会详细解析头部字段含义。</p>
 <h3 id="IP协议"><a href="#IP协议" class="headerlink" title="IP协议"></a>IP协议</h3><p>IP是无状态协议，主要解决数据去哪的问题。头部分析如下</p>
 <img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220719102205190.png" alt="image-20220719102205190" style="zoom:80%;" />
