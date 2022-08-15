@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=2">
+<meta name="theme-color" content="#222">
+<meta name="generator" content="Hexo 5.4.0">
+  <link rel="apple-touch-icon" sizes="180x180" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="32x32" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="icon" type="image/png" sizes="16x16" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <link rel="mask-icon" href="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132" color="#222">
+
+<link rel="stylesheet" href="/css/main.css">
+
+
+<link rel="stylesheet" href="/lib/font-awesome/css/all.min.css">
+
+<script id="hexo-configurations">
+    var NexT = window.NexT || {};
+    var CONFIG = {"hostname":"zou8944.com","root":"/","scheme":"Pisces","version":"7.8.0","exturl":false,"sidebar":{"position":"left","display":"always","padding":18,"offset":12,"onmobile":false},"copycode":{"enable":false,"show_result":false,"style":null},"back2top":{"enable":true,"sidebar":false,"scrollpercent":false},"bookmark":{"enable":false,"color":"#222","save":"auto"},"fancybox":false,"mediumzoom":false,"lazyload":false,"pangu":false,"comments":{"style":"tabs","active":null,"storage":true,"lazyload":false,"nav":null},"algolia":{"hits":{"per_page":10},"labels":{"input_placeholder":"Search for Posts","hits_empty":"We didn't find any results for the search: ${query}","hits_stats":"${hits} results found in ${time} ms"}},"localsearch":{"enable":true,"trigger":"auto","top_n_per_article":1,"unescape":false,"preload":false},"motion":{"enable":true,"async":false,"transition":{"post_block":"fadeIn","post_header":"slideDownIn","post_body":"slideDownIn","coll_header":"slideLeftIn","sidebar":"slideUpIn"}},"path":"search.xml"};
+  </script>
+
+  <meta name="description" content="以下内容作为这段时间研究Kubernetes网络的总结，一口气写完，代表了当前对Kubernetes网络的认知，可能有误，权当摆龙门阵。  K8s网络的核心问题我们理一理Kubernetes相关概念和网络的关系  Pod：调度的基本单位，一个pod内的所有容器共享一个主机IP Deployment：管理Pod的资源 StatefulSet：同样是管理Pod的资源，只不过是有状态的，其管理的主机I">
+<meta property="og:type" content="article">
+<meta property="og:title" content="Kubernetes网络侃闲天">
+<meta property="og:url" content="https://zou8944.com/2022/08/14/kubernetes-network/index.html">
+<meta property="og:site_name" content="半中二青年">
+<meta property="og:description" content="以下内容作为这段时间研究Kubernetes网络的总结，一口气写完，代表了当前对Kubernetes网络的认知，可能有误，权当摆龙门阵。  K8s网络的核心问题我们理一理Kubernetes相关概念和网络的关系  Pod：调度的基本单位，一个pod内的所有容器共享一个主机IP Deployment：管理Pod的资源 StatefulSet：同样是管理Pod的资源，只不过是有状态的，其管理的主机I">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220815095416855.png">
+<meta property="article:published_time" content="2022-08-14T06:57:05.000Z">
+<meta property="article:modified_time" content="2022-08-15T01:57:22.264Z">
+<meta property="article:author" content="果冻">
+<meta property="article:tag" content="Kubernetes">
+<meta property="article:tag" content="K8s">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:image" content="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220815095416855.png">
+
+<link rel="canonical" href="https://zou8944.com/2022/08/14/kubernetes-network/">
+
+
+<script id="page-configurations">
+  // https://hexo.io/docs/variables.html
+  CONFIG.page = {
+    sidebar: "",
+    isHome : false,
+    isPost : true,
+    lang   : 'zh-CN'
+  };
+</script>
+
+  <title>Kubernetes网络侃闲天 | 半中二青年</title>
+  
+
+
+  <script>
+    var _hmt = _hmt || [];
+    (function() {
+      var hm = document.createElement("script");
+      hm.src = "https://hm.baidu.com/hm.js?5f106bd9d28ad9215669a37fc984f768";
+      var s = document.getElementsByTagName("script")[0];
+      s.parentNode.insertBefore(hm, s);
+    })();
+  </script>
+
+
+
+
+  <noscript>
+  <style>
+  .use-motion .brand,
+  .use-motion .menu-item,
+  .sidebar-inner,
+  .use-motion .post-block,
+  .use-motion .pagination,
+  .use-motion .comments,
+  .use-motion .post-header,
+  .use-motion .post-body,
+  .use-motion .collection-header { opacity: initial; }
+
+  .use-motion .site-title,
+  .use-motion .site-subtitle {
+    opacity: initial;
+    top: initial;
+  }
+
+  .use-motion .logo-line-before i { left: initial; }
+  .use-motion .logo-line-after i { right: initial; }
+  </style>
+</noscript>
+
+</head>
+
+<body itemscope itemtype="http://schema.org/WebPage">
+  <div class="container use-motion">
+    <div class="headband"></div>
+
+    <header class="header" itemscope itemtype="http://schema.org/WPHeader">
+      <div class="header-inner"><div class="site-brand-container">
+  <div class="site-nav-toggle">
+    <div class="toggle" aria-label="切换导航栏">
+      <span class="toggle-line toggle-line-first"></span>
+      <span class="toggle-line toggle-line-middle"></span>
+      <span class="toggle-line toggle-line-last"></span>
+    </div>
+  </div>
+
+  <div class="site-meta">
+
+    <a href="/" class="brand" rel="start">
+      <span class="logo-line-before"><i></i></span>
+      <h1 class="site-title">半中二青年</h1>
+      <span class="logo-line-after"><i></i></span>
+    </a>
+      <p class="site-subtitle" itemprop="description">果冻的碎碎念</p>
+  </div>
+
+  <div class="site-nav-right">
+    <div class="toggle popup-trigger">
+        <i class="fa fa-search fa-fw fa-lg"></i>
+    </div>
+  </div>
+</div>
+
+
+
+
+<nav class="site-nav">
+  <ul id="menu" class="main-menu menu">
+        <li class="menu-item menu-item-home">
+
+    <a href="/" rel="section"><i class="fa fa-home fa-fw"></i>首页</a>
+
+  </li>
+        <li class="menu-item menu-item-archives">
+
+    <a href="/archives/" rel="section"><i class="fa fa-archive fa-fw"></i>归档<span class="badge">116</span></a>
+
+  </li>
+        <li class="menu-item menu-item-categories">
+
+    <a href="/categories/" rel="section"><i class="fa fa-th fa-fw"></i>分类<span class="badge">35</span></a>
+
+  </li>
+        <li class="menu-item menu-item-tags">
+
+    <a href="/tags/" rel="section"><i class="fa fa-tags fa-fw"></i>标签<span class="badge">87</span></a>
+
+  </li>
+        <li class="menu-item menu-item-about">
+
+    <a href="/about/me" rel="section"><i class="fa fa-user fa-fw"></i>关于</a>
+
+  </li>
+      <li class="menu-item menu-item-search">
+        <a role="button" class="popup-trigger"><i class="fa fa-search fa-fw"></i>搜索
+        </a>
+      </li>
+  </ul>
+</nav>
+
+
+
+  <div class="search-pop-overlay">
+    <div class="popup search-popup">
+        <div class="search-header">
+  <span class="search-icon">
+    <i class="fa fa-search"></i>
+  </span>
+  <div class="search-input-container">
+    <input autocomplete="off" autocapitalize="off"
+           placeholder="搜索..." spellcheck="false"
+           type="search" class="search-input">
+  </div>
+  <span class="popup-btn-close">
+    <i class="fa fa-times-circle"></i>
+  </span>
+</div>
+<div id="search-result">
+  <div id="no-result">
+    <i class="fa fa-spinner fa-pulse fa-5x fa-fw"></i>
+  </div>
+</div>
+
+    </div>
+  </div>
+
+</div>
+    </header>
+
+    
+  <div class="back-to-top">
+    <i class="fa fa-arrow-up"></i>
+    <span>0%</span>
+  </div>
+
+
+    <main class="main">
+      <div class="main-inner">
+        <div class="content-wrap">
+          
+
+          <div class="content post posts-expand">
+            
+
+    
+  
+  
+  <article itemscope itemtype="http://schema.org/Article" class="post-block" lang="zh-CN">
+    <link itemprop="mainEntityOfPage" href="https://zou8944.com/2022/08/14/kubernetes-network/">
+
+    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
+      <meta itemprop="image" content="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+      <meta itemprop="name" content="果冻">
+      <meta itemprop="description" content="果冻的碎碎念">
+    </span>
+
+    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
+      <meta itemprop="name" content="半中二青年">
+    </span>
+      <header class="post-header">
+        <h1 class="post-title" itemprop="name headline">
+          Kubernetes网络侃闲天
+        </h1>
+
+        <div class="post-meta">
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-calendar"></i>
+              </span>
+              <span class="post-meta-item-text">发表于</span>
+
+              <time title="创建时间：2022-08-14 14:57:05" itemprop="dateCreated datePublished" datetime="2022-08-14T14:57:05+08:00">2022-08-14</time>
+            </span>
+              <span class="post-meta-item">
+                <span class="post-meta-item-icon">
+                  <i class="far fa-calendar-check"></i>
+                </span>
+                <span class="post-meta-item-text">更新于</span>
+                <time title="修改时间：2022-08-15 09:57:22" itemprop="dateModified" datetime="2022-08-15T09:57:22+08:00">2022-08-15</time>
+              </span>
+            <span class="post-meta-item">
+              <span class="post-meta-item-icon">
+                <i class="far fa-folder"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+                <span itemprop="about" itemscope itemtype="http://schema.org/Thing">
+                  <a href="/categories/Kubernetes/" itemprop="url" rel="index"><span itemprop="name">Kubernetes</span></a>
+                </span>
+            </span>
+
+          
+            <span id="/2022/08/14/kubernetes-network/" class="post-meta-item leancloud_visitors" data-flag-title="Kubernetes网络侃闲天" title="阅读次数">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span class="leancloud-visitors-count"></span>
+            </span>
+            <span class="post-meta-item" title="阅读次数" id="busuanzi_container_page_pv" style="display: none;">
+              <span class="post-meta-item-icon">
+                <i class="fa fa-eye"></i>
+              </span>
+              <span class="post-meta-item-text">阅读次数：</span>
+              <span id="busuanzi_value_page_pv"></span>
+            </span>
+
+        </div>
+      </header>
+
+    
+    
+    
+    <div class="post-body" itemprop="articleBody">
+
+      
+        <blockquote>
+<p>以下内容作为这段时间研究Kubernetes网络的总结，一口气写完，代表了当前对Kubernetes网络的认知，可能有误，权当摆龙门阵。</p>
+</blockquote>
+<h2 id="K8s网络的核心问题"><a href="#K8s网络的核心问题" class="headerlink" title="K8s网络的核心问题"></a>K8s网络的核心问题</h2><p>我们理一理Kubernetes相关概念和网络的关系</p>
+<ul>
+<li>Pod：调度的基本单位，一个pod内的所有容器共享一个主机IP</li>
+<li>Deployment：管理Pod的资源</li>
+<li>StatefulSet：同样是管理Pod的资源，只不过是有状态的，其管理的主机IP创建后就不变了</li>
+<li>DaemonSet：也是管理Pod的资源</li>
+<li>Service：为Pod提供稳定的前端IP，同时能够通过QFDN的形式提供稳定的域名</li>
+<li>Ingress：允许以域名的形式访问Service</li>
+</ul>
+<p>可以看到，Kubernetes的网络主要有以下几个方面</p>
+<ul>
+<li>同一个集群内，Pod之间要能够相互通信</li>
+<li>Service提供负载均衡作用</li>
+<li>需要有一个域名解析系统，为Service提供域名</li>
+<li>Ingress提供应用层网关作用</li>
+</ul>
+<p>还有一个方面没有提到，但也很重要</p>
+<ul>
+<li>网络策略：限制网络资源之间网络访问的规则</li>
+</ul>
+<p>总计五个方面。</p>
+<h2 id="K8s网络的底层原理"><a href="#K8s网络的底层原理" class="headerlink" title="K8s网络的底层原理"></a>K8s网络的底层原理</h2><ul>
+<li>Pod之间相互通信<ul>
+<li>Pod只是逻辑抽象，最终管理的还是容器，只不过Pod的实现，是先启动一个简单的pause容器，占据一个<strong>网络命名空间</strong>，其它容器创建时加入这个命名空间就行了</li>
+<li>对于多节点集群，还涉及到IP划分的问题，一个简单的方案是：在集群的CIDR为每个主机划分一个子网，Pod从所属主机的IP池申请一个IP即可。flannel就是这样的实现</li>
+<li>同节点上的Pod，只需要通过<strong>veth pair</strong> + <strong>linux bridge</strong>的方式即可实现通信</li>
+<li>跨节点的Pod，则需要进行协调，一般的实现方式有<ul>
+<li><strong>隧道协议</strong>：即网络插件直接将原IP包再包一层，在Node之间进行转发，到达目标节点后再拆包然后路由到目标Pod。隧道一般有一个发送前装包，发送后拆包的步骤，这一般通过<strong>tun设备</strong>实现。</li>
+<li>直接路由：直接配置<strong>路由表</strong>，纯转发，没有封包的动作，性能好。但这要求所有节点都必须在同一个物理网络下。如果跨物理网络了，则需要BGP边界网关协议</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>Service负载均衡<ul>
+<li>这个一般有两种实现方式：<strong>iptables</strong>和<strong>IPVS</strong>。都是配置一系列规则，但iptables本身是为防火墙而生，有规则麻烦效率低的缺点，在超大规模集群中这就是问题，IPVS是实现在内核层的负载均衡，专门用来负载均衡，效率高，但也有功能单一的缺点，注入NAT之类的功能还是需要iptables辅助</li>
+</ul>
+</li>
+<li>Ingress应用层网关<ul>
+<li>这就是一个纯应用层的东西，直接将Nginx改造成Nginx-Ingress-Controller就能实现。正是由于其所处的位置，与应用有很大关系，切入点比较好，因此产生了一大堆Ingress-Controller：Kong、ApiSix、Traefik。。。</li>
+</ul>
+</li>
+<li>服务发现<ul>
+<li>即如何发现集群内的其它服务，有两种实现方式<ul>
+<li>环境变量：将集群内的所有服务IP通过环境变量的形式注入</li>
+<li>域名解析系统：用域名的方式解析得到服务的IP</li>
+</ul>
+</li>
+</ul>
+</li>
+<li>网络策略<ul>
+<li>简单的实现也可以通过<strong>iptables</strong>实现</li>
+<li>但是更高效的可以通过<strong>eBPF</strong>实现，它能在没有多少性能损失的情况下实现对网络包的任意处理，低至4层，高至7层，可以说强大无比。Cilium就是在他的基础上开发的。</li>
+</ul>
+</li>
+</ul>
+<p>总结一下用到的底层技术</p>
+<ul>
+<li>Linux Network Namespace</li>
+<li>Veth pair</li>
+<li>Linux Bridge</li>
+<li>tun设备</li>
+<li>隧道协议：IPIP、VXLAN等</li>
+<li>iptables</li>
+<li>IPVS</li>
+<li>eBPF</li>
+<li>DNS</li>
+</ul>
+<h2 id="K8s的网络组件"><a href="#K8s的网络组件" class="headerlink" title="K8s的网络组件"></a>K8s的网络组件</h2><ul>
+<li><p>Kube-proxy</p>
+</li>
+<li><p>Kubelet</p>
+</li>
+<li><p>API Server</p>
+</li>
+<li><p>ETCD</p>
+</li>
+<li><p>Scheduler</p>
+</li>
+<li><p>RC</p>
+</li>
+<li><p>CoreDNS</p>
+</li>
+</ul>
+<p>与网络相关的有</p>
+<ul>
+<li><p>Kube-proxy：其主要职责就是负责Service的实现，它定期拉取集群的网络配置，更新自己的规则。有三种工作模式</p>
+<ul>
+<li>userspace：这种情况下，Kube-poxy自己就是负载均衡器</li>
+<li>iptables：将配置的访问规则转换为本机的iptables规则，这种情况下负载均衡由iptables实现</li>
+<li>IPVS：效率更高</li>
+</ul>
+</li>
+<li><p>CoreDNS：负责域名解析系统</p>
+</li>
+<li><p>CNI插件：CNI接口基本来说就两个</p>
+<ul>
+<li>为容器添加Network</li>
+<li>为容器删除Network</li>
+</ul>
+<p>所以他就是集群的IP管理系统，同时网络分配后，它还需要确保网络的可达性，毕竟网络分配方式是你规定的，自然也只有你知道如何才能访问到对应的网络。你看，都保证可达性了，网络策略就是在限制各种可达性，这不又得支持一下，所以总结起来就是</p>
+<ul>
+<li>为Pod分配IP地址</li>
+<li>保证Pod之间的连通性</li>
+<li>提供Pod之间的网络访问策略</li>
+</ul>
+</li>
+</ul>
+<p>Kube-proxy和CNI的关系？</p>
+<p>Kube-poxy应该说是建立在CNI之上的，它不管Service背后的网络是否能够被访问到，只管将数据包转发过去就行了。保证这个数据包能够正确到达目的地是CNI插件的事情。</p>
+<h2 id="K8s网络的解决方案"><a href="#K8s网络的解决方案" class="headerlink" title="K8s网络的解决方案"></a>K8s网络的解决方案</h2><p>通常所说的K8s网络解决方案，指的就是各种CNI插件。这是CNI插件的主页：<a target="_blank" rel="noopener" href="https://github.com/containernetworking/cni%E3%80%82%E5%8F%AF%E4%BB%A5%E7%9C%8B%E5%88%B0%E4%B8%8D%E5%8F%AA%E6%98%AFKubernetes%E9%87%87%E7%94%A8%E4%BA%86CNI%EF%BC%8COpen">https://github.com/containernetworking/cni。可以看到不只是Kubernetes采用了CNI，Open</a> Shift、Mesos等都采用了CNI。</p>
+<ul>
+<li>Flannel：功能简单，因此配置简单，使用方便。但是也有性能一般、IP浪费等情况出现。这是元老级别的CNI插件</li>
+<li>Callico：工作在三层，即IP层，纯路由方式实现，因此速度应该比较快。纯三层的有点就是可以直接路由，没有NAT、封拆包等性能损耗的东西。但是规模稍大的集群，则需要通过BGP连接同集群下的两个数据中心</li>
+<li>Cilium：基础功能和Flannel差不多，但采用了eBPF，功能和性能都应该会非常强大。最为典型的一点是，它能够在内核中对7层数据做处理，这个就很强了。</li>
+<li>Weave：一个多主机网络，去中心化。没搞懂它特殊在哪里🤔</li>
+</ul>
+<p>一般Flannel和Callico会被放在一起比较</p>
+<h2 id="K8s和Service-Mesh之间的关系"><a href="#K8s和Service-Mesh之间的关系" class="headerlink" title="K8s和Service Mesh之间的关系"></a>K8s和Service Mesh之间的关系</h2><p>我们可以看到，K8s的网络包括CNI插件解决的是最最基本的问题：可达性。但是在实际开发中，还有大量的应用层面的共性任务需要处理</p>
+<ul>
+<li>日志采集</li>
+<li>链路追踪</li>
+<li>服务熔断和降级</li>
+<li>灰度发布</li>
+<li>。。。</li>
+</ul>
+<p>Service Mesh就是为了解决这些问题出现的，云计算的发展趋势就是这样，逐步将底层共性的技术抽象出来，通过底座的形式提供，这种发展的终极形式看起来就是Serverless。当然，Serverless有冷启动、可靠性等固有缺点，因此只能用来提供弱业务的功能。强业务方面，短时间看就是K8s了。Service Mesh就是这一脉络的发展方向。</p>
+<p>至于说Service Mesh和网络有什么关系呢？</p>
+<p>我们知道，传统K8s的网络架构如下</p>
+<ul>
+<li>CNI为网络基座，提供基本可用性</li>
+<li>Service提供访问固定入口和负载均衡</li>
+<li>Pod作为最小的网络单元</li>
+</ul>
+<p>Service Mesh在每个Pod中注入一个sidecar，相当于把Service融入到了每个Pod，这样管理起来更加灵活。与此同时，K8s的Service就可以不要了</p>
+<ul>
+<li>Kube-proxy拦截的是进入节点的流量</li>
+<li>sidecar拦截的是进入Pod的流量</li>
+</ul>
+<h2 id="是不是有点晕"><a href="#是不是有点晕" class="headerlink" title="是不是有点晕"></a>是不是有点晕</h2><p>网络的特殊性，使得能够拦截网络流量的组件能够做很多事，比如CNI看起来只是分配了网络，但还负责网络的可达性和访问策略，甚至有的CNI插件也会实现Service功能；Istio在每个pod注入的side car将Kubernetes Service替换掉了。看起来一个网络库能够实现所有K8s网络相关服务，但其实不是的，总体还是CNI插件提供基础网络能力；上层库如Envoy提供应用层能力。</p>
+<ul>
+<li><p>说到将Service融入每个Pod，Cilium也做了类似的事，不过更进一步，它是在内核层面做这件事，Istio是通过用户态程序Envoy实现，相比之下效率慢了不少。那Envoy和Cilium的关系是什么呢？</p>
+<p>还是一个应用层、一个网络基础层，它们之间的关系大概如下</p>
+<img src="https://gdz.oss-cn-shenzhen.aliyuncs.com/local/image-20220815095416855.png" alt="image-20220815095416855" style="zoom:50%;" /></li>
+<li><p>有了Istio，还需要CNI插件吗？</p>
+<p>当然还是需要的，尽管Istio自己也有提供CNI插件，但那也是CNI插件呀。</p>
+</li>
+</ul>
+
+    </div>
+
+    
+    
+    
+
+      <footer class="post-footer">
+          <div class="post-tags">
+              <a href="/tags/Kubernetes/" rel="tag"># Kubernetes</a>
+              <a href="/tags/K8s/" rel="tag"># K8s</a>
+          </div>
+
+        
+
+
+        
+    <div class="post-nav">
+      <div class="post-nav-item">
+    <a href="/2022/08/10/token-security/" rel="prev" title="如何安全地使用token">
+      <i class="fa fa-chevron-left"></i> 如何安全地使用token
+    </a></div>
+      <div class="post-nav-item"></div>
+    </div>
+      </footer>
+    
+  </article>
+  
+  
+  
+
+
+
+          </div>
+          
+    
+  <div class="comments">
+    <div id="lv-container" data-id="city" data-uid="MTAyMC80NjUyOC8yMzAzOA=="></div>
+  </div>
+  
+
+<script>
+  window.addEventListener('tabs:register', () => {
+    let { activeClass } = CONFIG.comments;
+    if (CONFIG.comments.storage) {
+      activeClass = localStorage.getItem('comments_active') || activeClass;
+    }
+    if (activeClass) {
+      let activeTab = document.querySelector(`a[href="#comment-${activeClass}"]`);
+      if (activeTab) {
+        activeTab.click();
+      }
+    }
+  });
+  if (CONFIG.comments.storage) {
+    window.addEventListener('tabs:click', event => {
+      if (!event.target.matches('.tabs-comment .tab-content .tab-pane')) return;
+      let commentClass = event.target.classList[1];
+      localStorage.setItem('comments_active', commentClass);
+    });
+  }
+</script>
+
+        </div>
+          
+  
+  <div class="toggle sidebar-toggle">
+    <span class="toggle-line toggle-line-first"></span>
+    <span class="toggle-line toggle-line-middle"></span>
+    <span class="toggle-line toggle-line-last"></span>
+  </div>
+
+  <aside class="sidebar">
+    <div class="sidebar-inner">
+
+      <ul class="sidebar-nav motion-element">
+        <li class="sidebar-nav-toc">
+          文章目录
+        </li>
+        <li class="sidebar-nav-overview">
+          站点概览
+        </li>
+      </ul>
+
+      <!--noindex-->
+      <div class="post-toc-wrap sidebar-panel">
+          <div class="post-toc motion-element"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#K8s%E7%BD%91%E7%BB%9C%E7%9A%84%E6%A0%B8%E5%BF%83%E9%97%AE%E9%A2%98"><span class="nav-number">1.</span> <span class="nav-text">K8s网络的核心问题</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#K8s%E7%BD%91%E7%BB%9C%E7%9A%84%E5%BA%95%E5%B1%82%E5%8E%9F%E7%90%86"><span class="nav-number">2.</span> <span class="nav-text">K8s网络的底层原理</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#K8s%E7%9A%84%E7%BD%91%E7%BB%9C%E7%BB%84%E4%BB%B6"><span class="nav-number">3.</span> <span class="nav-text">K8s的网络组件</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#K8s%E7%BD%91%E7%BB%9C%E7%9A%84%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88"><span class="nav-number">4.</span> <span class="nav-text">K8s网络的解决方案</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#K8s%E5%92%8CService-Mesh%E4%B9%8B%E9%97%B4%E7%9A%84%E5%85%B3%E7%B3%BB"><span class="nav-number">5.</span> <span class="nav-text">K8s和Service Mesh之间的关系</span></a></li><li class="nav-item nav-level-2"><a class="nav-link" href="#%E6%98%AF%E4%B8%8D%E6%98%AF%E6%9C%89%E7%82%B9%E6%99%95"><span class="nav-number">6.</span> <span class="nav-text">是不是有点晕</span></a></li></ol></div>
+      </div>
+      <!--/noindex-->
+
+      <div class="site-overview-wrap sidebar-panel">
+        <div class="site-author motion-element" itemprop="author" itemscope itemtype="http://schema.org/Person">
+    <img class="site-author-image" itemprop="image" alt="果冻"
+      src="https://thirdwx.qlogo.cn/mmopen/vi_32/DYAIOgq83equib0YGKeGrRww67LyZ7hSONtAW59RHDTd2JuKmSfQLEs8zWIB14hUcHibNG41zNibv5mr5QhM5QDMQ/132">
+  <p class="site-author-name" itemprop="name">果冻</p>
+  <div class="site-description" itemprop="description">果冻的碎碎念</div>
+</div>
+<div class="site-state-wrap motion-element">
+  <nav class="site-state">
+      <div class="site-state-item site-state-posts">
+          <a href="/archives/">
+        
+          <span class="site-state-item-count">116</span>
+          <span class="site-state-item-name">日志</span>
+        </a>
+      </div>
+      <div class="site-state-item site-state-categories">
+            <a href="/categories/">
+          
+        <span class="site-state-item-count">35</span>
+        <span class="site-state-item-name">分类</span></a>
+      </div>
+      <div class="site-state-item site-state-tags">
+            <a href="/tags/">
+          
+        <span class="site-state-item-count">87</span>
+        <span class="site-state-item-name">标签</span></a>
+      </div>
+  </nav>
+</div>
+  <div class="links-of-author motion-element">
+      <span class="links-of-author-item">
+        <a href="https://blog.csdn.net/zou8944" title="低质博客平台 → https:&#x2F;&#x2F;blog.csdn.net&#x2F;zou8944" rel="noopener" target="_blank"><i class="fa fa-th-large fa-fw"></i>低质博客平台</a>
+      </span>
+      <span class="links-of-author-item">
+        <a href="https://github.com/zou8944" title="同性交友网站 → https:&#x2F;&#x2F;github.com&#x2F;zou8944" rel="noopener" target="_blank"><i class="fab fa-github fa-fw"></i>同性交友网站</a>
+      </span>
+  </div>
+
+
+
+      </div>
+
+    </div>
+  </aside>
+  <div id="sidebar-dimmer"></div>
+
+
+      </div>
+    </main>
+
+    <footer class="footer">
+      <div class="footer-inner">
+        
+
+        
+  <div class="beian"><a href="https://beian.miit.gov.cn/" rel="noopener" target="_blank">粤ICP备2021024139号 </a>
+  </div>
+
+<div class="copyright">
+  
+  &copy; 
+  <span itemprop="copyrightYear">2022</span>
+  <span class="with-love">
+    <i class="fa fa-heart"></i>
+  </span>
+  <span class="author" itemprop="copyrightHolder">果冻</span>
+</div>
+  <div class="powered-by">由 <a href="https://hexo.io/" class="theme-link" rel="noopener" target="_blank">Hexo</a> & <a href="https://pisces.theme-next.org/" class="theme-link" rel="noopener" target="_blank">NexT.Pisces</a> 强力驱动
+  </div>
+
+
+    <script async src="//dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+
+
+        
+<div class="busuanzi-count">
+  <script async src="https://busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
+    <span class="post-meta-item" id="busuanzi_container_site_uv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-user"></i>
+      </span>
+      <span class="site-uv" title="总访客量">
+        <span id="busuanzi_value_site_uv"></span>
+      </span>
+    </span>
+    <span class="post-meta-divider">|</span>
+    <span class="post-meta-item" id="busuanzi_container_site_pv" style="display: none;">
+      <span class="post-meta-item-icon">
+        <i class="fa fa-eye"></i>
+      </span>
+      <span class="site-pv" title="总访问量">
+        <span id="busuanzi_value_site_pv"></span>
+      </span>
+    </span>
+</div>
+
+
+
+
+
+
+<script>
+  (function() {
+    function leancloudSelector(url) {
+      url = encodeURI(url);
+      return document.getElementById(url).querySelector('.leancloud-visitors-count');
+    }
+
+    function addCount(Counter) {
+      var visitors = document.querySelector('.leancloud_visitors');
+      var url = decodeURI(visitors.id);
+      var title = visitors.dataset.flagTitle;
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          if (results.length > 0) {
+            var counter = results[0];
+            leancloudSelector(url).innerText = counter.time + 1;
+            Counter('put', '/classes/Counter/' + counter.objectId, { time: { '__op': 'Increment', 'amount': 1 } })
+              .catch(error => {
+                console.error('Failed to save visitor count', error);
+              });
+          } else {
+              Counter('post', '/classes/Counter', { title, url, time: 1 })
+                .then(response => response.json())
+                .then(() => {
+                  leancloudSelector(url).innerText = 1;
+                })
+                .catch(error => {
+                  console.error('Failed to create', error);
+                });
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    function showTime(Counter) {
+      var visitors = document.querySelectorAll('.leancloud_visitors');
+      var entries = [...visitors].map(element => {
+        return decodeURI(element.id);
+      });
+
+      Counter('get', '/classes/Counter?where=' + encodeURIComponent(JSON.stringify({ url: { '$in': entries } })))
+        .then(response => response.json())
+        .then(({ results }) => {
+          for (let url of entries) {
+            let target = results.find(item => item.url === url);
+            leancloudSelector(url).innerText = target ? target.time : 0;
+          }
+        })
+        .catch(error => {
+          console.error('LeanCloud Counter Error', error);
+        });
+    }
+
+    let { app_id, app_key, server_url } = {"enable":true,"app_id":"ryE8EmVPz7F7UoBoHgb0sS3o-gzGzoHsz","app_key":"ts5Wga1uMoWcqyj4ABElP6uF","server_url":"https://www.zou8944.com","security":false};
+    function fetchData(api_server) {
+      var Counter = (method, url, data) => {
+        return fetch(`${api_server}/1.1${url}`, {
+          method,
+          headers: {
+            'X-LC-Id'     : app_id,
+            'X-LC-Key'    : app_key,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(data)
+        });
+      };
+      if (CONFIG.page.isPost) {
+        if (CONFIG.hostname !== location.hostname) return;
+        addCount(Counter);
+      } else if (document.querySelectorAll('.post-title-link').length >= 1) {
+        showTime(Counter);
+      }
+    }
+
+    let api_server = app_id.slice(-9) !== '-MdYXbMMI' ? server_url : `https://${app_id.slice(0, 8).toLowerCase()}.api.lncldglobal.com`;
+
+    if (api_server) {
+      fetchData(api_server);
+    } else {
+      fetch('https://app-router.leancloud.cn/2/route?appId=' + app_id)
+        .then(response => response.json())
+        .then(({ api_server }) => {
+          fetchData('https://' + api_server);
+        });
+    }
+  })();
+</script>
+
+
+      </div>
+    </footer>
+  </div>
+
+  
+  <script src="/lib/anime.min.js"></script>
+  <script src="/lib/velocity/velocity.min.js"></script>
+  <script src="/lib/velocity/velocity.ui.min.js"></script>
+
+<script src="/js/utils.js"></script>
+
+<script src="/js/motion.js"></script>
+
+
+<script src="/js/schemes/pisces.js"></script>
+
+
+<script src="/js/next-boot.js"></script>
+
+
+
+
+  
+
+
+
+
+  
+<script src="/js/local-search.js"></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+  
+
+  
+
+<script>
+NexT.utils.loadComments(document.querySelector('#lv-container'), () => {
+  window.livereOptions = {
+    refer: location.pathname.replace(CONFIG.root, '').replace('index.html', '')
+  };
+  (function(d, s) {
+    var j, e = d.getElementsByTagName(s)[0];
+    if (typeof LivereTower === 'function') { return; }
+    j = d.createElement(s);
+    j.src = 'https://cdn-city.livere.com/js/embed.dist.js';
+    j.async = true;
+    e.parentNode.insertBefore(j, e);
+  })(document, 'script');
+});
+</script>
+
+</body>
+</html>
